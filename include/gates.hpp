@@ -1,0 +1,13 @@
+#ifndef QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
+#define QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
+
+class Gate {
+};
+
+class NotGate {
+};
+
+class ToffoliGate {
+};
+
+#endif //QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
