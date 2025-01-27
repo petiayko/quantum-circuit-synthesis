@@ -47,7 +47,8 @@ if (BUILD_TESTS)
     add_executable(tests
             ${CMAKE_CURRENT_SOURCE_DIR}
             tests/test_boolean_functions.cpp
-            tests/test_functions.cpp
+            tests/test_primitives.cpp
+            tests/test_mappings.cpp
     )
 
     target_link_libraries(tests ${PROJECT_NAME} GTest::gtest_main)

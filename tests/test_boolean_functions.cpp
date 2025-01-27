@@ -49,6 +49,10 @@ TEST(BooleanFunction, Methods) {
     EXPECT_EQ(bf_3.dim(), 1);
     EXPECT_EQ(bf_3.weight(), 1);
     EXPECT_EQ(bf_3.is_balanced(), true);
+
+    EXPECT_EQ(bf_1.get_vector(), std::vector<bool>({true, false, false, false, true, false, true, false}));
+    EXPECT_EQ(bf_2.get_vector(), std::vector<bool>({false}));
+    EXPECT_EQ(bf_3.get_vector(), std::vector<bool>({false, true}));
 }
 
 TEST(BooleanFunction, Stream) {
