@@ -49,6 +49,7 @@ if (BUILD_TESTS)
             tests/test_boolean_functions.cpp
             tests/test_primitives.cpp
             tests/test_mappings.cpp
+            tests/test_substitutions.cpp
     )
 
     target_link_libraries(tests ${PROJECT_NAME} GTest::gtest_main)

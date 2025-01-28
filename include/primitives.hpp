@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <numeric>
@@ -45,9 +46,13 @@ T binary_to_decimal(const std::string &s) {
     return std::stoi(s, nullptr, 2);
 }
 
+//using substitution = std::vector<size_t>;
+using binary_vector = std::vector<bool>;
+using table = std::vector<binary_vector>;
+
 class BooleanFunction {
 public:
-    explicit BooleanFunction(const std::vector<bool> &);
+    explicit BooleanFunction(const binary_vector &);
 
     explicit BooleanFunction(const std::vector<int> &);
 
@@ -61,6 +66,8 @@ public:
 
     bool operator!=(const BooleanFunction &) const;
 
+    BooleanFunction &operator+=(const BooleanFunction &);
+
     size_t size() const noexcept;
 
     size_t dim() const noexcept;
@@ -69,18 +76,19 @@ public:
 
     bool is_balanced() const noexcept;
 
-    std::vector<bool> get_vector() const noexcept;
+    binary_vector get_vector() const noexcept;
 
     std::string to_table(char = '\t') const noexcept;
 
     friend std::ostream &operator<<(std::ostream &, const BooleanFunction &) noexcept;
 
 private:
-    std::vector<bool> v_;
+    binary_vector vec_;
 };
 
-//using substitution = std::vector<size_t>;
-using table = std::vector<std::vector<bool>>;
+BooleanFunction operator+(const BooleanFunction &, const BooleanFunction &);
+
+using cf_set = std::vector<BooleanFunction>;
 
 //bool is_substitution(const substitution &);
 
@@ -88,23 +96,29 @@ using table = std::vector<std::vector<bool>>;
 
 //binary_substitution substitution_to_table(const substitution &);
 
-class Mapping {
+class Substitution;
+
+class BinaryMapping {
 public:
-    explicit Mapping(const table &);
+    explicit BinaryMapping(const cf_set &);
 
-    explicit Mapping(const std::vector<BooleanFunction> &);
+    explicit BinaryMapping(const table &);
 
-    explicit Mapping(const std::string &);
+    explicit BinaryMapping(const std::string &);
 
-    Mapping(const Mapping &sub);
+    explicit BinaryMapping(const Substitution &);
 
-    Mapping &operator=(const Mapping &);
+    BinaryMapping(const BinaryMapping &sub);
 
-    bool operator==(const Mapping &) const;
+    BinaryMapping &operator=(const BinaryMapping &);
 
-    bool operator!=(const Mapping &) const;
+    BinaryMapping &operator=(const Substitution &);
 
-    std::vector<BooleanFunction> get_coordinate_functions() const noexcept;
+    bool operator==(const BinaryMapping &) const;
+
+    bool operator!=(const BinaryMapping &) const;
+
+    cf_set get_coordinate_functions() const noexcept;
 
     bool is_substitution() const noexcept;
 
@@ -112,12 +126,41 @@ public:
 
     size_t get_outputs_number() const noexcept;
 
+    std::string to_table(char = '\t') const noexcept;
+
+    friend std::ostream &operator<<(std::ostream &, const BinaryMapping &) noexcept;
+
+protected:
+    table to_table_() const noexcept;
+
 private:
-    table table_;
+    cf_set cf_;
 };
 
-class Substitution : public Mapping {
+class Substitution : public BinaryMapping {
+public:
+    explicit Substitution(const cf_set &);
 
+    explicit Substitution(const table &);
+
+    explicit Substitution(const std::string &);
+
+    Substitution(const Substitution &);
+
+    Substitution &operator=(const Substitution &);
+
+    Substitution &operator=(const BinaryMapping &);
+
+    size_t power() const noexcept;
+
+    std::vector<size_t> get_vector() const noexcept;
+
+    bool is_odd() const noexcept;
+
+    friend std::ostream &operator<<(std::ostream &, const Substitution &) noexcept;
+
+private:
+    std::vector<size_t> sub_;
 };
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP
