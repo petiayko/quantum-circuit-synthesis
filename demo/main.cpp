@@ -1,7 +1,7 @@
 #include <iostream>
-#include <primitives.hpp>
+#include "primitives.hpp"
 
 int main() {
-    std::cout << decimal_to_binary(12, 6) << std::endl;
+    std::cout << "QCL" << std::endl;
     return 0;
 }
