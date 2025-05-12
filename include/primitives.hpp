@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <vector>
 #include <sstream>
@@ -106,6 +107,8 @@ public:
 
     explicit BinaryMapping(const std::string &);
 
+    explicit BinaryMapping(std::istream &);
+
     explicit BinaryMapping(const Substitution &);
 
     BinaryMapping(const BinaryMapping &sub);
@@ -134,6 +137,7 @@ protected:
     table to_table_() const noexcept;
 
 private:
+    void by_string_(const std::string &);
     cf_set cf_;
 };
 
@@ -144,6 +148,8 @@ public:
     explicit Substitution(const table &);
 
     explicit Substitution(const std::string &);
+
+    explicit Substitution(const std::ifstream &);
 
     Substitution(const Substitution &);
 

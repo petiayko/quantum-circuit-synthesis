@@ -202,38 +202,13 @@ BinaryMapping::BinaryMapping(const table &t) {
 }
 
 BinaryMapping::BinaryMapping(const std::string &s) {
-    if (s.empty()) {
-        throw std::runtime_error{"Empty table"};
-    }
-    table truth_table;
-    std::istringstream stream(s);
-    std::string line;
-    while (getline(stream, line)) {
-        if (line.empty()) {
-            throw std::runtime_error{"Empty line in tables are not allowed"};
-        }
-        if (truth_table.size() != line.size()) {
-            if (!truth_table.empty()) {
-                throw std::runtime_error{"Table lines should have equal length"};
-            } else {
-                for (size_t i = 0; i < line.size(); i++) {
-                    truth_table.emplace_back();
-                }
-            }
-        }
-        for (size_t i = 0; i < line.size(); i++) {
-            if (line[i] == '0') {
-                truth_table[i].push_back(false);
-            } else if (line[i] == '1') {
-                truth_table[i].push_back(true);
-            } else {
-                throw std::runtime_error{"Unexpected symbol"};
-            }
-        }
-    }
-    for (const auto &vec: truth_table) {
-        cf_.emplace_back(vec);
-    }
+    by_string_(s);
+}
+
+BinaryMapping::BinaryMapping(std::istream &s) {
+    std::stringstream ss;
+    ss << s.rdbuf();
+    by_string_(ss.str());
 }
 
 //BinaryMapping::BinaryMapping(const Substitution &sub) {
@@ -307,6 +282,51 @@ table BinaryMapping::to_table_() const noexcept {
     return result;
 }
 
+void BinaryMapping::by_string_(const std::string &s) {
+    if (s.empty()) {
+        throw std::runtime_error{"Empty truth table"};
+    }
+    std::stringstream ss(s);
+    std::string line;
+    table truth_table;
+
+    while (getline(ss, line, '\n')) {
+        if (line.empty() || line.front() == '#') {
+            continue;
+        }
+        size_t current_col = 0;
+        for (size_t i = 0; i < line.size(); i++) {
+            if (isspace(line[i])) {
+                continue;
+            }
+            if (line[i] == '0') {
+                if (current_col >= truth_table.size()) {
+                    truth_table.emplace_back();
+                }
+                truth_table[current_col].push_back(false);
+                current_col++;
+            } else if (line[i] == '1') {
+                if (current_col >= truth_table.size()) {
+                    truth_table.emplace_back();
+                }
+                truth_table[current_col].push_back(true);
+                current_col++;
+            } else {
+                throw std::runtime_error{std::string("Unexpected symbol: ") + line[i]};
+            }
+        }
+    }
+    if (!std::all_of(truth_table.begin(), truth_table.end(),
+                     [first_size = truth_table[0].size()](const auto &v) {
+                         return v.size() == first_size;
+                     })) {
+        throw std::runtime_error{"All columns in truth table should have equal length"};
+    }
+    for (const auto &vec: truth_table) {
+        cf_.emplace_back(vec);
+    }
+}
+
 std::string BinaryMapping::to_table(char sep) const noexcept {
     auto truth_table = this->to_table_();
     std::string result;
@@ -365,6 +385,10 @@ Substitution::Substitution(const table &t) : BinaryMapping(t) {
 Substitution::Substitution(const std::string &s) : BinaryMapping(s) {
 
 }
+
+//Substitution::Substitution(const std::ofstream &s) {
+//
+//}
 
 //Substitution::Substitution(const Substitution &sub) : BinaryMapping(sub) {
 //
