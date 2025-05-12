@@ -6,17 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_COVERAGE "Build code coverage" ON)
 
-#set(
-#        HUNTER_CACHE_SERVERS
-#        "https://github.com/bmstu-iu8-cpp-sem-3/hunter-cache"
-#        CACHE STRING "Default cache server"
-#)
-
 include("cmake/HunterGate.cmake")
 
 HunterGate(
-        URL "https://github.com/cpp-pm/hunter/archive/v0.23.314.tar.gz"
-        SHA1 "95c47c92f68edb091b5d6d18924baabe02a6962a"
+        URL "https://github.com/cpp-pm/hunter/archive/v0.23.317.tar.gz"
+        SHA1 "fbdd94b1966d351384e27b02c8d134915b1131d6"
 )
 
 project(quantum_circuit_synthesis VERSION 0.1.0)
