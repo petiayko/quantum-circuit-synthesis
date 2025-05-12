@@ -2,50 +2,18 @@
 #define QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP
 
 #include <algorithm>
-#include <cmath>
 #include <fstream>
 #include <iostream>
+#include <iterator>
+#include <map>
 #include <vector>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <numeric>
 
-template<class T = size_t>
-bool is_power_of_2(T v) {
-    return v && !(v & (v - 1));
-}
-
-template<class T = size_t>
-std::string decimal_to_binary(T v, size_t l = 0) {
-    std::string result;
-    if (!v) {
-        result = "0";
-    }
-    while (v) {
-        result += (v % 2 ? '1' : '0');
-        v /= 2;
-    }
-    if (l && l > result.size()) {
-        result += std::string(l - result.size(), '0');
-    }
-    std::reverse(result.begin(), result.end());
-    return result;
-}
-
-template<class T = size_t>
-T binary_to_decimal(const std::string &s) {
-    if (s.empty()) {
-        return 0;
-    }
-    for (auto bit: s) {
-        if (bit == '0' || bit == '1') {
-            continue;
-        }
-        throw std::runtime_error{"Unexpected symbol in binary notation"};
-    }
-    return std::stoi(s, nullptr, 2);
-}
+#include "math.hpp"
 
 //using substitution = std::vector<size_t>;
 using binary_vector = std::vector<bool>;
@@ -111,6 +79,8 @@ public:
 
     explicit BinaryMapping(const Substitution &);
 
+    virtual ~BinaryMapping() = default;
+
     BinaryMapping(const BinaryMapping &sub);
 
     BinaryMapping &operator=(const BinaryMapping &);
@@ -133,15 +103,15 @@ public:
 
     friend std::ostream &operator<<(std::ostream &, const BinaryMapping &) noexcept;
 
-protected:
+private:
+    cf_set cf_;
+
     table to_table_() const noexcept;
 
-private:
     void by_string_(const std::string &);
-    cf_set cf_;
 };
 
-class Substitution : public BinaryMapping {
+class Substitution {
 public:
     explicit Substitution(const cf_set &);
 
@@ -149,7 +119,7 @@ public:
 
     explicit Substitution(const std::string &);
 
-    explicit Substitution(const std::ifstream &);
+    explicit Substitution(std::istream &);
 
     Substitution(const Substitution &);
 
@@ -167,6 +137,8 @@ public:
 
 private:
     std::vector<size_t> sub_;
+
+    void by_string_(const std::string &);
 };
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP

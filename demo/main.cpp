@@ -2,6 +2,8 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <fstream>
+#include "primitives.hpp"
 
 using configuration = std::map<std::string, std::string>;
 
@@ -75,12 +77,12 @@ configuration parse_arguments(int argc, char *argv[]) {
 
         auto it = arguments_map.find(arg);
         if (it == arguments_map.end()) {
-            throw std::runtime_error("Unknown argument: " + arg);
+            throw std::runtime_error{"Unknown argument: " + arg};
         }
 
         std::string full_arg_name = it->second;
         if (arguments_accounting[full_arg_name]) {
-            throw std::runtime_error("Duplicate argument: " + arg);
+            throw std::runtime_error{"Duplicate argument: " + arg};
         }
         arguments_accounting[full_arg_name] = true;
         if (i + 1 >= argc || argv[i + 1][0] == '-') {
@@ -88,7 +90,7 @@ configuration parse_arguments(int argc, char *argv[]) {
                 config[full_arg_name] = "";
                 i++;
             } else {
-                throw std::runtime_error("Missing value for argument: " + arg);
+                throw std::runtime_error{"Missing value for argument: " + arg};
             }
         } else {
             config[full_arg_name] = argv[i + 1];
@@ -156,8 +158,18 @@ int main(int argc, char *argv[]) {
         log = it->second;
     }
 
-    std::cout << input << " " << type << " " << output << " " << log << " " << algo << std::endl;
 //    handle_config(type, algo, input, output, log);
 //    let this function validate input
+
+    std::cout << input << " " << type << " " << output << " " << log << " " << algo << std::endl;
+    std::ifstream file(input, std::ios::in);
+    if (type == "tt") {
+        BinaryMapping map(file);
+        std::cout << map << std::endl;
+    } else if (type == "sub") {
+        Substitution s(file);
+        std::cout << s << std::endl;
+    }
+    file.close();
     return 0;
 }

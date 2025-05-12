@@ -354,43 +354,45 @@ std::ostream &operator<<(std::ostream &out, const BinaryMapping &mp) noexcept {
 
 // Substitution
 
-Substitution::Substitution(const cf_set &cf) : BinaryMapping(cf) {
-    if (this->get_inputs_number() != this->get_outputs_number()) {
-        throw std::runtime_error{"This mapping is not substitution"};
-    }
-    auto truth_table = this->to_table_();
-    auto power = static_cast<size_t>(std::pow(2, this->get_inputs_number()));
-    sub_ = std::vector<size_t>(power);
-    binary_vector indicator(power, false);
-    std::string line;
-    size_t value = 0;
-    for (size_t i = 0; i < truth_table.front().size(); i++) {
-        for (auto &j: truth_table) {
-            line += (j[i] ? '1' : '0');
-        }
-        value = binary_to_decimal(line);
-        if (indicator[value]) {
-            throw std::runtime_error{"This mapping is not substitution"};
-        }
-        indicator[value] = true;
-        sub_[i] = value;
-        line.clear();
-    }
-}
+//Substitution::Substitution(const cf_set &cf) {
+//    if (this->get_inputs_number() != this->get_outputs_number()) {
+//        throw std::runtime_error{"This mapping is not substitution"};
+//    }
+//    auto truth_table = this->to_table_();
+//    auto power = static_cast<size_t>(std::pow(2, this->get_inputs_number()));
+//    sub_ = std::vector<size_t>(power);
+//    binary_vector indicator(power, false);
+//    std::string line;
+//    size_t value = 0;
+//    for (size_t i = 0; i < truth_table.front().size(); i++) {
+//        for (auto &j: truth_table) {
+//            line += (j[i] ? '1' : '0');
+//        }
+//        value = binary_to_decimal(line);
+//        if (indicator[value]) {
+//            throw std::runtime_error{"This mapping is not substitution"};
+//        }
+//        indicator[value] = true;
+//        sub_[i] = value;
+//        line.clear();
+//    }
+//}
 
-Substitution::Substitution(const table &t) : BinaryMapping(t) {
-
-}
-
-Substitution::Substitution(const std::string &s) : BinaryMapping(s) {
-
-}
-
-//Substitution::Substitution(const std::ofstream &s) {
+//Substitution::Substitution(const table &t) {
 //
 //}
 
-//Substitution::Substitution(const Substitution &sub) : BinaryMapping(sub) {
+Substitution::Substitution(const std::string &s) {
+    by_string_(s);
+}
+
+Substitution::Substitution(std::istream &s) {
+    std::stringstream ss;
+    ss << s.rdbuf();
+    by_string_(ss.str());
+}
+
+//Substitution::Substitution(const Substitution &sub) {
 //
 //}
 
@@ -413,14 +415,53 @@ bool Substitution::is_odd() const noexcept {
     return true;
 }
 
+void Substitution::by_string_(const std::string &s) {
+    if (s.empty()) {
+        throw std::runtime_error{"Empty substitution"};
+    }
+    std::stringstream ss(s);
+    std::string line;
+    std::string value;
+
+//    std::map<size_t, bool> substitution;
+    std::vector<size_t> substitution;
+
+    while (getline(ss, line, '\n')) {
+        if (line.empty() || line.front() == '#') {
+            continue;
+        }
+        std::stringstream line_ss(line);
+        while (line_ss >> value) {
+            int value_int = 0;
+            try {
+                value_int = std::stoi(value);
+            } catch (const std::invalid_argument &e) {
+                try {
+                    value_int = std::stoi(value, nullptr, 16);
+                } catch (const std::invalid_argument &e1) {
+                    throw std::runtime_error{std::string("Invalid value: ") + value};
+                }
+            }
+            if (std::find(substitution.begin(), substitution.end(), value_int) != substitution.end()) {
+                throw std::runtime_error{std::string("Duplicated value: ") + value};
+            }
+            substitution.push_back(value_int);
+        }
+    }
+    if (!is_power_of_2(substitution.size())) {
+        throw std::runtime_error{"Substitution length should be power of 2"};
+    }
+    for (size_t i = 0; i < substitution.size(); i++) {
+        if (std::find(substitution.begin(), substitution.end(), i) == substitution.end()) {
+            throw std::runtime_error{std::string("In substitution skipped value: ") + std::to_string(i)};
+        }
+    }
+    sub_ = substitution;
+}
+
 std::ostream &operator<<(std::ostream &out, const Substitution &sub) noexcept {
     for (size_t i = 0; i < sub.power(); i++) {
-        out << i << ' ';
+        out << i << ' ' << sub.sub_[i] << '\n';
     }
-    out << '\n';
-    for (auto v: sub.sub_) {
-        out << v << ' ';
-    }
-    out << '\n';
     return out;
 }
