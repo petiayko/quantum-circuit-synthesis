@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <fstream>
+
 #include "primitives.hpp"
 
 using configuration = std::map<std::string, std::string>;

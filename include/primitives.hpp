@@ -11,11 +11,11 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <numeric>
 
 #include "math.hpp"
 
-//using substitution = std::vector<size_t>;
 using binary_vector = std::vector<bool>;
 using table = std::vector<binary_vector>;
 
@@ -59,12 +59,6 @@ BooleanFunction operator+(const BooleanFunction &, const BooleanFunction &);
 
 using cf_set = std::vector<BooleanFunction>;
 
-//bool is_substitution(const substitution &);
-
-//substitution table_to_substitution(const binary_substitution &);
-
-//binary_substitution substitution_to_table(const substitution &);
-
 class Substitution;
 
 class BinaryMapping {
@@ -77,11 +71,9 @@ public:
 
     explicit BinaryMapping(std::istream &);
 
-    explicit BinaryMapping(const Substitution &);
-
-    virtual ~BinaryMapping() = default;
-
     BinaryMapping(const BinaryMapping &sub);
+
+    BinaryMapping(const Substitution &);
 
     BinaryMapping &operator=(const BinaryMapping &);
 
@@ -111,6 +103,8 @@ private:
     void by_string_(const std::string &);
 };
 
+bool is_substitution(const std::map<size_t, size_t> &);
+
 class Substitution {
 public:
     explicit Substitution(const cf_set &);
@@ -123,13 +117,23 @@ public:
 
     Substitution(const Substitution &);
 
+    Substitution(const BinaryMapping &);
+
     Substitution &operator=(const Substitution &);
 
     Substitution &operator=(const BinaryMapping &);
 
+    bool operator==(const Substitution &) const;
+
+    bool operator!=(const Substitution &) const;
+
     size_t power() const noexcept;
 
     std::vector<size_t> get_vector() const noexcept;
+
+    std::vector<std::pair<size_t, size_t>> get_transpositions() const noexcept;
+
+    std::vector<std::vector<size_t>> get_cycles() const noexcept;
 
     bool is_odd() const noexcept;
 
@@ -140,5 +144,11 @@ private:
 
     void by_string_(const std::string &);
 };
+
+//bool is_substitution(const substitution &);
+
+//substitution table_to_substitution(const binary_substitution &);
+
+//binary_substitution substitution_to_table(const substitution &);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP

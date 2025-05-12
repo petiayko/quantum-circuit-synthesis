@@ -42,4 +42,32 @@ T binary_to_decimal(const std::string &s) {
 }
 
 
+inline bool try_string_to_decimal(const std::string &s, size_t &num) {
+    if (s.empty()) {
+        return false;
+    }
+    if (!(s.rfind("0x") && s.rfind("0X"))) {
+        try {
+            std::stringstream hex_value_ss;
+            hex_value_ss << std::hex << s;
+            hex_value_ss >> num;
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
+    try {
+        num = std::stoi(s);
+        return true;
+    } catch (...) {
+        try {
+            num = std::stoi(s, nullptr, 16);
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
+}
+
+
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_MATH_HPP

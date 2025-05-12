@@ -211,12 +211,23 @@ BinaryMapping::BinaryMapping(std::istream &s) {
     by_string_(ss.str());
 }
 
-//BinaryMapping::BinaryMapping(const Substitution &sub) {
-//
-//}
-
 BinaryMapping::BinaryMapping(const BinaryMapping &mp) {
     cf_ = mp.cf_;
+}
+
+BinaryMapping::BinaryMapping(const Substitution &sub) {
+    auto power = static_cast<size_t>(std::log2(sub.power()));
+    table truth_table(power);
+    for (const auto &v: sub.get_vector()) {
+        auto v_binary = decimal_to_binary(v, power);
+        for (size_t i = 0; i < v_binary.size(); i++) {
+            truth_table[i].push_back(v_binary[i] == '1');
+        }
+    }
+    cf_.reserve(truth_table.size());
+    for (const auto &bf: truth_table) {
+        cf_.emplace_back(bf);
+    }
 }
 
 BinaryMapping &BinaryMapping::operator=(const BinaryMapping &mp) {
@@ -227,8 +238,14 @@ BinaryMapping &BinaryMapping::operator=(const BinaryMapping &mp) {
     return *this;
 }
 
-//BinaryMapping &BinaryMapping::operator=(const Substitution &sub) {
-//}
+BinaryMapping &BinaryMapping::operator=(const Substitution &sub) {
+    BinaryMapping mp(sub);
+    if (this->operator!=(mp)) {
+        cf_.clear();
+        cf_ = mp.cf_;
+    }
+    return *this;
+}
 
 bool BinaryMapping::operator==(const BinaryMapping &mp) const {
     if (this->get_inputs_number() != mp.get_inputs_number() || this->get_outputs_number() != mp.get_outputs_number()) {
@@ -354,33 +371,85 @@ std::ostream &operator<<(std::ostream &out, const BinaryMapping &mp) noexcept {
 
 // Substitution
 
-//Substitution::Substitution(const cf_set &cf) {
-//    if (this->get_inputs_number() != this->get_outputs_number()) {
-//        throw std::runtime_error{"This mapping is not substitution"};
-//    }
-//    auto truth_table = this->to_table_();
-//    auto power = static_cast<size_t>(std::pow(2, this->get_inputs_number()));
-//    sub_ = std::vector<size_t>(power);
-//    binary_vector indicator(power, false);
-//    std::string line;
-//    size_t value = 0;
-//    for (size_t i = 0; i < truth_table.front().size(); i++) {
-//        for (auto &j: truth_table) {
-//            line += (j[i] ? '1' : '0');
-//        }
-//        value = binary_to_decimal(line);
-//        if (indicator[value]) {
-//            throw std::runtime_error{"This mapping is not substitution"};
-//        }
-//        indicator[value] = true;
-//        sub_[i] = value;
-//        line.clear();
-//    }
-//}
+bool is_substitution(const std::vector<size_t> &vec) {
+    if (vec.empty()) {
+        return false;
+    }
+    std::unordered_set<size_t> checked;
+    for (auto v: vec) {
+        if (v >= vec.size() || checked.count(v)) {
+            return false;
+        }
+        checked.insert(v);
+    }
+    return checked.size() == vec.size();
+}
 
-//Substitution::Substitution(const table &t) {
-//
-//}
+Substitution::Substitution(const cf_set &cf) {
+    if (cf.empty()) {
+        throw std::runtime_error{"Empty coordinate function set"};
+    }
+
+    auto bf_dim = cf.front().dim();
+    auto bf_size = cf.front().size();
+
+    if (!std::all_of(cf.begin(), cf.end(),
+                     [bf_dim](const auto &v) {
+                         return v.dim() == bf_dim;
+                     })) {
+        throw std::runtime_error{"All coordinate functions should have equal length"};
+    }
+    if (bf_dim != cf.size()) {
+        throw std::runtime_error{"Length of the coordinate functions must be equal to 2 to the power of their number"};
+    }
+    table truth_table(bf_dim);
+    std::transform(cf.begin(), cf.end(), truth_table.begin(),
+                   [](const auto &bf) {
+                       return bf.get_vector();
+                   });
+    sub_ = std::vector<size_t>(bf_size);
+    for (size_t i = 0; i < bf_size; i++) {
+        std::string line;
+        for (const auto &v: truth_table) {
+            line += v[i] ? '1' : '0';
+        }
+        sub_[i] = binary_to_decimal(line);
+    }
+    if (!is_substitution(sub_)) {
+        sub_.clear();
+        throw std::runtime_error{"Invalid substitution"};
+    }
+}
+
+Substitution::Substitution(const table &t) {
+    if (t.empty()) {
+        throw std::runtime_error{"Empty truth table"};
+    }
+
+    auto col_size = t.front().size();
+
+    if (!std::all_of(t.begin(), t.end(),
+                     [col_size](const auto &col) {
+                         return col.size() == col_size;
+                     })) {
+        throw std::runtime_error{"All truth table columns should have equal length"};
+    }
+    if (static_cast<size_t>(std::log2(col_size)) != t.size()) {
+        throw std::runtime_error{"Length of the truth table columns must be equal to 2 to the power of their number"};
+    }
+    sub_ = std::vector<size_t>(col_size);
+    for (size_t i = 0; i < col_size; i++) {
+        std::string line;
+        for (const auto &v: t) {
+            line += v[i] ? '1' : '0';
+        }
+        sub_.push_back(binary_to_decimal(line));
+    }
+    if (!is_substitution(sub_)) {
+        sub_.clear();
+        throw std::runtime_error{"Invalid substitution"};
+    }
+}
 
 Substitution::Substitution(const std::string &s) {
     by_string_(s);
@@ -392,16 +461,46 @@ Substitution::Substitution(std::istream &s) {
     by_string_(ss.str());
 }
 
-//Substitution::Substitution(const Substitution &sub) {
-//
-//}
+Substitution::Substitution(const Substitution &sub) {
+    sub_ = sub.sub_;
+}
 
-//Substitution &Substitution::operator=(const Substitution &sub) {
-//}
+Substitution::Substitution(const BinaryMapping &mp) {
+    sub_ = Substitution(mp.get_coordinate_functions()).sub_;
+}
 
-//Substitution &Substitution::operator=(const BinaryMapping &) {
-//
-//}
+Substitution &Substitution::operator=(const Substitution &sub) {
+    if (this->operator!=(sub)) {
+        sub_.clear();
+        sub_ = sub.sub_;
+    }
+    return *this;
+}
+
+Substitution &Substitution::operator=(const BinaryMapping &mp) {
+    Substitution sub(mp);
+    if (this->operator!=(sub)) {
+        sub_.clear();
+        sub_ = sub.sub_;
+    }
+    return *this;
+}
+
+bool Substitution::operator==(const Substitution &sub) const {
+    if (this->power() != sub.power()) {
+        return false;
+    }
+    for (size_t i = 0; i < sub_.size(); i++) {
+        if (sub_[i] != sub.sub_[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Substitution::operator!=(const Substitution &sub) const {
+    return !this->operator==(sub);
+}
 
 size_t Substitution::power() const noexcept {
     return sub_.size();
@@ -411,8 +510,46 @@ std::vector<size_t> Substitution::get_vector() const noexcept {
     return sub_;
 }
 
+std::vector<std::pair<size_t, size_t>> Substitution::get_transpositions() const noexcept {
+    std::vector<std::pair<size_t, size_t>> transpositions;
+    for (const auto& cycle : this->get_cycles()) {
+        if (cycle.size() == 1) {
+            continue;
+        }
+        for (size_t i = 0; i < cycle.size() - 1; i++) {
+            transpositions.emplace_back(cycle[i], cycle[i + 1]);
+        }
+    }
+    return transpositions;
+}
+
+std::vector<std::vector<size_t>> Substitution::get_cycles() const noexcept {
+    std::unordered_set<size_t> visited;
+    std::vector<std::vector<size_t>> cycles;
+
+    for (size_t i = 0; i < sub_.size(); i++) {
+        if (visited.count(i)) {
+            continue;
+        }
+
+        std::vector<size_t> cycle;
+        auto element = i;
+        while (!visited.count(element)) {
+            visited.insert(element);
+            cycle.push_back(element);
+            element = sub_[element];
+        }
+        cycles.push_back(cycle);
+    }
+    return cycles;
+}
+
 bool Substitution::is_odd() const noexcept {
-    return true;
+    int indicator = 1;  // is not odd
+    for (const auto &cycle: this->get_cycles()) {
+        indicator *= std::pow(-1, cycle.size() - 1);
+    }
+    return indicator == -1;
 }
 
 void Substitution::by_string_(const std::string &s) {
@@ -423,40 +560,23 @@ void Substitution::by_string_(const std::string &s) {
     std::string line;
     std::string value;
 
-//    std::map<size_t, bool> substitution;
-    std::vector<size_t> substitution;
-
     while (getline(ss, line, '\n')) {
         if (line.empty() || line.front() == '#') {
             continue;
         }
         std::stringstream line_ss(line);
         while (line_ss >> value) {
-            int value_int = 0;
-            try {
-                value_int = std::stoi(value);
-            } catch (const std::invalid_argument &e) {
-                try {
-                    value_int = std::stoi(value, nullptr, 16);
-                } catch (const std::invalid_argument &e1) {
-                    throw std::runtime_error{std::string("Invalid value: ") + value};
-                }
+            size_t value_int = 0;
+            if (!try_string_to_decimal(value, value_int)) {
+                throw std::runtime_error{std::string("Invalid value: ") + value};
             }
-            if (std::find(substitution.begin(), substitution.end(), value_int) != substitution.end()) {
-                throw std::runtime_error{std::string("Duplicated value: ") + value};
-            }
-            substitution.push_back(value_int);
+            sub_.push_back(value_int);
         }
     }
-    if (!is_power_of_2(substitution.size())) {
-        throw std::runtime_error{"Substitution length should be power of 2"};
+    if (!is_substitution(sub_)) {
+        sub_.clear();
+        throw std::runtime_error{"Invalid substitution"};
     }
-    for (size_t i = 0; i < substitution.size(); i++) {
-        if (std::find(substitution.begin(), substitution.end(), i) == substitution.end()) {
-            throw std::runtime_error{std::string("In substitution skipped value: ") + std::to_string(i)};
-        }
-    }
-    sub_ = substitution;
 }
 
 std::ostream &operator<<(std::ostream &out, const Substitution &sub) noexcept {

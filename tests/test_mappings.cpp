@@ -3,6 +3,16 @@
 #include "primitives.hpp"
 
 TEST(BinaryMappings, Constructor) {
+    EXPECT_THROW(BinaryMapping(cf_set({})), std::runtime_error);
+    EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("0"), BooleanFunction("1")})), std::runtime_error);
+    EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("1001"),
+                                       BooleanFunction("10")})),
+                 std::runtime_error);
+    EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("01"),
+                                       BooleanFunction("10"),
+                                       BooleanFunction("0")})),
+                 std::runtime_error);
+
     EXPECT_THROW(BinaryMapping(table({})), std::runtime_error);
     EXPECT_THROW(BinaryMapping(table({{}})), std::runtime_error);
     EXPECT_THROW(BinaryMapping(table({{1},
@@ -20,17 +30,11 @@ TEST(BinaryMappings, Constructor) {
                                       {1, 0, 1},
                                       {1, 0, 0}})), std::runtime_error);
 
-    EXPECT_THROW(BinaryMapping(cf_set({})), std::runtime_error);
-    EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("0"), BooleanFunction("1")})), std::runtime_error);
-    EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("1001"), BooleanFunction("10")})),
-                 std::runtime_error);
-    EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("01"), BooleanFunction("10"), BooleanFunction("0")})),
-                 std::runtime_error);
-
     EXPECT_THROW(BinaryMapping(""), std::runtime_error);
     EXPECT_THROW(BinaryMapping("001\n110\n1 0"), std::runtime_error);
     EXPECT_THROW(BinaryMapping("001\n110\n101\n01"), std::runtime_error);
     EXPECT_THROW(BinaryMapping("001\n110\n121\n011"), std::runtime_error);
+    EXPECT_THROW(BinaryMapping("#001\n110\n101\n011"), std::runtime_error);
 
     EXPECT_NO_THROW(BinaryMapping("001\n110\n\n101\n011"));
     EXPECT_NO_THROW(BinaryMapping("0 0 1\n1 1 0\n1 0 1\n0 0 0"));
@@ -85,7 +89,7 @@ TEST(BinaryMappings, Constructor) {
     EXPECT_EQ(vec4[2], BooleanFunction("01"));
 }
 
-TEST(BinaryMappings, Size) {
+TEST(BinaryMappings, Methods) {
     auto bm = BinaryMapping(table({
                                           {1, 1, 0, 1},
                                           {0, 0, 1, 0},
@@ -155,8 +159,20 @@ TEST(BinaryMapping, Stream) {
                                 "101110001110\n");
     EXPECT_EQ(bm1.to_table(), "0\t010010011110\n"
                               "1\t101110001110\n");
+
+    std::ifstream file("../tests/assets/map.txt", std::ios::in);
+    BinaryMapping bm2(file);
+    EXPECT_EQ(bm2.to_table(), "00\t011\n"
+                              "01\t110\n"
+                              "10\t000\n"
+                              "11\t100\n");
 }
 
 TEST(BinaryMapping, Substitutions) {
+    Substitution sub("3 0 2 1");
+    BinaryMapping bm(sub);
+    EXPECT_EQ(bm, BinaryMapping(cf_set({BooleanFunction("1010"), BooleanFunction("1001")})));
 
+    BinaryMapping bm1 = sub;
+    EXPECT_EQ(bm1, BinaryMapping(cf_set({BooleanFunction("1010"), BooleanFunction("1001")})));
 }
