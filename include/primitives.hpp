@@ -2,142 +2,153 @@
 #define QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP
 
 #include <algorithm>
-#include <cmath>
+#include <fstream>
 #include <iostream>
+#include <iterator>
+#include <map>
 #include <vector>
+#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <numeric>
 
-template<class T = size_t>
-bool is_power_of_2(T v) {
-    return v && !(v & (v - 1));
-}
+#include "math.hpp"
 
-template<class T = size_t>
-std::string decimal_to_binary(T v, size_t l = 0) {
-    std::string result;
-    while (v) {
-        result += (v % 2 ? '1' : '0');
-        v /= 2;
-    }
-    if (l && l > result.size()) {
-        result += std::string(l - result.size(), '0');
-    }
-    std::reverse(result.begin(), result.end());
-    return result;
-}
+using binary_vector = std::vector<bool>;
+using table = std::vector<binary_vector>;
 
 class BooleanFunction {
 public:
-    explicit BooleanFunction(const std::vector<bool> &v) {
-        if (!is_power_of_2(v.size())) {
-            throw std::runtime_error{"Invalid length"};
-        }
-        v_ = v;
-    }
+    explicit BooleanFunction(const binary_vector &);
 
-    explicit BooleanFunction(const std::vector<int> &v) {
-        if (!is_power_of_2(v.size())) {
-            throw std::runtime_error{"Invalid length"};
-        }
-        for (auto i: v) {
-            if (i == 1) {
-                v_.push_back(true);
-            } else if (!i) {
-                v_.push_back(false);
-            } else {
-                throw std::runtime_error{"Unexpected value"};
-            }
-        }
-    }
+    explicit BooleanFunction(const std::vector<int> &);
 
-    explicit BooleanFunction(const std::string &s) {
-        if (!is_power_of_2(s.size())) {
-            throw std::runtime_error{"Invalid length"};
-        }
-        for (auto i: s) {
-            if (i == '1') {
-                v_.push_back(true);
-            } else if (i == '0') {
-                v_.push_back(false);
-            } else {
-                throw std::runtime_error{"Unexpected value"};
-            }
-        }
-    }
+    explicit BooleanFunction(const std::string &);
 
-    BooleanFunction(const BooleanFunction &bf) {
-        v_ = bf.v_;
-    }
+    BooleanFunction(const BooleanFunction &);
 
-    ~BooleanFunction() {
-        v_.clear();
-    }
+    BooleanFunction &operator=(const BooleanFunction &);
 
-    BooleanFunction &operator=(const BooleanFunction &bf) {
-        if (this->operator!=(bf)) {
-            v_.clear();
-            v_ = bf.v_;
-        }
-        return *this;
-    }
+    bool operator==(const BooleanFunction &) const;
 
-    bool operator==(const BooleanFunction &bf) const {
-        if (this->size() != bf.size()) {
-            return false;
-        }
-        for (size_t i = 0; i < this->size(); i++) {
-            if (v_[i] != bf.v_[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
+    bool operator!=(const BooleanFunction &) const;
 
-    bool operator!=(const BooleanFunction &bf) const {
-        return !this->operator==(bf);
-    }
+    BooleanFunction &operator+=(const BooleanFunction &);
 
-    size_t size() const noexcept {
-        return v_.size();
-    }
+    size_t size() const noexcept;
 
-    size_t dim() const noexcept {
-        return lround(log2(this->size()));
-    }
+    size_t dim() const noexcept;
 
-    size_t weight() const noexcept {
-        return std::accumulate(v_.begin(), v_.end(), 0);
-    }
+    size_t weight() const noexcept;
 
-    bool is_balanced() const noexcept {
-        return this->weight() * 2 == this->size();
-    }
+    bool is_balanced() const noexcept;
 
-    std::string to_table(char sep = '\t') const noexcept {
-        std::string out;
-        std::string set;
-        for (size_t i = 0; i < this->size(); i++) {
-            out += decimal_to_binary(i, this->dim()) + sep + (v_[i] ? '1' : '0') + '\n';
-        }
-        return out;
-    }
+    binary_vector get_vector() const noexcept;
+
+    std::string to_table(char = '\t') const noexcept;
 
     friend std::ostream &operator<<(std::ostream &, const BooleanFunction &) noexcept;
 
 private:
-    std::vector<bool> v_;
+    binary_vector vec_;
 };
 
-std::ostream &operator<<(std::ostream &out, const BooleanFunction &bf) noexcept {
-    for (auto v: bf.v_) {
-        out << (v ? '1' : '0');
-    }
-    return out;
-}
+BooleanFunction operator+(const BooleanFunction &, const BooleanFunction &);
+
+using cf_set = std::vector<BooleanFunction>;
+
+class Substitution;
+
+class BinaryMapping {
+public:
+    explicit BinaryMapping(const cf_set &);
+
+    explicit BinaryMapping(const table &);
+
+    explicit BinaryMapping(const std::string &);
+
+    explicit BinaryMapping(std::istream &);
+
+    BinaryMapping(const BinaryMapping &sub);
+
+    BinaryMapping(const Substitution &);
+
+    BinaryMapping &operator=(const BinaryMapping &);
+
+    BinaryMapping &operator=(const Substitution &);
+
+    bool operator==(const BinaryMapping &) const;
+
+    bool operator!=(const BinaryMapping &) const;
+
+    cf_set get_coordinate_functions() const noexcept;
+
+    bool is_substitution() const noexcept;
+
+    size_t get_inputs_number() const noexcept;
+
+    size_t get_outputs_number() const noexcept;
+
+    std::string to_table(char = '\t') const noexcept;
+
+    friend std::ostream &operator<<(std::ostream &, const BinaryMapping &) noexcept;
+
+private:
+    cf_set cf_;
+
+    table to_table_() const noexcept;
+
+    void by_string_(const std::string &);
+};
+
+bool is_substitution(const std::map<size_t, size_t> &);
 
 class Substitution {
+public:
+    explicit Substitution(const cf_set &);
+
+    explicit Substitution(const table &);
+
+    explicit Substitution(const std::string &);
+
+    explicit Substitution(std::istream &);
+
+    Substitution(const Substitution &);
+
+    Substitution(const BinaryMapping &);
+
+    Substitution &operator=(const Substitution &);
+
+    Substitution &operator=(const BinaryMapping &);
+
+    bool operator==(const Substitution &) const;
+
+    bool operator!=(const Substitution &) const;
+
+    size_t power() const noexcept;
+
+    std::vector<size_t> get_vector() const noexcept;
+
+    std::vector<std::pair<size_t, size_t>> get_transpositions() const noexcept;
+
+    std::vector<std::vector<size_t>> get_cycles() const noexcept;
+
+    bool is_odd() const noexcept;
+
+    friend std::ostream &operator<<(std::ostream &, const Substitution &) noexcept;
+
+private:
+    std::vector<size_t> sub_;
+
+    void by_string_(const std::string &);
 };
+
+//bool is_substitution(const substitution &);
+
+//substitution table_to_substitution(const binary_substitution &);
+
+//binary_substitution substitution_to_table(const substitution &);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP
