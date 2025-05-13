@@ -20,6 +20,8 @@ public:
 
     void act(std::vector<BooleanFunction> &) const noexcept;
 
+    bool operator==(const Gate&);
+
     friend std::ostream &operator<<(std::ostream &, const Gate &) noexcept;
 
 private:

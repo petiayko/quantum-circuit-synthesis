@@ -30,21 +30,27 @@ Gate::Gate(const std::string &s, size_t dim) {
     auto gate_params = s_copy.substr(0, close_bracket_pos);
     trim(gate_params);
     s_copy = s_copy.substr(close_bracket_pos + 1);
+
     if (!s_copy.empty()) {
         throw std::runtime_error{"Invalid string"};
     }
+
     auto semicolumn_pos = gate_params.find(';');
+    std::string nests_line;
+    std::string controls_line;
+    if (semicolumn_pos != std::string::npos) {
+        nests_line = gate_params.substr(0, semicolumn_pos);
+        controls_line = gate_params.substr(semicolumn_pos + 1);
+    } else {
+        nests_line = gate_params;
+    }
 
     int type = -1;
-    std::unordered_set<size_t> nests;
-    std::unordered_set<size_t> controls;
+//    std::unordered_set<size_t> nests;
+//    std::unordered_set<size_t> controls;
     if (gate_name == "not") {
         type = NOT;
         if (semicolumn_pos != std::string::npos) {
-            throw std::runtime_error{"Invalid NOT gate format"};
-        }
-        size_t nest_line;
-        if (!try_string_to_decimal(gate_params, nest_line)) {
             throw std::runtime_error{"Invalid NOT gate format"};
         }
     } else if (gate_name == "cnot") {
@@ -52,23 +58,40 @@ Gate::Gate(const std::string &s, size_t dim) {
         if (semicolumn_pos == std::string::npos) {
             throw std::runtime_error{"Invalid CNOT gate format"};
         }
-        auto nests_s = gate_params.substr(0, semicolumn_pos);
-        gate_params = gate_params.substr(semicolumn_pos + 1);
-        auto controls_s = gate_params;
     } else if (gate_name == "kcnot") {
         type = kCNOT;
+        if (semicolumn_pos == std::string::npos) {
+            throw std::runtime_error{"Invalid kCNOT gate format"};
+        }
     } else if (gate_name == "swap") {
         type = SWAP;
+        if (semicolumn_pos != std::string::npos) {
+            throw std::runtime_error{"Invalid SWAP gate format"};
+        }
     } else if (gate_name == "cswap") {
         type = CSWAP;
+        if (semicolumn_pos == std::string::npos) {
+            throw std::runtime_error{"Invalid CSWAP gate format"};
+        }
     } else {
         throw std::runtime_error{"Unknown gate type: " + gate_name};
     }
 
-    init_(type, nests, controls, dim);
+    auto nests = string_to_num_vector(nests_line, ',');
+    auto controls = string_to_num_vector(controls_line, ',');
+    init_(type, {nests.begin(), nests.end()}, {controls.begin(), controls.end()}, dim);
 }
 
-void Gate::init_(int type, const std::unordered_set<size_t> &nests, const std::unordered_set<size_t> &controls, size_t dim) {
+//void Gate::act(std::vector<BooleanFunction> &vec) const noexcept {
+//
+//}
+
+bool Gate::operator==(const Gate &g) {
+    return (type_ == g.type_ && dim_ && g.dim_ && nests_ == g.nests_ && controls_ == g.controls_);
+}
+
+void Gate::init_(int type, const std::unordered_set<size_t> &nests,
+                 const std::unordered_set<size_t> &controls, size_t dim) {
     for (auto num: nests) {
         if (num > dim - 1) {
             throw std::runtime_error{std::string("Invalid nest line: ") + std::to_string(num)};

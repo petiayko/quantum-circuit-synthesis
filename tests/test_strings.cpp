@@ -15,6 +15,28 @@ bool operator==(const std::vector<T> &a, const std::vector<T> &b) {
     return true;
 }
 
+TEST(Strings, Trim) {
+    std::string s = "";
+    trim(s);
+    EXPECT_EQ(s, "");
+
+    s = " ";
+    trim(s);
+    EXPECT_EQ(s, "");
+
+    s = "\t\n    \t";
+    trim(s);
+    EXPECT_EQ(s, "");
+
+    s = "\t text \t\nword";
+    trim(s);
+    EXPECT_EQ(s, "text \t\nword");
+
+    s = "\t text \t\nword             \n\n        \t\t";
+    trim(s);
+    EXPECT_EQ(s, "text \t\nword");
+}
+
 TEST(Strings, StrictStoi) {
     EXPECT_THROW(strict_stoi("4,"), std::runtime_error);
     EXPECT_THROW(strict_stoi("4."), std::runtime_error);

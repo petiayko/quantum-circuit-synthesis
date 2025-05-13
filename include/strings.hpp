@@ -5,6 +5,15 @@
 #include <string>
 #include <vector>
 
+inline void trim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char ch) {
+        return !std::isspace(ch);
+    }));
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
+
 template<typename T = size_t>
 inline T strict_stoi(const std::string &s, int base = 10) {
     if (s.empty()) {
@@ -56,15 +65,6 @@ inline bool try_string_to_decimal(const std::string &s, T &num) {
             return false;
         }
     }
-}
-
-inline void trim(std::string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char ch) {
-        return !std::isspace(ch);
-    }));
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }).base(), s.end());
 }
 
 template<typename T = size_t>
