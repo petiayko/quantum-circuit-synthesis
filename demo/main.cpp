@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 
+#include "gates.hpp"
 #include "primitives.hpp"
 
 using configuration = std::map<std::string, std::string>;
@@ -163,14 +164,15 @@ int main(int argc, char *argv[]) {
 //    let this function validate input
 
     std::cout << input << " " << type << " " << output << " " << log << " " << algo << std::endl;
-    std::ifstream file(input, std::ios::in);
-    if (type == "tt") {
-        BinaryMapping map(file);
-        std::cout << map << std::endl;
-    } else if (type == "sub") {
-        Substitution s(file);
-        std::cout << s << std::endl;
-    }
-    file.close();
+//    std::ifstream file(input, std::ios::in);
+//    if (type == "tt") {
+//        BinaryMapping map(file);
+//        std::cout << map << std::endl;
+//    } else if (type == "sub") {
+//        Substitution s(file);
+//        std::cout << s << std::endl;
+//    }
+//    file.close();
+    auto g = Gate("\t NOT(l     , 5)       ", 6);
     return 0;
 }

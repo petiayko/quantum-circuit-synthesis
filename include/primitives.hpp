@@ -15,12 +15,19 @@
 #include <numeric>
 
 #include "math.hpp"
+#include "strings.hpp"
 
 using binary_vector = std::vector<bool>;
 using table = std::vector<binary_vector>;
 
 class BooleanFunction {
 public:
+    explicit BooleanFunction() = default;
+
+    explicit BooleanFunction(size_t, size_t);
+
+    explicit BooleanFunction(bool, size_t);
+
     explicit BooleanFunction(const binary_vector &);
 
     explicit BooleanFunction(const std::vector<int> &);
@@ -36,6 +43,12 @@ public:
     bool operator!=(const BooleanFunction &) const;
 
     BooleanFunction &operator+=(const BooleanFunction &);
+
+    BooleanFunction &operator*=(const BooleanFunction &);
+
+    BooleanFunction &operator|=(const BooleanFunction &);
+
+    BooleanFunction &operator~() noexcept;
 
     size_t size() const noexcept;
 
@@ -56,6 +69,10 @@ private:
 };
 
 BooleanFunction operator+(const BooleanFunction &, const BooleanFunction &);
+
+BooleanFunction operator*(const BooleanFunction &, const BooleanFunction &);
+
+BooleanFunction operator|(const BooleanFunction &, const BooleanFunction &);
 
 using cf_set = std::vector<BooleanFunction>;
 

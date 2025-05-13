@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "primitives.hpp"
+#include "math.hpp"
 
-TEST(Primitives, IsPowerOf2) {
+TEST(Math, IsPowerOf2) {
     EXPECT_TRUE(is_power_of_2(1));
     EXPECT_TRUE(is_power_of_2(2));
     EXPECT_TRUE(is_power_of_2(4));
@@ -19,7 +19,7 @@ TEST(Primitives, IsPowerOf2) {
 }
 
 
-TEST(Primitives, DecimalToBinary) {
+TEST(Math, DecimalToBinary) {
     EXPECT_EQ(decimal_to_binary(0), "0");
     EXPECT_EQ(decimal_to_binary(1), "1");
     EXPECT_EQ(decimal_to_binary(2), "10");
@@ -39,7 +39,7 @@ TEST(Primitives, DecimalToBinary) {
     EXPECT_EQ(decimal_to_binary<int>(14251525), "110110010111011000000101");
 }
 
-TEST(Primitives, BinaryToDecimal) {
+TEST(Math, BinaryToDecimal) {
     EXPECT_THROW(binary_to_decimal("0010 1101"), std::runtime_error);
     EXPECT_THROW(binary_to_decimal("12"), std::runtime_error);
     EXPECT_THROW(binary_to_decimal("0010.1101"), std::runtime_error);

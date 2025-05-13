@@ -131,12 +131,14 @@ TEST(Substitutions, Stream) {
     std::stringstream out_stream;
 
     out_stream << s;
-    EXPECT_EQ(out_stream.str(), "0 0\n1 2\n2 3\n3 4\n4 5\n5 1\n6 7\n7 6\n8 8\n9 9\n10 12\n11 11\n12 10\n");
+    EXPECT_EQ(out_stream.str(), "0 2 3 4 5 1 7 6 8 9 12 11 10 \n");
+    EXPECT_NO_THROW(Substitution(out_stream.str()));
 
     out_stream.str("");
     s = Substitution("0");
     out_stream << s;
-    EXPECT_EQ(out_stream.str(), "0 0\n");
+    EXPECT_EQ(out_stream.str(), "0 \n");
+    EXPECT_NO_THROW(Substitution(out_stream.str()));
 }
 
 TEST(Substitutions, BinaryMappings) {
