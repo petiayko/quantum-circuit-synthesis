@@ -23,6 +23,7 @@ jobs:
           - os: windows-latest
             c_compiler: gcc
             cpp_compiler: g++
+            toolchain: msvc
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
@@ -35,6 +36,10 @@ jobs:
         shell: bash
         run: |
           echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+      - name: Setup MSVC
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure CMake
         run: >
