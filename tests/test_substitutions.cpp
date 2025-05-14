@@ -131,13 +131,13 @@ TEST(Substitutions, Stream) {
     std::stringstream out_stream;
 
     out_stream << s;
-    EXPECT_EQ(out_stream.str(), "0 2 3 4 5 1 7 6 8 9 12 11 10 \n");
+    EXPECT_EQ(out_stream.str(), "0 2 3 4 5 1 7 6 8 9 12 11 10 ");
     EXPECT_NO_THROW(Substitution(out_stream.str()));
 
     out_stream.str("");
     s = Substitution("0");
     out_stream << s;
-    EXPECT_EQ(out_stream.str(), "0 \n");
+    EXPECT_EQ(out_stream.str(), "0 ");
     EXPECT_NO_THROW(Substitution(out_stream.str()));
 }
 

@@ -174,8 +174,8 @@ BooleanFunction &BooleanFunction::operator|=(const BooleanFunction &bf) {
 }
 
 BooleanFunction &BooleanFunction::operator~() noexcept {
-    for (size_t i = 0; i < vec_.size(); i++) {
-        vec_[i] = !vec_[i];
+    for (auto && bit : vec_) {
+        bit = !bit;
     }
     return *this;
 }
@@ -652,6 +652,5 @@ std::ostream &operator<<(std::ostream &out, const Substitution &sub) noexcept {
     for (size_t i = 0; i < sub.power(); i++) {
         out << sub.sub_[i] << ' ';
     }
-    out << '\n';
     return out;
 }

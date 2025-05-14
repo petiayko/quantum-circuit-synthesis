@@ -44,6 +44,7 @@ if (BUILD_TESTS)
             tests/test_mappings.cpp
             tests/test_substitutions.cpp
             tests/test_gates.cpp
+            tests/test_circuits.cpp
 
             tests/test_math.cpp
             tests/test_strings.cpp

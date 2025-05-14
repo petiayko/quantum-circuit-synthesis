@@ -93,3 +93,11 @@ TEST(Gates, ConstructorString) {
     EXPECT_TRUE(Gate("  \t   cSWAP(0,1;2)", 5) == Gate(CSWAP, {0, 1}, {2}, 5));
     EXPECT_TRUE(Gate("  \t   CswaP  ( 2   ,3 \t   ;\t\t  4  )             ", 5) == Gate(CSWAP, {2, 3}, {4}, 5));
 }
+
+TEST(Gates, Act) {
+
+}
+
+TEST(Gates, Stream) {
+
+}

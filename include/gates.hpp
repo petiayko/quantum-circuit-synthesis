@@ -18,15 +18,17 @@ public:
 
     explicit Gate(const std::string &, size_t);
 
-    void act(std::vector<BooleanFunction> &) const noexcept;
+    size_t dim() const noexcept;
 
-    bool operator==(const Gate&);
+    void act(std::vector<BooleanFunction> &) const;
+
+    bool operator==(const Gate &);
 
     friend std::ostream &operator<<(std::ostream &, const Gate &) noexcept;
 
 private:
-    int type_;
-    size_t dim_;
+    int type_{};
+    size_t dim_{};
     std::unordered_set<size_t> nests_;
     std::unordered_set<size_t> controls_;
 
@@ -36,17 +38,26 @@ private:
 
 class Circuit {
 public:
-    explicit Circuit();
+    explicit Circuit(size_t);
+
+    explicit Circuit(const Substitution&, int);
+
+    explicit Circuit(const BinaryMapping&, int);
 
     explicit Circuit(const std::string &);
 
     explicit Circuit(std::istream &);
+
+    size_t dim() const noexcept;
+
+//    void act() const;
 
     void add(const Gate &);
 
     friend std::ostream &operator<<(std::ostream &, const Circuit &) noexcept;
 
 private:
+    size_t dim_{};
     std::vector<Gate> gates_;
 };
 

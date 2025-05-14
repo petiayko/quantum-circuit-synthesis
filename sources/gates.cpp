@@ -82,7 +82,12 @@ Gate::Gate(const std::string &s, size_t dim) {
     init_(type, {nests.begin(), nests.end()}, {controls.begin(), controls.end()}, dim);
 }
 
-//void Gate::act(std::vector<BooleanFunction> &vec) const noexcept {
+size_t Gate::dim() const noexcept {
+    return dim_;
+}
+
+
+//void Gate::act(std::vector<BooleanFunction> &vec) const {
 //
 //}
 
@@ -101,7 +106,7 @@ void Gate::init_(int type, const std::unordered_set<size_t> &nests,
         if (num > dim - 1) {
             throw std::runtime_error{std::string("Invalid control line: ") + std::to_string(num)};
         }
-        if (std::find(nests.begin(), nests.end(), num) != nests.end()) {
+        if (nests.find(num) != nests.end()) {
             throw std::runtime_error{std::string("Line selected as nest and control: ") + std::to_string(num)};
         }
     }
@@ -154,4 +159,63 @@ void Gate::init_(int type, const std::unordered_set<size_t> &nests,
     dim_ = dim;
     nests_ = nests;
     controls_ = controls;
+}
+
+std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
+    std::string gate_name;
+    switch (g.type_) {
+        case NOT:
+            gate_name = "NOT";
+            break;
+        case CNOT:
+            gate_name = "CNOT";
+            break;
+        case kCNOT:
+            gate_name = "kCNOT";
+            break;
+        case SWAP:
+            gate_name = "SWAP";
+            break;
+        case CSWAP:
+            gate_name = "CSWAP";
+            break;
+    }
+    std::string gate_params;
+    for (auto p: g.nests_) {
+        gate_params += std::to_string(p) + ", ";
+    }
+    gate_params = gate_params.substr(0, gate_params.size() - 2);
+    if (!g.controls_.empty()) {
+        gate_params += "; ";
+        for (auto p: g.controls_) {
+            gate_params += std::to_string(p) + ", ";
+        }
+        gate_params = gate_params.substr(0, gate_params.size() - 2);
+    }
+    return out << gate_name << '(' << gate_params << ')';
+}
+
+// Circuit
+
+Circuit::Circuit(size_t lines_num) {
+    dim_ = lines_num;
+}
+
+size_t Circuit::dim() const noexcept {
+    return dim_;
+}
+
+void Circuit::add(const Gate &g) {
+    if (g.dim() != dim_) {
+        throw std::runtime_error{"Circuit and gate should have equal dimensions"};
+    }
+    gates_.push_back(g);
+}
+
+std::ostream &operator<<(std::ostream &out, const Circuit &c) noexcept {
+    out << "Lines: " << c.dim_ << '\n';
+    for (const auto &g: c.gates_) {
+        out << g << '\n';
+    }
+    return out;
 }
