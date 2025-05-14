@@ -89,8 +89,12 @@ TEST(BooleanFunction, Operators) {
     EXPECT_EQ(BooleanFunction("00110011") * BooleanFunction("11001100"), BooleanFunction("00000000"));
     EXPECT_EQ(BooleanFunction("0011") | BooleanFunction("1101"), BooleanFunction("1111"));
     EXPECT_EQ(BooleanFunction("1101") | BooleanFunction("0011"), BooleanFunction("1111"));
-    EXPECT_EQ(BooleanFunction("11001100") | BooleanFunction("00110011"), BooleanFunction("11111111"));
-    EXPECT_EQ(BooleanFunction("00110011") | BooleanFunction("11001100"), BooleanFunction("11111111"));
+    EXPECT_EQ(BooleanFunction("10000100") | BooleanFunction("11001001"), BooleanFunction("11001101"));
+    EXPECT_EQ(BooleanFunction("11001001") | BooleanFunction("10000100"), BooleanFunction("11001101"));
+    EXPECT_EQ(~BooleanFunction("1101"), BooleanFunction("0010"));
+    EXPECT_EQ(~BooleanFunction("10000100"), BooleanFunction("01111011"));
+    EXPECT_EQ((BooleanFunction("0100") + BooleanFunction("1101") * ~BooleanFunction("1100")) | BooleanFunction("1000"),
+              BooleanFunction("1101"));
 
     BooleanFunction bf1("11000010");
     BooleanFunction bf2("01010100");
@@ -110,10 +114,8 @@ TEST(BooleanFunction, Operators) {
     bf6 |= bf5;
     EXPECT_EQ(bf6, BooleanFunction("11110110"));
 
-    EXPECT_EQ(~BooleanFunction("11011010"), BooleanFunction("00100101"));
-
-    EXPECT_EQ((BooleanFunction("0100") + BooleanFunction("1101") * ~BooleanFunction("1100")) | BooleanFunction("1000"),
-              BooleanFunction("1101"));
+    EXPECT_EQ(~bf6, BooleanFunction("00001001"));
+    EXPECT_EQ(~bf6, BooleanFunction("11110110"));
 }
 
 TEST(BooleanFunction, Stream) {

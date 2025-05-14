@@ -6,13 +6,12 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <numeric>
 #include <vector>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
-#include <numeric>
 
 #include "math.hpp"
 #include "strings.hpp"

@@ -148,7 +148,7 @@ BooleanFunction &BooleanFunction::operator+=(const BooleanFunction &bf) {
         throw std::runtime_error{"Boolean functions must to be the same dimensions"};
     }
     for (size_t i = 0; i < vec_.size(); i++) {
-        vec_[i] = vec_[i] ^ bf.vec_[i];
+        vec_[i] = vec_[i] != bf.vec_[i];
     }
     return *this;
 }

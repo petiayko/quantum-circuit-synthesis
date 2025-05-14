@@ -1,8 +1,6 @@
 #ifndef QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 #define QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 
-#include <string>
-
 #include "primitives.hpp"
 #include "strings.hpp"
 
@@ -14,11 +12,13 @@ static const int CSWAP = 4;
 
 class Gate {
 public:
-    explicit Gate(int, const std::unordered_set<size_t> &, const std::unordered_set<size_t> &, size_t);
+    explicit Gate(int, const std::vector<size_t> &, const std::vector<size_t> &, size_t);
 
     explicit Gate(const std::string &, size_t);
 
     size_t dim() const noexcept;
+
+    void act(std::vector<bool> &) const;
 
     void act(std::vector<BooleanFunction> &) const;
 
@@ -29,10 +29,10 @@ public:
 private:
     int type_{};
     size_t dim_{};
-    std::unordered_set<size_t> nests_;
-    std::unordered_set<size_t> controls_;
+    std::vector<size_t> nests_;
+    std::vector<size_t> controls_;
 
-    void init_(int, const std::unordered_set<size_t> &, const std::unordered_set<size_t> &, size_t);
+    void init_(int, const std::vector<size_t> &, const std::vector<size_t> &, size_t);
 };
 
 
@@ -40,9 +40,9 @@ class Circuit {
 public:
     explicit Circuit(size_t);
 
-    explicit Circuit(const Substitution&, int);
+    explicit Circuit(const Substitution &, int);
 
-    explicit Circuit(const BinaryMapping&, int);
+    explicit Circuit(const BinaryMapping &, int);
 
     explicit Circuit(const std::string &);
 

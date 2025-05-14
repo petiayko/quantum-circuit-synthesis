@@ -1,6 +1,6 @@
 #include "gates.hpp"
 
-Gate::Gate(int type, const std::unordered_set<size_t> &nests, const std::unordered_set<size_t> &controls, size_t dim) {
+Gate::Gate(int type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
     init_(type, nests, controls, dim);
 }
 
@@ -77,36 +77,92 @@ Gate::Gate(const std::string &s, size_t dim) {
         throw std::runtime_error{"Unknown gate type: " + gate_name};
     }
 
-    auto nests = string_to_num_vector(nests_line, ',');
-    auto controls = string_to_num_vector(controls_line, ',');
-    init_(type, {nests.begin(), nests.end()}, {controls.begin(), controls.end()}, dim);
+    init_(type, string_to_num_vector(nests_line, ','), string_to_num_vector(controls_line, ','), dim);
 }
 
 size_t Gate::dim() const noexcept {
     return dim_;
 }
 
+void Gate::act(std::vector<bool> &vec) const {
+    if (vec.size() != dim_) {
+        throw std::runtime_error{"Vector should have length equals to the Gate dimension"};
+    }
+    if (type_ == NOT) {
+        vec[nests_.front()] = !vec[nests_.front()];
+    } else if (type_ == CNOT) {
+        vec[nests_.front()] = vec[nests_.front()] != vec[controls_.front()];
+    } else if (type_ == kCNOT) {
+        bool control_signal = true;
+        for (auto num: controls_) {
+            control_signal = control_signal && vec[num];
+        }
+        vec[nests_.front()] = vec[nests_.front()] != control_signal;
+    } else if (type_ == SWAP) {
+        swap(vec[nests_.front()], vec[nests_.back()]);
+    } else if (type_ == CSWAP) {
+        if (vec[controls_.front()]) {
+            swap(vec[nests_.front()], vec[nests_.back()]);
+        }
+    }
+}
 
-//void Gate::act(std::vector<BooleanFunction> &vec) const {
-//
-//}
+void Gate::act(std::vector<BooleanFunction> &vec) const {
+    if (vec.size() != dim_) {
+        throw std::runtime_error{"Vector should have length equals to the Gate dimension"};
+    }
+    if (!std::all_of(vec.begin(), vec.end(),
+                     [bf_size = std::pow(2, dim_)](const auto &v) {
+                         return v.size() == bf_size;
+                     })) {
+        throw std::runtime_error{"All boolean functions should have the same dimensions as Gate"};
+    }
+
+    if (type_ == NOT) {
+        vec[nests_.front()] = ~vec[nests_.front()];
+    } else if (type_ == CNOT) {
+        vec[nests_.front()] += vec[controls_.front()];
+    } else if (type_ == kCNOT) {
+        BooleanFunction control_signal(true, dim_);
+        for (auto num: controls_) {
+            control_signal *= vec[num];
+        }
+        vec[nests_.front()] += control_signal;
+    } else if (type_ == SWAP) {
+        BooleanFunction temp = vec[nests_.front()];
+        vec[nests_.front()] = vec[nests_.back()];
+        vec[nests_.back()] = temp;
+    } else if (type_ == CSWAP) {
+        BooleanFunction front_bf = (vec[controls_.front()] + BooleanFunction(true, dim_)) * vec[nests_.front()] |
+                                   vec[controls_.front()] * vec[nests_.back()];
+        BooleanFunction back_bf = vec[controls_.front()] * vec[nests_.front()] |
+                                  (vec[controls_.front()] + BooleanFunction(true, dim_)) * vec[nests_.back()];
+        vec[nests_.front()] = front_bf;
+        vec[nests_.back()] = back_bf;
+    }
+}
 
 bool Gate::operator==(const Gate &g) {
     return (type_ == g.type_ && dim_ && g.dim_ && nests_ == g.nests_ && controls_ == g.controls_);
 }
 
-void Gate::init_(int type, const std::unordered_set<size_t> &nests,
-                 const std::unordered_set<size_t> &controls, size_t dim) {
+void Gate::init_(int type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
     for (auto num: nests) {
         if (num > dim - 1) {
             throw std::runtime_error{std::string("Invalid nest line: ") + std::to_string(num)};
+        }
+        if (std::count(nests.begin(), nests.end(), num) != 1) {
+            throw std::runtime_error{std::string("Nest line selected more the once: ") + std::to_string(num)};
         }
     }
     for (auto num: controls) {
         if (num > dim - 1) {
             throw std::runtime_error{std::string("Invalid control line: ") + std::to_string(num)};
         }
-        if (nests.find(num) != nests.end()) {
+        if (std::count(controls.begin(), controls.end(), num) != 1) {
+            throw std::runtime_error{std::string("Nest line selected more the once: ") + std::to_string(num)};
+        }
+        if (std::find(nests.begin(), nests.end(), num) != nests.end()) {
             throw std::runtime_error{std::string("Line selected as nest and control: ") + std::to_string(num)};
         }
     }
@@ -120,6 +176,9 @@ void Gate::init_(int type, const std::unordered_set<size_t> &nests,
             }
             break;
         case CNOT:
+            if (dim < 2) {
+                throw std::runtime_error{"Gate CNOT should have dimension equals at least 2"};
+            }
             if (nests.size() != 1) {
                 throw std::runtime_error{"Gate CNOT should have an only nest line"};
             }
@@ -128,6 +187,9 @@ void Gate::init_(int type, const std::unordered_set<size_t> &nests,
             }
             break;
         case kCNOT:
+            if (dim < 2) {
+                throw std::runtime_error{"Gate kCNOT should have dimension equals at least 2"};
+            }
             if (nests.size() != 1) {
                 throw std::runtime_error{"Gate kCNOT should have an only nest line"};
             }
@@ -136,6 +198,9 @@ void Gate::init_(int type, const std::unordered_set<size_t> &nests,
             }
             break;
         case SWAP:
+            if (dim < 2) {
+                throw std::runtime_error{"Gate SWAP should have dimension equals at least 2"};
+            }
             if (nests.size() != 2) {
                 throw std::runtime_error{"Gate SWAP should have two nest line"};
             }
@@ -144,6 +209,9 @@ void Gate::init_(int type, const std::unordered_set<size_t> &nests,
             }
             break;
         case CSWAP:
+            if (dim < 3) {
+                throw std::runtime_error{"Gate CSWAP should have dimension equals at least 3"};
+            }
             if (nests.size() != 2) {
                 throw std::runtime_error{"Gate CSWAP should have two nest line"};
             }
