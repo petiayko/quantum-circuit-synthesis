@@ -10,9 +10,7 @@ Gate::Gate(const std::string &s, size_t dim) {
         throw std::runtime_error{"Empty string"};
     }
     std::string s_copy(s);
-    std::transform(s_copy.begin(), s_copy.end(), s_copy.begin(), [](char ch) {
-        return std::tolower(ch);
-    });
+    to_lower(s_copy);
     trim(s_copy);
 
     auto open_bracket_pos = s_copy.find('(');
@@ -291,6 +289,23 @@ size_t Circuit::dim() const noexcept {
     return dim_;
 }
 
+std::vector<bool> Circuit::act(const std::vector<bool> &vec) const {
+    if (vec.size() != dim_) {
+        throw std::runtime_error{"Vector length should be equal to Circuit dimension"};
+    }
+    std::vector<bool> vec_result(vec);
+    for (const auto &g: gates_) {
+        g.act(vec_result);
+    }
+    return vec_result;
+}
+
+void Circuit::act(std::vector<BooleanFunction> &vec) const {
+    for (const auto &g: gates_) {
+        g.act(vec);
+    }
+}
+
 void Circuit::add(const Gate &g) {
     if (g.dim() != dim_) {
         throw std::runtime_error{"Circuit and gate should have equal dimensions"};
@@ -323,9 +338,7 @@ void Circuit::by_string_(const std::string &s) {
             line.clear();
             continue;
         }
-        std::transform(line.begin(), line.end(), line.begin(), [](char ch) {
-            return std::tolower(ch);
-        });
+        to_lower(line);
         auto lines_word_pos = line.find("lines:");
         if (lines_word_pos == std::string::npos) {
             throw std::runtime_error{"Invalid string"};

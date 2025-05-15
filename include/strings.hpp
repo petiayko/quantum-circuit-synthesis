@@ -88,4 +88,10 @@ inline std::vector<T> string_to_num_vector(const std::string &s, char sep = ' ')
     return result;
 }
 
+inline void to_lower(std::string &s) {
+    std::transform(s.begin(), s.end(), s.begin(), [](char ch) {
+        return std::tolower(ch);
+    });
+}
+
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_STRINGS_HPP

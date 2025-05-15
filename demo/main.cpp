@@ -2,10 +2,8 @@
 #include <iostream>
 #include <map>
 #include <string>
-#include <fstream>
 
-#include "gates.hpp"
-#include "primitives.hpp"
+#include "computings.hpp"
 
 using configuration = std::map<std::string, std::string>;
 
@@ -134,6 +132,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     auto input = it->second;
+    trim(input);
 
     it = config.find("--type");
     if (it == config.end()) {
@@ -141,35 +140,30 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     auto type = it->second;
+    trim(type);
+    to_lower(type);
 
     it = config.find("--algo");
     std::string algo;
     if (it != config.end()) {
         algo = it->second;
     }
+    trim(algo);
 
     it = config.find("--output");
     std::string output;
     if (it != config.end()) {
         output = it->second;
     }
+    trim(output);
 
     it = config.find("--log");
     std::string log;
     if (it != config.end()) {
         log = it->second;
     }
+    trim(log);
 
-//    let this function validate input
-//    process_config(type, algo, input, output, log);
-
-    std::cout << input << " " << type << " " << output << " " << log << " " << algo << std::endl;
-
-    Circuit c("lines: 2\n"
-              "NOT(1)\n"
-              "CNOT(0;1)\n");
-
-    std::cout << c << std::endl;
-
+    process_config(type, algo, input, output, log);
     return 0;
 }

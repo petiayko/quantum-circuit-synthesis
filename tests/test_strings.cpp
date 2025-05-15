@@ -95,3 +95,21 @@ TEST(Strings, StringToVector) {
     EXPECT_EQ(string_to_num_vector<int>("\t      \t 5 \t 0x2 4       A"), std::vector<int>({5, 2, 4, 10}));
     EXPECT_EQ(string_to_num_vector<int>("\t      \t 5; \t 0x2; 4    ;   A", ';'), std::vector<int>({5, 2, 4, 10}));
 }
+
+TEST(Strings, ToLower) {
+    std::string s;
+    to_lower(s);
+    EXPECT_EQ(s, "");
+
+    s = "text";
+    to_lower(s);
+    EXPECT_EQ(s, "text");
+
+    s = "TExt";
+    to_lower(s);
+    EXPECT_EQ(s, "text");
+
+    s = "1245.,;";
+    to_lower(s);
+    EXPECT_EQ(s, "1245.,;");
+}

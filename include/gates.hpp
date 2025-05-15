@@ -40,7 +40,7 @@ class Circuit {
 public:
     explicit Circuit(size_t);
 
-    explicit Circuit(const std::vector<Gate>&);
+    explicit Circuit(const std::vector<Gate> &);
 
 //    explicit Circuit(const Substitution &, int);
 //
@@ -52,9 +52,9 @@ public:
 
     size_t dim() const noexcept;
 
-    void act(std::vector<bool> &) const;
+    std::vector<bool> act(const std::vector<bool> &) const;
 
-    void act() const;
+    void act(std::vector<BooleanFunction>&) const;
 
     void add(const Gate &);
 
