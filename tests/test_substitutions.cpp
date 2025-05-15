@@ -139,6 +139,10 @@ TEST(Substitutions, Stream) {
     out_stream << s;
     EXPECT_EQ(out_stream.str(), "0 ");
     EXPECT_NO_THROW(Substitution(out_stream.str()));
+
+    std::ifstream file("../tests/assets/sub.txt", std::ios::in);
+    s = Substitution(file);
+    EXPECT_EQ(s, Substitution("11 0 1 2 5 14 4 10 3 15 6 7 13 8 12 9"));
 }
 
 TEST(Substitutions, BinaryMappings) {

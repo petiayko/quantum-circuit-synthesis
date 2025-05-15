@@ -1,0 +1,14 @@
+# comment
+# text
+
+
+
+
+
+
+   LinEs:        0x4
+
+NOT(1              )
+# text
+        CsWAp       (       3  , 1        ; 0)
+   Kcnot(0;       1   ,2 ,  3)

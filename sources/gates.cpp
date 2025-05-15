@@ -46,8 +46,6 @@ Gate::Gate(const std::string &s, size_t dim) {
     }
 
     int type = -1;
-//    std::unordered_set<size_t> nests;
-//    std::unordered_set<size_t> controls;
     if (gate_name == "not") {
         type = NOT;
         if (semicolumn_pos != std::string::npos) {
@@ -142,7 +140,7 @@ void Gate::act(std::vector<BooleanFunction> &vec) const {
     }
 }
 
-bool Gate::operator==(const Gate &g) {
+bool Gate::operator==(const Gate &g) const {
     return (type_ == g.type_ && dim_ && g.dim_ && nests_ == g.nests_ && controls_ == g.controls_);
 }
 
@@ -269,6 +267,26 @@ Circuit::Circuit(size_t lines_num) {
     dim_ = lines_num;
 }
 
+Circuit::Circuit(const std::vector<Gate> &vec) {
+    if (vec.empty()) {
+        return;
+    }
+    dim_ = vec.front().dim();
+    for (const auto &g: vec) {
+        this->add(g);
+    }
+}
+
+Circuit::Circuit(const std::string &s) {
+    by_string_(s);
+}
+
+Circuit::Circuit(std::istream &s) {
+    std::stringstream ss;
+    ss << s.rdbuf();
+    by_string_(ss.str());
+}
+
 size_t Circuit::dim() const noexcept {
     return dim_;
 }
@@ -280,10 +298,55 @@ void Circuit::add(const Gate &g) {
     gates_.push_back(g);
 }
 
+bool Circuit::operator==(const Circuit &c) const {
+    return (dim_ == c.dim_ && gates_ == c.gates_);
+}
+
 std::ostream &operator<<(std::ostream &out, const Circuit &c) noexcept {
     out << "Lines: " << c.dim_ << '\n';
     for (const auto &g: c.gates_) {
         out << g << '\n';
     }
     return out;
+}
+
+void Circuit::by_string_(const std::string &s) {
+    if (s.empty()) {
+        throw std::runtime_error{"Empty string"};
+    }
+    std::stringstream ss(s);
+    std::string line;
+
+    while (getline(ss, line, '\n')) {
+        trim(line);
+        if (line.empty() || line.front() == '#') {
+            line.clear();
+            continue;
+        }
+        std::transform(line.begin(), line.end(), line.begin(), [](char ch) {
+            return std::tolower(ch);
+        });
+        auto lines_word_pos = line.find("lines:");
+        if (lines_word_pos == std::string::npos) {
+            throw std::runtime_error{"Invalid string"};
+        }
+        line = line.substr(lines_word_pos + 6);
+        if (!try_string_to_decimal(line, dim_)) {
+            throw std::runtime_error{std::string("Invalid lines number: ") + line};
+        }
+        if (!dim_) {
+            throw std::runtime_error{"Invalid number of lines"};
+        }
+        break;
+    }
+    if (line.empty()) {
+        throw std::runtime_error{"Invalid string"};
+    }
+
+    while (getline(ss, line, '\n')) {
+        if (line.empty() || line.front() == '#') {
+            continue;
+        }
+        gates_.emplace_back(line, dim_);
+    }
 }

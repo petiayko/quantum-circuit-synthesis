@@ -164,5 +164,12 @@ int main(int argc, char *argv[]) {
 //    process_config(type, algo, input, output, log);
 
     std::cout << input << " " << type << " " << output << " " << log << " " << algo << std::endl;
+
+    Circuit c("lines: 2\n"
+              "NOT(1)\n"
+              "CNOT(0;1)\n");
+
+    std::cout << c << std::endl;
+
     return 0;
 }
