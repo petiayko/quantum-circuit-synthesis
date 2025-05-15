@@ -52,7 +52,7 @@ public:
 
     size_t dim() const noexcept;
 
-    std::vector<bool> act(const std::vector<bool> &) const;
+    void act(std::vector<bool> &) const;
 
     void act(std::vector<BooleanFunction>&) const;
 

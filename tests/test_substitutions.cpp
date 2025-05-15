@@ -2,30 +2,6 @@
 
 #include "primitives.hpp"
 
-bool operator==(const std::vector<size_t> &a, const std::vector<size_t> &b) {
-    if (a.size() != b.size()) {
-        return false;
-    }
-    for (size_t i = 0; i < a.size(); i++) {
-        if (a[i] != b[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool operator==(const std::vector<std::pair<size_t, size_t>> &a, const std::vector<std::pair<size_t, size_t>> &b) {
-    if (a.size() != b.size()) {
-        return false;
-    }
-    for (size_t i = 0; i < a.size(); i++) {
-        if (a[i].first != b[i].first || a[i].second != b[i].second) {
-            return false;
-        }
-    }
-    return true;
-}
-
 TEST(Substitutions, Constructor) {
     EXPECT_THROW(Substitution(cf_set({})), std::runtime_error);
     EXPECT_THROW(Substitution(cf_set({BooleanFunction("0"), BooleanFunction("1")})), std::runtime_error);

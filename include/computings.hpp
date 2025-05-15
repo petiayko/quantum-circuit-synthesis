@@ -10,8 +10,8 @@ void process_config(const std::string &type, const std::string &algo, const std:
         throw std::runtime_error{"Path to input file was not provided"};
     }
     std::ifstream file(input_path, std::ios::in);
-    if (!file.good()) {
-        throw std::runtime_error{std::string("File not exist: " + input_path)};
+    if (!file) {
+        throw std::runtime_error{std::string("Unable to open input file: " + input_path)};
     }
 
     if (type == "tt") {
@@ -25,8 +25,9 @@ void process_config(const std::string &type, const std::string &algo, const std:
         file.close();
 
         std::vector<BooleanFunction> vec_bf;
+        vec_bf.reserve(c.dim());
         for (size_t i = 0; i < c.dim(); i++) {
-            vec_bf.push_back(BooleanFunction(i, c.dim()));
+            vec_bf.emplace_back(i, c.dim());
         }
         c.act(vec_bf);
 

@@ -289,18 +289,25 @@ size_t Circuit::dim() const noexcept {
     return dim_;
 }
 
-std::vector<bool> Circuit::act(const std::vector<bool> &vec) const {
+void Circuit::act(std::vector<bool> &vec) const {
     if (vec.size() != dim_) {
         throw std::runtime_error{"Vector length should be equal to Circuit dimension"};
     }
-    std::vector<bool> vec_result(vec);
     for (const auto &g: gates_) {
-        g.act(vec_result);
+        g.act(vec);
     }
-    return vec_result;
 }
 
 void Circuit::act(std::vector<BooleanFunction> &vec) const {
+    if (vec.size() != dim_) {
+        throw std::runtime_error{"Vector should have length equals to the Circuit dimension"};
+    }
+    if (!std::all_of(vec.begin(), vec.end(),
+                     [bf_size = std::pow(2, dim_)](const auto &v) {
+                         return v.size() == bf_size;
+                     })) {
+        throw std::runtime_error{"All boolean functions should have the same dimensions as Circuit"};
+    }
     for (const auto &g: gates_) {
         g.act(vec);
     }
@@ -344,12 +351,14 @@ void Circuit::by_string_(const std::string &s) {
             throw std::runtime_error{"Invalid string"};
         }
         line = line.substr(lines_word_pos + 6);
-        if (!try_string_to_decimal(line, dim_)) {
+        int dim = 0;
+        if (!try_string_to_decimal(line, dim)) {
             throw std::runtime_error{std::string("Invalid lines number: ") + line};
         }
-        if (!dim_) {
+        if (dim < 1) {
             throw std::runtime_error{"Invalid number of lines"};
         }
+        dim_ = dim;
         break;
     }
     if (line.empty()) {
