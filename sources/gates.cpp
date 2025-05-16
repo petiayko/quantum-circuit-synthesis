@@ -275,6 +275,21 @@ Circuit::Circuit(const std::vector<Gate> &vec) {
     }
 }
 
+Circuit::Circuit(const Substitution &sub) {
+    if (!is_power_of_2(sub.power())) {
+        throw std::runtime_error{"Power of substitution should be power of 2"};
+    }
+    [[maybe_unused]] BinaryMapping bm(sub);
+}
+
+Circuit::Circuit(const BinaryMapping &bm) {
+    try {
+        Substitution sub(bm);
+    } catch (const std::exception &e) {
+        throw std::runtime_error{std::string("Unable to convert binary mapping to substitution: ") + e.what()};
+    }
+}
+
 Circuit::Circuit(const std::string &s) {
     by_string_(s);
 }

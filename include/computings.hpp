@@ -4,27 +4,37 @@
 #include "gates.hpp"
 #include "logger.hpp"
 
+bool overwrite_confirmation() {
+    std::cout << "Output file is already exists. Do you want to overwrite it [y/n]? ";
+    std::string answer;
+    std::cin >> answer;
+    return (answer == "y" || answer == "Y");
+}
+
 template<typename T>
 void write_result(const std::string &output_path, const T &result) {
-    // @TODO if file exists ask user to overwrite it else create it
     if (output_path.empty()) {
         std::cout << result;
         std::cout << std::endl;
         return;
     }
     std::ofstream file(output_path, std::ios::out);
-    if (!file.is_open()) {
-        LOG_ERROR("Application parameters",
-                  std::string("Unable to open output file: ") + output_path + std::string(" - write to cout"));
-        std::cout << result << std::endl;
-        throw std::runtime_error{std::string("Unable to open input file: ") + output_path};
+    if (file.is_open()) {
+        LOG_WARNING("Writing result", "Output file already exists");
+        if (!overwrite_confirmation()) {
+            LOG_WARNING("Writing result", "Will be write to cout");
+            std::cout << result << std::endl;
+            return;
+        } else {
+            LOG_WARNING("Writing result", "File will be overwritten");
+            file << result;
+            file.close();
+            return;
+        }
     }
-    file << result;
-    file.close();
 }
 
-void process_config(const std::string &type, const std::string &algo, const std::string &input_path,
-                    const std::string &output_path) {
+void process_config(const std::string &type, const std::string &algo, const std::string &input_path, const std::string &output_path) {
     if (input_path.empty()) {
         LOG_ERROR("Application parameters", "Path to input file was not provided");
         throw std::runtime_error{"Path to input file was not provided"};
@@ -39,6 +49,10 @@ void process_config(const std::string &type, const std::string &algo, const std:
     file.close();
 
     if (type == "qc") {
+        if (!algo.empty()) {
+            LOG_ERROR("Application parameters", "Algo was provided for reverse mode");
+            throw std::runtime_error{"Algo was provided for reverse mode"};
+        }
         LOG_INFO("Starting converting of quantum circuit into substitution", "");
         Circuit c(file_content);
 
@@ -55,7 +69,19 @@ void process_config(const std::string &type, const std::string &algo, const std:
         return;
     }
 
-    std::cout << algo << std::endl;
+    if (algo.empty()) {
+        LOG_ERROR("Application parameters", "Synthesis algorithm was not provided");
+        throw std::runtime_error{"Synthesis algorithm was not provided"};
+    }
+    if (algo == "1") {
+
+    } else if (algo == "2") {
+
+    } else {
+        LOG_ERROR("Application parameters", std::string("Unknown synthesis algorithm: ") + algo);
+        throw std::runtime_error{std::string("Unknown synthesis algorithm: ") + algo};
+    }
+
     if (type == "tt") {
         BinaryMapping bm(file_content);
     } else if (type == "sub") {

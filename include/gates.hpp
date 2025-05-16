@@ -46,9 +46,9 @@ public:
 
     explicit Circuit(const std::vector<Gate> &);
 
-    explicit Circuit(const Substitution &, int);
+    explicit Circuit(const Substitution &);
 
-    explicit Circuit(const BinaryMapping &, int);
+    explicit Circuit(const BinaryMapping &);
 
     explicit Circuit(const std::string &);
 

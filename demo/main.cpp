@@ -31,12 +31,12 @@ void print_program_help() {
     std::cout << std::endl;
 
     std::cout << "Operating modes:" << std::endl;
-    std::cout << "  --type arg      type of input ('tt' truth table, 'sub' substitution, 'qs' quantum scheme)"
+    std::cout << "  --type arg      type of input ('tt' truth table, 'sub' substitution, 'qc' quantum circuit)"
               << std::endl;
     std::cout << std::endl;
 
     std::cout << "Synthesis options:" << std::endl;
-    std::cout << "  --algo arg      algorithm to synthesis quantum scheme ('1', '2', '3')" << std::endl;
+    std::cout << "  --algo arg      algorithm to synthesis quantum circuit ('1', '2')" << std::endl;
     std::cout << std::endl;
 
     std::cout << "Parameters:" << std::endl;
