@@ -4,6 +4,8 @@
 #include "primitives.hpp"
 #include "strings.hpp"
 
+#define GateType(type) static_cast<GateType>(type)
+
 enum class GateType {
     NOT = 0,
     CNOT = 1,

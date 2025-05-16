@@ -3,8 +3,9 @@
 #include "gates.hpp"
 
 TEST(Gates, Constructor) {
-    EXPECT_THROW(Gate(static_cast<GateType>(-1), {}, {}, 2), std::runtime_error);
-    EXPECT_THROW(Gate(static_cast<GateType>(5), {}, {}, 2), std::runtime_error);
+    EXPECT_THROW(Gate(GateType(-1), {}, {}, 2), std::runtime_error);
+    EXPECT_THROW(Gate(GateType(0), {}, {}, 2), std::runtime_error);
+    EXPECT_THROW(Gate(GateType(5), {}, {}, 2), std::runtime_error);
     EXPECT_THROW(Gate(GateType::NOT, {4}, {}, 1), std::runtime_error);
 
     // NOT
@@ -91,7 +92,8 @@ TEST(Gates, ConstructorString) {
     EXPECT_THROW(Gate("CSWAP(2,0;4,1)", 5), std::runtime_error);
     EXPECT_TRUE(Gate("cswap(2,1;0)", 5) == Gate(GateType::CSWAP, {2, 1}, {0}, 5));
     EXPECT_TRUE(Gate("  \t   cSWAP(0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {2}, 5));
-    EXPECT_TRUE(Gate("  \t   CswaP  ( 2   ,3 \t   ;\t\t  4  )             ", 5) == Gate(GateType::CSWAP, {2, 3}, {4}, 5));
+    EXPECT_TRUE(
+            Gate("  \t   CswaP  ( 2   ,3 \t   ;\t\t  4  )             ", 5) == Gate(GateType::CSWAP, {2, 3}, {4}, 5));
 }
 
 TEST(Gates, ActNOT) {

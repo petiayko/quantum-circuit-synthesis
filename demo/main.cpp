@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
     try {
         config = parse_arguments(argc, argv);
     } catch (const std::exception &e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        LOG_ERROR("Handling parameters", std::string("Error: ") + e.what());
         return 1;
     }
 
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
 
     it = config.find("--input");
     if (it == config.end()) {
-        std::cerr << "Path to input file was not provided" << std::endl;
+        LOG_ERROR("Handling parameters", "Path to input file was not provided");
         return 1;
     }
     auto input = it->second;
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
 
     it = config.find("--type");
     if (it == config.end()) {
-        std::cerr << "Type of input was not provided - impossible to define operating mode" << std::endl;
+        LOG_ERROR("Handling parameters", "Type of input was not provided");
         return 1;
     }
     auto type = it->second;
@@ -158,13 +158,35 @@ int main(int argc, char *argv[]) {
     trim(output);
 
     it = config.find("--log");
-    std::string log_level = "error";
+    std::string log_level_s = "error";
     if (it != config.end()) {
-        log_level = it->second;
+        log_level_s = it->second;
+        trim(log_level_s);
+        to_lower(log_level_s);
     }
-    trim(log_level);
-    to_lower(log_level);
+    LogLevel log_level;
+    if (log_level_s == "critical") {
+        log_level = LogLevel::CRITICAL;
+    } else if (log_level_s == "error") {
+        log_level = LogLevel::ERROR;
+    } else if (log_level_s == "warning") {
+        log_level = LogLevel::WARNING;
+    } else if (log_level_s == "info") {
+        log_level = LogLevel::INFO;
+    } else if (log_level_s == "debug") {
+        log_level = LogLevel::DEBUG;
+    } else {
+        LOG_ERROR("Handling parameters", "Wrong log level was provided");
+        return -1;
+    }
+    Logger::get_instance().set_level(log_level);
 
-    process_config(type, algo, input, output, log_level);
+    LOG_INFO("Starting", "");
+    try {
+        process_config(type, algo, input, output);
+    } catch (const std::exception &e) {
+        LOG_ERROR("Finishing", std::string("Error: ") + e.what());
+    }
+    LOG_INFO("Finishing", "");
     return 0;
 }
