@@ -1,6 +1,8 @@
 #ifndef QUANTUM_CIRCUIT_SYNTHESIS_COMPUTINGS_HPP
 #define QUANTUM_CIRCUIT_SYNTHESIS_COMPUTINGS_HPP
 
+#include <filesystem>
+
 #include "gates.hpp"
 #include "logger.hpp"
 
@@ -14,27 +16,32 @@ bool overwrite_confirmation() {
 template<typename T>
 void write_result(const std::string &output_path, const T &result) {
     if (output_path.empty()) {
-        std::cout << result;
-        std::cout << std::endl;
+        std::cout << result << std::endl;
         return;
     }
-    std::ofstream file(output_path, std::ios::out);
-    if (file.is_open()) {
+
+    if (std::filesystem::exists(output_path)) {
         LOG_WARNING("Writing result", "Output file already exists");
         if (!overwrite_confirmation()) {
-            LOG_WARNING("Writing result", "Will be write to cout");
+            LOG_WARNING("Writing result", "Will be written to cout");
             std::cout << result << std::endl;
             return;
         } else {
             LOG_WARNING("Writing result", "File will be overwritten");
-            file << result;
-            file.close();
-            return;
         }
     }
+
+    std::fstream file(output_path, std::ios::out);
+    if (!file) {
+        LOG_ERROR("Writing result", "Impossible to use this file");
+        throw std::runtime_error{"Impossible to use this file"};
+    }
+    file << result;
+    file.close();
 }
 
-void process_config(const std::string &type, const std::string &algo, const std::string &input_path, const std::string &output_path) {
+void process_config(const std::string &type, const std::string &algo, const std::string &input_path,
+                    const std::string &output_path) {
     if (input_path.empty()) {
         LOG_ERROR("Application parameters", "Path to input file was not provided");
         throw std::runtime_error{"Path to input file was not provided"};

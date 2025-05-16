@@ -27,7 +27,8 @@ void print_program_help() {
     std::cout << "Generic options:" << std::endl;
     std::cout << "  --version       print version std::string" << std::endl;
     std::cout << "  --help          produce help message" << std::endl;
-    std::cout << "  --log arg       minimum level of logging ('DEBUG', 'INFO', 'ERROR', 'CRITICAL')" << std::endl;
+    std::cout << "  --log arg       minimum level of logging ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')"
+              << std::endl;
     std::cout << std::endl;
 
     std::cout << "Operating modes:" << std::endl;
