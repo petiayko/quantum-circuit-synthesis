@@ -1,50 +1,5 @@
 #include "primitives.hpp"
 
-//substitution table_to_substitution(const binary_substitution &t) {
-//    auto power = t.size();
-//    if (!is_power_of_2(power)) {
-//        throw std::runtime_error{""};
-//    }
-//    for (auto const &vec: t) {
-//        if (power != vec.size()) {
-//            throw std::runtime_error{""};
-//        }
-//    }
-//
-//    substitution result;
-//    std::string binary_element;
-//    for (size_t i = 0; i < power; i++) {
-//        for (size_t j = 0; j < static_cast<size_t>(std::log2(power)); j++) {
-//            binary_element += (t[i][j] ? '1' : '0');
-//        }
-//        result.push_back(binary_to_decimal<size_t>(binary_element));
-//        binary_element.clear();
-//    }
-//    return result;
-//}
-
-//binary_substitution substitution_to_table(const substitution &sub) {
-//    auto power = sub.size();
-//    if (!is_power_of_2(power)) {
-//        throw std::runtime_error{"Incorrect power of substitution. Should be power of 2"};
-//    }
-//    if (!is_substitution(sub)) {
-//        throw std::runtime_error{"Incorrect substitution"};
-//    }
-//
-//    auto power_log = static_cast<size_t>(std::log2(power));
-//    binary_substitution result(power_log);
-//    std::string binary_element;
-//    for (auto element: sub) {
-//        binary_element = decimal_to_binary(element, power_log);
-//        for (size_t i = 0; i < power_log; i++) {
-//            result[i].push_back(bool(int(binary_element[i])));
-//        }
-//    }
-//    return result;
-//}
-
-
 // Boolean function
 BooleanFunction::BooleanFunction(size_t n, size_t dim) {
     // create bf x_n in basis {x_0, x_1, ..., x_{n-1}}
@@ -174,7 +129,7 @@ BooleanFunction &BooleanFunction::operator|=(const BooleanFunction &bf) {
 }
 
 BooleanFunction &BooleanFunction::operator~() noexcept {
-    for (auto && bit : vec_) {
+    for (auto &&bit: vec_) {
         bit = !bit;
     }
     return *this;
@@ -334,22 +289,6 @@ bool BinaryMapping::operator!=(const BinaryMapping &mp) const {
 
 cf_set BinaryMapping::get_coordinate_functions() const noexcept {
     return cf_;
-}
-
-bool BinaryMapping::is_substitution() const noexcept {
-    if (this->get_inputs_number() != this->get_outputs_number()) {
-        return false;
-    }
-//    if (std::any_of(cf_.begin(), cf_.end(),
-//                    [&](const BooleanFunction &bf) {
-//                        return !bf.is_balanced();
-//                    })) {
-//        return false;
-//    }
-
-    // ...
-
-    return true;
 }
 
 size_t BinaryMapping::get_inputs_number() const noexcept {

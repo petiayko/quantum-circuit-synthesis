@@ -158,12 +158,13 @@ int main(int argc, char *argv[]) {
     trim(output);
 
     it = config.find("--log");
-    std::string log;
+    std::string log_level = "error";
     if (it != config.end()) {
-        log = it->second;
+        log_level = it->second;
     }
-    trim(log);
+    trim(log_level);
+    to_lower(log_level);
 
-    process_config(type, algo, input, output, log);
+    process_config(type, algo, input, output, log_level);
     return 0;
 }

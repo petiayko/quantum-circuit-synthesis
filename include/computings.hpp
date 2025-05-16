@@ -3,6 +3,10 @@
 
 #include "gates.hpp"
 
+//void TEMP_log(const std::string& s) {
+//    std::cout << s << std::endl;
+//}
+
 void process_config(const std::string &type, const std::string &algo, const std::string &input_path,
                     const std::string &output_path, const std::string &log_level) {
     std::cout << algo << ' ' << output_path << ' ' << log_level << std::endl;
