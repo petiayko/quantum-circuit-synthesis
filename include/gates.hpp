@@ -4,15 +4,17 @@
 #include "primitives.hpp"
 #include "strings.hpp"
 
-static const int NOT = 0;
-static const int CNOT = 1;
-static const int kCNOT = 2;
-static const int SWAP = 3;
-static const int CSWAP = 4;
+enum class GateType {
+    NOT = 0,
+    CNOT = 1,
+    kCNOT = 2,
+    SWAP = 3,
+    CSWAP = 4,
+};
 
 class Gate {
 public:
-    explicit Gate(int, const std::vector<size_t> &, const std::vector<size_t> &, size_t);
+    explicit Gate(GateType, const std::vector<size_t> &, const std::vector<size_t> &, size_t);
 
     explicit Gate(const std::string &, size_t);
 
@@ -27,12 +29,12 @@ public:
     friend std::ostream &operator<<(std::ostream &, const Gate &) noexcept;
 
 private:
-    int type_{};
+    GateType type_{};
     size_t dim_{};
     std::vector<size_t> nests_;
     std::vector<size_t> controls_;
 
-    void init_(int, const std::vector<size_t> &, const std::vector<size_t> &, size_t);
+    void init_(GateType, const std::vector<size_t> &, const std::vector<size_t> &, size_t);
 };
 
 
@@ -54,7 +56,7 @@ public:
 
     void act(std::vector<bool> &) const;
 
-    void act(std::vector<BooleanFunction>&) const;
+    void act(std::vector<BooleanFunction> &) const;
 
     void add(const Gate &);
 

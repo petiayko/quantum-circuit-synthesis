@@ -1,6 +1,6 @@
 #include "gates.hpp"
 
-Gate::Gate(int type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
+Gate::Gate(GateType type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
     init_(type, nests, controls, dim);
 }
 
@@ -43,29 +43,29 @@ Gate::Gate(const std::string &s, size_t dim) {
         nests_line = gate_params;
     }
 
-    int type = -1;
+    GateType type;
     if (gate_name == "not") {
-        type = NOT;
+        type = GateType::NOT;
         if (semicolumn_pos != std::string::npos) {
             throw std::runtime_error{"Invalid NOT gate format"};
         }
     } else if (gate_name == "cnot") {
-        type = CNOT;
+        type = GateType::CNOT;
         if (semicolumn_pos == std::string::npos) {
             throw std::runtime_error{"Invalid CNOT gate format"};
         }
     } else if (gate_name == "kcnot") {
-        type = kCNOT;
+        type = GateType::kCNOT;
         if (semicolumn_pos == std::string::npos) {
             throw std::runtime_error{"Invalid kCNOT gate format"};
         }
     } else if (gate_name == "swap") {
-        type = SWAP;
+        type = GateType::SWAP;
         if (semicolumn_pos != std::string::npos) {
             throw std::runtime_error{"Invalid SWAP gate format"};
         }
     } else if (gate_name == "cswap") {
-        type = CSWAP;
+        type = GateType::CSWAP;
         if (semicolumn_pos == std::string::npos) {
             throw std::runtime_error{"Invalid CSWAP gate format"};
         }
@@ -84,19 +84,19 @@ void Gate::act(std::vector<bool> &vec) const {
     if (vec.size() != dim_) {
         throw std::runtime_error{"Vector should have length equals to the Gate dimension"};
     }
-    if (type_ == NOT) {
+    if (type_ == GateType::NOT) {
         vec[nests_.front()] = !vec[nests_.front()];
-    } else if (type_ == CNOT) {
+    } else if (type_ == GateType::CNOT) {
         vec[nests_.front()] = vec[nests_.front()] != vec[controls_.front()];
-    } else if (type_ == kCNOT) {
+    } else if (type_ == GateType::kCNOT) {
         bool control_signal = true;
         for (auto num: controls_) {
             control_signal = control_signal && vec[num];
         }
         vec[nests_.front()] = vec[nests_.front()] != control_signal;
-    } else if (type_ == SWAP) {
+    } else if (type_ == GateType::SWAP) {
         swap(vec[nests_.front()], vec[nests_.back()]);
-    } else if (type_ == CSWAP) {
+    } else if (type_ == GateType::CSWAP) {
         if (vec[controls_.front()]) {
             swap(vec[nests_.front()], vec[nests_.back()]);
         }
@@ -114,21 +114,21 @@ void Gate::act(std::vector<BooleanFunction> &vec) const {
         throw std::runtime_error{"All boolean functions should have the same dimensions as Gate"};
     }
 
-    if (type_ == NOT) {
+    if (type_ == GateType::NOT) {
         vec[nests_.front()] = ~vec[nests_.front()];
-    } else if (type_ == CNOT) {
+    } else if (type_ == GateType::CNOT) {
         vec[nests_.front()] += vec[controls_.front()];
-    } else if (type_ == kCNOT) {
+    } else if (type_ == GateType::kCNOT) {
         BooleanFunction control_signal(true, dim_);
         for (auto num: controls_) {
             control_signal *= vec[num];
         }
         vec[nests_.front()] += control_signal;
-    } else if (type_ == SWAP) {
+    } else if (type_ == GateType::SWAP) {
         BooleanFunction temp = vec[nests_.front()];
         vec[nests_.front()] = vec[nests_.back()];
         vec[nests_.back()] = temp;
-    } else if (type_ == CSWAP) {
+    } else if (type_ == GateType::CSWAP) {
         BooleanFunction front_bf = (vec[controls_.front()] + BooleanFunction(true, dim_)) * vec[nests_.front()] |
                                    vec[controls_.front()] * vec[nests_.back()];
         BooleanFunction back_bf = vec[controls_.front()] * vec[nests_.front()] |
@@ -142,7 +142,7 @@ bool Gate::operator==(const Gate &g) const {
     return (type_ == g.type_ && dim_ && g.dim_ && nests_ == g.nests_ && controls_ == g.controls_);
 }
 
-void Gate::init_(int type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
+void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
     for (auto num: nests) {
         if (num > dim - 1) {
             throw std::runtime_error{std::string("Invalid nest line: ") + std::to_string(num)};
@@ -163,7 +163,7 @@ void Gate::init_(int type, const std::vector<size_t> &nests, const std::vector<s
         }
     }
     switch (type) {
-        case NOT:
+        case GateType::NOT:
             if (nests.size() != 1) {
                 throw std::runtime_error{"Gate NOT should have an only nest line"};
             }
@@ -171,7 +171,7 @@ void Gate::init_(int type, const std::vector<size_t> &nests, const std::vector<s
                 throw std::runtime_error{"Gate NOT should not have control lines"};
             }
             break;
-        case CNOT:
+        case GateType::CNOT:
             if (dim < 2) {
                 throw std::runtime_error{"Gate CNOT should have dimension equals at least 2"};
             }
@@ -182,7 +182,7 @@ void Gate::init_(int type, const std::vector<size_t> &nests, const std::vector<s
                 throw std::runtime_error{"Gate CNOT should have an only nest line"};
             }
             break;
-        case kCNOT:
+        case GateType::kCNOT:
             if (dim < 2) {
                 throw std::runtime_error{"Gate kCNOT should have dimension equals at least 2"};
             }
@@ -193,7 +193,7 @@ void Gate::init_(int type, const std::vector<size_t> &nests, const std::vector<s
                 throw std::runtime_error{"Gate kCNOT should have at least one nest line"};
             }
             break;
-        case SWAP:
+        case GateType::SWAP:
             if (dim < 2) {
                 throw std::runtime_error{"Gate SWAP should have dimension equals at least 2"};
             }
@@ -204,7 +204,7 @@ void Gate::init_(int type, const std::vector<size_t> &nests, const std::vector<s
                 throw std::runtime_error{"Gate SWAP should not have control lines"};
             }
             break;
-        case CSWAP:
+        case GateType::CSWAP:
             if (dim < 3) {
                 throw std::runtime_error{"Gate CSWAP should have dimension equals at least 3"};
             }
@@ -216,7 +216,7 @@ void Gate::init_(int type, const std::vector<size_t> &nests, const std::vector<s
             }
             break;
         default:
-            throw std::runtime_error{std::string("Unknown gate type: ") + std::to_string(type)};
+            throw std::runtime_error{std::string("Unknown gate type: ") + std::to_string(static_cast<int>(type))};
     }
 
     type_ = type;
@@ -228,19 +228,19 @@ void Gate::init_(int type, const std::vector<size_t> &nests, const std::vector<s
 std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
     std::string gate_name;
     switch (g.type_) {
-        case NOT:
+        case GateType::NOT:
             gate_name = "NOT";
             break;
-        case CNOT:
+        case GateType::CNOT:
             gate_name = "CNOT";
             break;
-        case kCNOT:
+        case GateType::kCNOT:
             gate_name = "kCNOT";
             break;
-        case SWAP:
+        case GateType::SWAP:
             gate_name = "SWAP";
             break;
-        case CSWAP:
+        case GateType::CSWAP:
             gate_name = "CSWAP";
             break;
     }
