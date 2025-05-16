@@ -2,30 +2,6 @@
 
 #include "primitives.hpp"
 
-bool operator==(const std::vector<size_t> &a, const std::vector<size_t> &b) {
-    if (a.size() != b.size()) {
-        return false;
-    }
-    for (size_t i = 0; i < a.size(); i++) {
-        if (a[i] != b[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool operator==(const std::vector<std::pair<size_t, size_t>> &a, const std::vector<std::pair<size_t, size_t>> &b) {
-    if (a.size() != b.size()) {
-        return false;
-    }
-    for (size_t i = 0; i < a.size(); i++) {
-        if (a[i].first != b[i].first || a[i].second != b[i].second) {
-            return false;
-        }
-    }
-    return true;
-}
-
 TEST(Substitutions, Constructor) {
     EXPECT_THROW(Substitution(cf_set({})), std::runtime_error);
     EXPECT_THROW(Substitution(cf_set({BooleanFunction("0"), BooleanFunction("1")})), std::runtime_error);
@@ -131,12 +107,18 @@ TEST(Substitutions, Stream) {
     std::stringstream out_stream;
 
     out_stream << s;
-    EXPECT_EQ(out_stream.str(), "0 0\n1 2\n2 3\n3 4\n4 5\n5 1\n6 7\n7 6\n8 8\n9 9\n10 12\n11 11\n12 10\n");
+    EXPECT_EQ(out_stream.str(), "0 2 3 4 5 1 7 6 8 9 12 11 10 ");
+    EXPECT_NO_THROW(Substitution(out_stream.str()));
 
     out_stream.str("");
     s = Substitution("0");
     out_stream << s;
-    EXPECT_EQ(out_stream.str(), "0 0\n");
+    EXPECT_EQ(out_stream.str(), "0 ");
+    EXPECT_NO_THROW(Substitution(out_stream.str()));
+
+    std::ifstream file("../tests/assets/sub.txt", std::ios::in);
+    s = Substitution(file);
+    EXPECT_EQ(s, Substitution("11 0 1 2 5 14 4 10 3 15 6 7 13 8 12 9"));
 }
 
 TEST(Substitutions, BinaryMappings) {

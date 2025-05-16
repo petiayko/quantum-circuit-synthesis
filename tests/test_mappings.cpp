@@ -159,6 +159,7 @@ TEST(BinaryMapping, Stream) {
                                 "101110001110\n");
     EXPECT_EQ(bm1.to_table(), "0\t010010011110\n"
                               "1\t101110001110\n");
+    EXPECT_NO_THROW(BinaryMapping(out_stream.str()));
 
     std::ifstream file("../tests/assets/map.txt", std::ios::in);
     BinaryMapping bm2(file);

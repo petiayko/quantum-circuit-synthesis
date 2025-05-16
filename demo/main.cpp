@@ -2,9 +2,8 @@
 #include <iostream>
 #include <map>
 #include <string>
-#include <fstream>
 
-#include "primitives.hpp"
+#include "computings.hpp"
 
 using configuration = std::map<std::string, std::string>;
 
@@ -133,6 +132,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     auto input = it->second;
+    trim(input);
 
     it = config.find("--type");
     if (it == config.end()) {
@@ -140,37 +140,31 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     auto type = it->second;
+    trim(type);
+    to_lower(type);
 
     it = config.find("--algo");
     std::string algo;
     if (it != config.end()) {
         algo = it->second;
     }
+    trim(algo);
 
     it = config.find("--output");
     std::string output;
     if (it != config.end()) {
         output = it->second;
     }
+    trim(output);
 
     it = config.find("--log");
-    std::string log;
+    std::string log_level = "error";
     if (it != config.end()) {
-        log = it->second;
+        log_level = it->second;
     }
+    trim(log_level);
+    to_lower(log_level);
 
-//    handle_config(type, algo, input, output, log);
-//    let this function validate input
-
-    std::cout << input << " " << type << " " << output << " " << log << " " << algo << std::endl;
-    std::ifstream file(input, std::ios::in);
-    if (type == "tt") {
-        BinaryMapping map(file);
-        std::cout << map << std::endl;
-    } else if (type == "sub") {
-        Substitution s(file);
-        std::cout << s << std::endl;
-    }
-    file.close();
+    process_config(type, algo, input, output, log_level);
     return 0;
 }
