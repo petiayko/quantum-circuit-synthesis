@@ -107,7 +107,7 @@ TEST(Circuits, Stream) {
                                 "kCNOT(2; 0, 1, 3)\n"
                                 "kCNOT(2; 0, 1, 3)\n");
 
-    std::ifstream file("../tests/assets/circuit.txt", std::ios::in);
+    std::ifstream file("../tests/assets/qc.txt", std::ios::in);
     Circuit c1(file);
     EXPECT_EQ(c1, Circuit(std::vector<Gate>{Gate("NOT(1)", 4), Gate("CSWAP(3,1;0)", 4), Gate("kCNOT(0;1,2,3)", 4)}));
 }
