@@ -4,14 +4,12 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <map>
 #include <numeric>
-#include <vector>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 #include "math.hpp"
 #include "strings.hpp"
@@ -87,7 +85,7 @@ public:
 
     explicit BinaryMapping(std::istream &);
 
-    BinaryMapping(const BinaryMapping &sub);
+    BinaryMapping(const BinaryMapping &);
 
     BinaryMapping(const Substitution &);
 
@@ -100,8 +98,6 @@ public:
     bool operator!=(const BinaryMapping &) const;
 
     cf_set get_coordinate_functions() const noexcept;
-
-    bool is_substitution() const noexcept;
 
     size_t get_inputs_number() const noexcept;
 
@@ -118,8 +114,6 @@ private:
 
     void by_string_(const std::string &);
 };
-
-bool is_substitution(const std::map<size_t, size_t> &);
 
 class Substitution {
 public:

@@ -320,24 +320,24 @@ void BinaryMapping::by_string_(const std::string &s) {
             continue;
         }
         size_t current_col = 0;
-        for (size_t i = 0; i < line.size(); i++) {
-            if (isspace(line[i])) {
+        for (char i: line) {
+            if (isspace(i)) {
                 continue;
             }
-            if (line[i] == '0') {
+            if (i == '0') {
                 if (current_col >= truth_table.size()) {
                     truth_table.emplace_back();
                 }
                 truth_table[current_col].push_back(false);
                 current_col++;
-            } else if (line[i] == '1') {
+            } else if (i == '1') {
                 if (current_col >= truth_table.size()) {
                     truth_table.emplace_back();
                 }
                 truth_table[current_col].push_back(true);
                 current_col++;
             } else {
-                throw std::runtime_error{std::string("Unexpected symbol: ") + line[i]};
+                throw std::runtime_error{std::string("Unexpected symbol: ") + i};
             }
         }
     }
