@@ -48,10 +48,10 @@ public:
     }
 
 private:
-    LogLevel level_;
+    LogLevel level_ = LogLevel::ERROR;
     std::mutex mutex_;
 
-    std::string to_string(LogLevel level) {
+    static std::string to_string(LogLevel level) {
         switch (level) {
             case LogLevel::DEBUG:
                 return "[DEBUG]    ";
@@ -68,7 +68,7 @@ private:
         }
     }
 
-    std::string current_time_to_string() {
+    static std::string current_time_to_string() {
         auto now = std::chrono::system_clock::now();
         auto time = std::chrono::system_clock::to_time_t(now);
         auto tm = *std::localtime(&time);

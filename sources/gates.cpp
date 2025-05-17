@@ -22,7 +22,7 @@ Gate::Gate(const std::string &s, size_t dim) {
     s_copy = s_copy.substr(open_bracket_pos + 1);
 
     auto close_bracket_pos = s_copy.find(')');
-    if (s_copy.empty() || open_bracket_pos == std::string::npos) {
+    if (s_copy.empty()) {
         throw std::runtime_error{"Invalid string"};
     }
     auto gate_params = s_copy.substr(0, close_bracket_pos);
