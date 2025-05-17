@@ -32,6 +32,9 @@ jobs:
             artifact_name: qcs-ubuntu
             binary_name: qcs
 
+    outputs:
+      os-name: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -53,26 +56,7 @@ jobs:
   build:
     name: Build
     needs: configure
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-
-      matrix:
-        os: [ ubuntu-latest, windows-latest ]
-        build_type: [ Release ]
-        c_compiler: [ gcc ]
-        include:
-          - os: windows-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-            artifact_name: qcs-windows
-            binary_name: qcs.exe
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-            artifact_name: qcs-ubuntu
-            binary_name: qcs
+    runs-on: ${{ needs.configure.outputs.os-name }}
 
     steps:
       - uses: actions/checkout@v4
@@ -96,26 +80,7 @@ jobs:
   test:
     name: Test
     needs: build
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-
-      matrix:
-        os: [ ubuntu-latest, windows-latest ]
-        build_type: [ Release ]
-        c_compiler: [ gcc ]
-        include:
-          - os: windows-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-            artifact_name: qcs-windows
-            binary_name: qcs.exe
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-            artifact_name: qcs-ubuntu
-            binary_name: qcs
+    runs-on: ${{ needs.configure.outputs.os-name }}
 
     steps:
       - uses: actions/checkout@v4
