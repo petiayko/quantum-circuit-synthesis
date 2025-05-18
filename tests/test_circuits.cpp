@@ -110,4 +110,10 @@ TEST(Circuits, Stream) {
     std::ifstream file("../tests/assets/qc.txt", std::ios::in);
     Circuit c1(file);
     EXPECT_EQ(c1, Circuit(std::vector<Gate>{Gate("NOT(1)", 4), Gate("CSWAP(3,1;0)", 4), Gate("kCNOT(0;1,2,3)", 4)}));
+
+    std::ifstream file1("../tests/assets/map.txt", std::ios::in);
+    EXPECT_THROW((Circuit(file1)), std::runtime_error);
+
+    std::ifstream file2("../tests/assets/sub.txt", std::ios::in);
+    EXPECT_THROW((Circuit(file2)), std::runtime_error);
 }

@@ -26,6 +26,8 @@ public:
 
     void act(std::vector<BooleanFunction> &) const;
 
+    void inc() noexcept;
+
     bool operator==(const Gate &) const;
 
     friend std::ostream &operator<<(std::ostream &, const Gate &) noexcept;
@@ -72,5 +74,17 @@ private:
 
     void by_string_(const std::string &);
 };
+
+Circuit synthesize(const BinaryMapping &, const std::string &);
+
+Circuit synthesize(const Substitution &, const std::string &);
+
+Circuit enumeration_algorithm(const BinaryMapping &);
+
+Circuit enumeration_algorithm(const Substitution &);
+
+Circuit RW_algorithm(const BinaryMapping &);
+
+Circuit RW_algorithm(const Substitution &);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP

@@ -78,6 +78,7 @@ TEST(Substitutions, Methods) {
     EXPECT_EQ(cycles[3], (std::vector<size_t>{3}));
     EXPECT_FALSE(s1.is_odd());
     EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{}));
+    EXPECT_TRUE(s1.is_identical());
 
     Substitution s2("1 0 3 2 5 4 7 6");
     cycles = s2.get_cycles();
@@ -92,6 +93,7 @@ TEST(Substitutions, Methods) {
                                                                       {2, 3},
                                                                       {4, 5},
                                                                       {6, 7}}));
+    EXPECT_FALSE(s2.is_identical());
 
     Substitution s3("0");
     cycles = s3.get_cycles();
@@ -100,6 +102,7 @@ TEST(Substitutions, Methods) {
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0}));
     EXPECT_FALSE(s3.is_odd());
     EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{}));
+    EXPECT_TRUE(s3.is_identical());
 }
 
 TEST(Substitutions, Stream) {
@@ -119,6 +122,21 @@ TEST(Substitutions, Stream) {
     std::ifstream file("../tests/assets/sub.txt", std::ios::in);
     s = Substitution(file);
     EXPECT_EQ(s, Substitution("11 0 1 2 5 14 4 10 3 15 6 7 13 8 12 9"));
+
+    std::ifstream file1("../tests/assets/map.txt", std::ios::in);
+    EXPECT_THROW((Substitution(file1)), std::runtime_error);
+
+    std::ifstream file2("../tests/assets/qc.txt", std::ios::in);
+    EXPECT_THROW((Substitution(file2)), std::runtime_error);
+}
+
+TEST(Substitutions, BooleanFunctions) {
+    EXPECT_EQ(Substitution(BooleanFunction("0110")), Substitution("0 1 3 2"));
+    EXPECT_EQ(Substitution(BooleanFunction("1101")), Substitution("1 0 3 2 4 5 7 6"));
+    EXPECT_EQ(Substitution(BooleanFunction("0000")), Substitution("0 1 2 3 4 5 6 7"));
+    EXPECT_EQ(Substitution(BooleanFunction("1111")), Substitution("1 0 3 2 5 4 7 6"));
+    EXPECT_EQ(Substitution(BooleanFunction("00101110")), Substitution("0 2 1 4 3 5 7 6"));
+    EXPECT_EQ(Substitution(BooleanFunction("00010110")), Substitution("0 1 2 3 4 5 7 6 8 9 11 10 13 12 14 15"));
 }
 
 TEST(Substitutions, BinaryMappings) {

@@ -80,23 +80,27 @@ void process_config(const std::string &type, const std::string &algo, const std:
         LOG_ERROR("Application parameters", "Synthesis algorithm was not provided");
         throw std::runtime_error{"Synthesis algorithm was not provided"};
     }
-    if (algo == "1") {
-
-    } else if (algo == "2") {
-
-    } else {
+    if (algo == "enum") {
+        LOG_WARNING("Application parameters", "Selected synthesis algorithm is enumeration (enum), it does not guarantee results and fast execution time");
+    } else if (algo != "rw") {
         LOG_ERROR("Application parameters", std::string("Unknown synthesis algorithm: ") + algo);
         throw std::runtime_error{std::string("Unknown synthesis algorithm: ") + algo};
     }
 
+    LOG_INFO("Starting of quantum circuit synthesis", "");
     if (type == "tt") {
         BinaryMapping bm(file_content);
+        Circuit c = synthesize(bm, algo);
+        write_result<Circuit>(output_path, c);
     } else if (type == "sub") {
         Substitution sub(file_content);
+        Circuit c = synthesize(sub, algo);
+        write_result<Circuit>(output_path, c);
     } else {
         LOG_ERROR("Application parameters", std::string("Unknown type of input: ") + type);
         throw std::runtime_error{std::string("Unknown type of input: ") + type};
     }
+    LOG_INFO("Finishing of quantum circuit synthesis", "");
 }
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_COMPUTINGS_HPP

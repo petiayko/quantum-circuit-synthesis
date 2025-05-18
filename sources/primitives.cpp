@@ -272,7 +272,7 @@ BinaryMapping &BinaryMapping::operator=(const Substitution &sub) {
 }
 
 bool BinaryMapping::operator==(const BinaryMapping &mp) const {
-    if (this->get_inputs_number() != mp.get_inputs_number() || this->get_outputs_number() != mp.get_outputs_number()) {
+    if (this->inputs_number() != mp.inputs_number() || this->outputs_number() != mp.outputs_number()) {
         return false;
     }
     for (size_t i = 0; i < cf_.size(); i++) {
@@ -291,11 +291,11 @@ cf_set BinaryMapping::get_coordinate_functions() const noexcept {
     return cf_;
 }
 
-size_t BinaryMapping::get_inputs_number() const noexcept {
+size_t BinaryMapping::inputs_number() const noexcept {
     return cf_.front().dim();
 }
 
-size_t BinaryMapping::get_outputs_number() const noexcept {
+size_t BinaryMapping::outputs_number() const noexcept {
     return cf_.size();
 }
 
@@ -356,7 +356,7 @@ std::string BinaryMapping::to_table(char sep) const noexcept {
     auto truth_table = this->to_table_();
     std::string result;
     for (size_t i = 0; i < truth_table.front().size(); i++) {
-        result += decimal_to_binary(i, this->get_inputs_number()) + sep;
+        result += decimal_to_binary(i, this->inputs_number()) + sep;
         for (auto &j: truth_table) {
             result += (j[i] ? '1' : '0');
         }
@@ -469,6 +469,38 @@ Substitution::Substitution(std::istream &s) {
     by_string_(ss.str());
 }
 
+Substitution::Substitution(const BooleanFunction &bf) {
+    // if f(x1,...,xn) make f1(x1,...,x{n+1})=f+x{n+1}
+    // f1(x1,...,xn,0)=f
+    std::vector<bool> bf_values;
+    size_t base = std::pow(2, bf.dim()) - 1;
+    if (!bf.is_balanced()) {
+        base = std::pow(2, bf.dim() + 1) - 1;
+        for (auto bit: bf.get_vector()) {
+            bf_values.push_back(bit);
+            bf_values.push_back(!bit);
+        }
+    } else {
+        bf_values = bf.get_vector();
+    }
+
+    size_t even = base;
+    size_t odd = base - 1;
+    for (auto bit: bf_values) {
+        if (bit) {
+            sub_.push_back(base - odd);
+            odd -= 2;
+            continue;
+        }
+        sub_.push_back(base - even);
+        even -= 2;
+    }
+
+    if (!is_substitution(sub_)) {
+        throw std::runtime_error{"Unable to build substitution"};
+    }
+}
+
 Substitution::Substitution(const Substitution &sub) {
     sub_ = sub.sub_;
 }
@@ -512,6 +544,15 @@ bool Substitution::operator!=(const Substitution &sub) const {
 
 size_t Substitution::power() const noexcept {
     return sub_.size();
+}
+
+bool Substitution::is_identical() const noexcept {
+    for (size_t i = 0; i < sub_.size(); i++) {
+        if (sub_[i] != i) {
+            return false;
+        }
+    }
+    return true;
 }
 
 std::vector<size_t> Substitution::get_vector() const noexcept {

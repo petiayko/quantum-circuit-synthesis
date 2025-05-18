@@ -37,7 +37,7 @@ void print_program_help() {
     std::cout << std::endl;
 
     std::cout << "Synthesis options:" << std::endl;
-    std::cout << "  --algo arg      algorithm to synthesis quantum circuit ('1', '2')" << std::endl;
+    std::cout << "  --algo arg      algorithm to synthesis quantum circuit ('enum', 'rw')" << std::endl;
     std::cout << std::endl;
 
     std::cout << "Parameters:" << std::endl;
@@ -148,15 +148,16 @@ int main(int argc, char *argv[]) {
     std::string algo;
     if (it != config.end()) {
         algo = it->second;
+        trim(algo);
+        to_lower(type);
     }
-    trim(algo);
 
     it = config.find("--output");
     std::string output;
     if (it != config.end()) {
         output = it->second;
+        trim(output);
     }
-    trim(output);
 
     it = config.find("--log");
     std::string log_level_s = "error";

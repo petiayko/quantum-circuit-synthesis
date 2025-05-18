@@ -99,9 +99,9 @@ public:
 
     cf_set get_coordinate_functions() const noexcept;
 
-    size_t get_inputs_number() const noexcept;
+    size_t inputs_number() const noexcept;
 
-    size_t get_outputs_number() const noexcept;
+    size_t outputs_number() const noexcept;
 
     std::string to_table(char = '\t') const noexcept;
 
@@ -125,6 +125,8 @@ public:
 
     explicit Substitution(std::istream &);
 
+    Substitution(const BooleanFunction &);
+
     Substitution(const Substitution &);
 
     Substitution(const BinaryMapping &);
@@ -138,6 +140,8 @@ public:
     bool operator!=(const Substitution &) const;
 
     size_t power() const noexcept;
+
+    bool is_identical() const noexcept;
 
     std::vector<size_t> get_vector() const noexcept;
 
@@ -154,11 +158,5 @@ private:
 
     void by_string_(const std::string &);
 };
-
-//bool is_substitution(const substitution &);
-
-//substitution table_to_substitution(const binary_substitution &);
-
-//binary_substitution substitution_to_table(const substitution &);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP

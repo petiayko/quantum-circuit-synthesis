@@ -100,15 +100,15 @@ TEST(BinaryMappings, Methods) {
                                           {0, 1, 0, 1},
                                           {1, 0, 0, 1},
                                   }));
-    EXPECT_EQ(bm.get_inputs_number(), 2);
-    EXPECT_EQ(bm.get_outputs_number(), 8);
+    EXPECT_EQ(bm.inputs_number(), 2);
+    EXPECT_EQ(bm.outputs_number(), 8);
 
     auto bm1 = BinaryMapping(table({
                                            {1, 1, 0, 1, 0, 0, 1, 0},
                                            {0, 1, 1, 1, 1, 0, 0, 0},
                                    }));
-    EXPECT_EQ(bm1.get_inputs_number(), 3);
-    EXPECT_EQ(bm1.get_outputs_number(), 2);
+    EXPECT_EQ(bm1.inputs_number(), 3);
+    EXPECT_EQ(bm1.outputs_number(), 2);
 }
 
 TEST(BinaryMapping, Stream) {
@@ -167,6 +167,12 @@ TEST(BinaryMapping, Stream) {
                               "01\t110\n"
                               "10\t000\n"
                               "11\t100\n");
+
+    std::ifstream file1("../tests/assets/sub.txt", std::ios::in);
+    EXPECT_THROW((BinaryMapping(file1)), std::runtime_error);
+
+    std::ifstream file2("../tests/assets/qc.txt", std::ios::in);
+    EXPECT_THROW((BinaryMapping(file2)), std::runtime_error);
 }
 
 TEST(BinaryMapping, Substitutions) {
