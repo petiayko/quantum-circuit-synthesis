@@ -4,7 +4,6 @@
 
 TEST(Substitutions, Constructor) {
     EXPECT_THROW(Substitution(cf_set({})), std::runtime_error);
-    EXPECT_THROW(Substitution(cf_set({BooleanFunction("0"), BooleanFunction("1")})), std::runtime_error);
     EXPECT_THROW(Substitution(cf_set({BooleanFunction("1010"), BooleanFunction("10")})), std::runtime_error);
     EXPECT_THROW(Substitution(cf_set({BooleanFunction("1010"), BooleanFunction("1001"), BooleanFunction("1010")})),
                  std::runtime_error);
@@ -128,15 +127,6 @@ TEST(Substitutions, Stream) {
 
     std::ifstream file2("../tests/assets/qc.txt", std::ios::in);
     EXPECT_THROW((Substitution(file2)), std::runtime_error);
-}
-
-TEST(Substitutions, BooleanFunctions) {
-    EXPECT_EQ(Substitution(BooleanFunction("0110")), Substitution("0 1 3 2"));
-    EXPECT_EQ(Substitution(BooleanFunction("1101")), Substitution("1 0 3 2 4 5 7 6"));
-    EXPECT_EQ(Substitution(BooleanFunction("0000")), Substitution("0 1 2 3 4 5 6 7"));
-    EXPECT_EQ(Substitution(BooleanFunction("1111")), Substitution("1 0 3 2 5 4 7 6"));
-    EXPECT_EQ(Substitution(BooleanFunction("00101110")), Substitution("0 2 1 4 3 5 7 6"));
-    EXPECT_EQ(Substitution(BooleanFunction("00010110")), Substitution("0 1 2 3 4 5 7 6 8 9 11 10 13 12 14 15"));
 }
 
 TEST(Substitutions, BinaryMappings) {

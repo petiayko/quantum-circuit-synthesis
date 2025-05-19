@@ -109,6 +109,61 @@ TEST(BinaryMappings, Methods) {
                                    }));
     EXPECT_EQ(bm1.inputs_number(), 3);
     EXPECT_EQ(bm1.outputs_number(), 2);
+
+    EXPECT_EQ(BinaryMapping(table{{0, 1}}).extend(), BinaryMapping(table{{0, 1}}));
+    EXPECT_TRUE(BinaryMapping(table{{0, 1}}).extend().is_substitution());
+
+    EXPECT_EQ(BinaryMapping(table{{0, 0, 0, 1}}).extend(), BinaryMapping(table{{0, 0, 0, 0, 1, 1, 1, 1},
+                                                                               {0, 0, 1, 1, 0, 0, 1, 1},
+                                                                               {0, 1, 0, 1, 0, 1, 1, 0}}));
+    EXPECT_TRUE(BinaryMapping(table{{0, 0, 0, 1}}).extend().is_substitution());
+
+    EXPECT_EQ(BinaryMapping(table{{1, 0},
+                                  {1, 1}}).extend(), BinaryMapping(table{{0, 0, 0, 0, 1, 1, 1, 1},
+                                                                         {1, 1, 0, 0, 0, 0, 1, 1},
+                                                                         {1, 0, 1, 0, 1, 0, 1, 0}}));
+    EXPECT_TRUE(BinaryMapping(table{{1, 0},
+                                    {1, 1}}).extend().is_substitution());
+
+    EXPECT_EQ(BinaryMapping(table{{1, 0, 1, 0},
+                                  {1, 0, 1, 0}}).extend(),
+              BinaryMapping(table{{0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+                                  {0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1},
+                                  {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1},
+                                  {1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1}}));
+    EXPECT_TRUE(BinaryMapping(table{{1, 0, 1, 0},
+                                    {1, 0, 1, 0}}).extend().is_substitution());
+
+    EXPECT_EQ(BinaryMapping(table{{1, 1, 1, 1},
+                                  {0, 0, 0, 0}}).extend(),
+              BinaryMapping(table{{0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+                                  {0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1},
+                                  {1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0},
+                                  {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1}}));
+    EXPECT_TRUE(BinaryMapping(table{{1, 1, 1, 1},
+                                    {0, 0, 0, 0}}).extend().is_substitution());
+
+    EXPECT_EQ(BinaryMapping(table{{1, 0},
+                                  {1, 1},
+                                  {0, 1}}).extend(),
+              BinaryMapping(table{{0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+                                  {1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1},
+                                  {1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0},
+                                  {0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0}}));
+    EXPECT_TRUE(BinaryMapping(table{{1, 0},
+                                    {1, 1},
+                                    {0, 1}}).extend().is_substitution());
+
+    auto bm_ext = bm.extend();
+    EXPECT_TRUE(bm_ext.extend().is_substitution());
+    EXPECT_EQ(bm_ext.inputs_number(), bm.inputs_number() + bm.outputs_number());
+    EXPECT_EQ(bm_ext.outputs_number(), bm.inputs_number() + bm.outputs_number());
+
+    auto bm1_ext = bm1.extend();
+    EXPECT_TRUE(bm1_ext.extend().is_substitution());
+    EXPECT_EQ(bm1_ext.inputs_number(), bm1.inputs_number() + bm1.outputs_number());
+    EXPECT_EQ(bm1_ext.outputs_number(), bm1.inputs_number() + bm1.outputs_number());
+
 }
 
 TEST(BinaryMapping, Stream) {

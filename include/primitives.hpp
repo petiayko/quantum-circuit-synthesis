@@ -17,6 +17,8 @@
 using binary_vector = std::vector<bool>;
 using table = std::vector<binary_vector>;
 
+class BinaryMapping;
+
 class BooleanFunction {
 public:
     explicit BooleanFunction() = default;
@@ -54,6 +56,8 @@ public:
     size_t weight() const noexcept;
 
     bool is_balanced() const noexcept;
+
+    BinaryMapping extend() const;
 
     binary_vector get_vector() const noexcept;
 
@@ -103,6 +107,10 @@ public:
 
     size_t outputs_number() const noexcept;
 
+    bool is_substitution() const noexcept;
+
+    BinaryMapping extend() const;
+
     std::string to_table(char = '\t') const noexcept;
 
     friend std::ostream &operator<<(std::ostream &, const BinaryMapping &) noexcept;
@@ -124,8 +132,6 @@ public:
     explicit Substitution(const std::string &);
 
     explicit Substitution(std::istream &);
-
-    Substitution(const BooleanFunction &);
 
     Substitution(const Substitution &);
 

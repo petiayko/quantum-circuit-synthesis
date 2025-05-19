@@ -44,6 +44,8 @@ private:
 
 class Circuit {
 public:
+    Circuit() = default;
+
     explicit Circuit(size_t);
 
     explicit Circuit(const std::vector<Gate> &);

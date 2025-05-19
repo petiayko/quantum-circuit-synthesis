@@ -81,7 +81,8 @@ void process_config(const std::string &type, const std::string &algo, const std:
         throw std::runtime_error{"Synthesis algorithm was not provided"};
     }
     if (algo == "enum") {
-        LOG_WARNING("Application parameters", "Selected synthesis algorithm is enumeration (enum), it does not guarantee results and fast execution time");
+        LOG_WARNING("Application parameters",
+                    "Selected synthesis algorithm is enumeration (enum), it does not guarantee results and fast execution time");
     } else if (algo != "rw") {
         LOG_ERROR("Application parameters", std::string("Unknown synthesis algorithm: ") + algo);
         throw std::runtime_error{std::string("Unknown synthesis algorithm: ") + algo};

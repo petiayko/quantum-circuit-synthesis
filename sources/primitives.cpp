@@ -34,14 +34,14 @@ BooleanFunction::BooleanFunction(bool bit, size_t dim) {
 }
 
 BooleanFunction::BooleanFunction(const binary_vector &v) {
-    if (!is_power_of_2(v.size())) {
+    if (v.size() == 1 || !is_power_of_2(v.size())) {
         throw std::runtime_error{"Invalid length"};
     }
     vec_ = v;
 }
 
 BooleanFunction::BooleanFunction(const std::vector<int> &v) {
-    if (!is_power_of_2(v.size())) {
+    if (v.size() == 1 || !is_power_of_2(v.size())) {
         throw std::runtime_error{"Invalid length"};
     }
     for (auto i: v) {
@@ -56,7 +56,7 @@ BooleanFunction::BooleanFunction(const std::vector<int> &v) {
 }
 
 BooleanFunction::BooleanFunction(const std::string &s) {
-    if (!is_power_of_2(s.size())) {
+    if (s.size() == 1 || !is_power_of_2(s.size())) {
         throw std::runtime_error{"Invalid length"};
     }
     for (auto i: s) {
@@ -147,8 +147,44 @@ size_t BooleanFunction::weight() const noexcept {
     return std::accumulate(vec_.begin(), vec_.end(), 0);
 }
 
+
 bool BooleanFunction::is_balanced() const noexcept {
     return this->weight() * 2 == this->size();
+}
+
+BinaryMapping BooleanFunction::extend() const {
+    // extends a boolean function to an invertible mapping
+    // the values of the original function will be achieved by feeding zeros to additional inputs
+    // if f(x1,...,xn) make f1(x1,...,x{n+1})=f+x{n+1}
+    // f1(x1,...,xn,0)=f
+    std::vector<bool> bf_values;
+    size_t height;
+    std::string truth_table_s;
+    size_t width = this->dim();
+    if (!this->is_balanced()) {
+        height = std::pow(2, this->dim() + 1) - 1;
+        width += 1;
+        for (auto bit: this->get_vector()) {
+            bf_values.push_back(bit);
+            bf_values.push_back(!bit);
+        }
+    } else {
+        height = std::pow(2, this->dim()) - 1;
+        bf_values = this->get_vector();
+    }
+
+    size_t even = height;
+    size_t odd = height - 1;
+    for (auto bit: bf_values) {
+        if (bit) {
+            truth_table_s += decimal_to_binary(height - odd, width) + '\n';
+            odd -= 2;
+            continue;
+        }
+        truth_table_s += decimal_to_binary(height - even, width) + '\n';
+        even -= 2;
+    }
+    return BinaryMapping(truth_table_s);
 }
 
 binary_vector BooleanFunction::get_vector() const noexcept {
@@ -299,6 +335,46 @@ size_t BinaryMapping::outputs_number() const noexcept {
     return cf_.size();
 }
 
+bool BinaryMapping::is_substitution() const noexcept {
+    try {
+        auto _ = Substitution(*this);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+BinaryMapping BinaryMapping::extend() const {
+    // extends the mapping to a reversible mapping
+    if (cf_.size() == 1) {
+        return BooleanFunction(cf_.front()).extend();
+    }
+
+    if (this->is_substitution()) {
+        return *this;
+    }
+
+    int inputs = cf_.front().dim();
+    int outputs = cf_.size();
+    table truth_table;
+
+    for (int i = inputs + outputs - 1; i >= 0; i--) {
+        auto column_bf = BooleanFunction(static_cast<size_t>(i), outputs + inputs);
+        if (i - inputs < 0) {
+            truth_table.insert(truth_table.begin(), column_bf.get_vector());
+            continue;
+        }
+        std::vector<bool> extension;
+        for (auto bit: cf_[i - inputs].get_vector()) {
+            for (size_t _ = 0; _ < std::pow(2, outputs); _++) {
+                extension.push_back(bit);
+            }
+        }
+        truth_table.insert(truth_table.begin(), (BooleanFunction(extension) + column_bf).get_vector());
+    }
+    return BinaryMapping(truth_table);
+}
+
 table BinaryMapping::to_table_() const noexcept {
     table result;
     for (const auto &bf: cf_) {
@@ -425,7 +501,7 @@ Substitution::Substitution(const cf_set &cf) {
     }
     if (!is_substitution(sub_)) {
         sub_.clear();
-        throw std::runtime_error{"Invalid substitution"};
+        throw std::runtime_error{"Unable to build substitution"};
     }
 }
 
@@ -467,38 +543,6 @@ Substitution::Substitution(std::istream &s) {
     std::stringstream ss;
     ss << s.rdbuf();
     by_string_(ss.str());
-}
-
-Substitution::Substitution(const BooleanFunction &bf) {
-    // if f(x1,...,xn) make f1(x1,...,x{n+1})=f+x{n+1}
-    // f1(x1,...,xn,0)=f
-    std::vector<bool> bf_values;
-    size_t base = std::pow(2, bf.dim()) - 1;
-    if (!bf.is_balanced()) {
-        base = std::pow(2, bf.dim() + 1) - 1;
-        for (auto bit: bf.get_vector()) {
-            bf_values.push_back(bit);
-            bf_values.push_back(!bit);
-        }
-    } else {
-        bf_values = bf.get_vector();
-    }
-
-    size_t even = base;
-    size_t odd = base - 1;
-    for (auto bit: bf_values) {
-        if (bit) {
-            sub_.push_back(base - odd);
-            odd -= 2;
-            continue;
-        }
-        sub_.push_back(base - even);
-        even -= 2;
-    }
-
-    if (!is_substitution(sub_)) {
-        throw std::runtime_error{"Unable to build substitution"};
-    }
 }
 
 Substitution::Substitution(const Substitution &sub) {
