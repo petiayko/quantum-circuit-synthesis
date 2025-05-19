@@ -46,13 +46,9 @@ class Circuit {
 public:
     Circuit() = default;
 
-    explicit Circuit(size_t);
+    explicit Circuit(size_t, size_t = 0);
 
-    explicit Circuit(const std::vector<Gate> &);
-
-    explicit Circuit(const Substitution &);
-
-    explicit Circuit(const BinaryMapping &);
+    explicit Circuit(const std::vector<Gate> &, size_t = 0);
 
     explicit Circuit(const std::string &);
 
@@ -60,11 +56,15 @@ public:
 
     size_t dim() const noexcept;
 
+    size_t memory() const noexcept;
+
     void act(std::vector<bool> &) const;
 
     void act(std::vector<BooleanFunction> &) const;
 
     void add(const Gate &);
+
+    void set_memory(size_t);
 
     bool operator==(const Circuit &) const;
 
@@ -72,6 +72,7 @@ public:
 
 private:
     size_t dim_{};
+    size_t memory_{};
     std::vector<Gate> gates_;
 
     void by_string_(const std::string &);

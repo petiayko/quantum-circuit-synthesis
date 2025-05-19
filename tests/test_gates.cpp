@@ -62,6 +62,7 @@ TEST(Gates, ConstructorString) {
     EXPECT_NO_THROW(Gate("NOT(2)", 5));
     EXPECT_NO_THROW(Gate("  \t   NOT(2)", 5));
     EXPECT_NO_THROW(Gate("  \t   NOT  ( 2         )             ", 5));
+    EXPECT_NO_THROW(Gate("  \t   NOT  ( 0x2         )             ", 5));
 
     // CNOT
     EXPECT_THROW(Gate("CNOT()", 5), std::runtime_error);
@@ -69,6 +70,7 @@ TEST(Gates, ConstructorString) {
     EXPECT_TRUE(Gate("cNoT(2;4)", 5) == Gate(GateType::CNOT, {2}, {4}, 5));
     EXPECT_TRUE(Gate("  \t   cnot(2;1)", 5) == Gate(GateType::CNOT, {2}, {1}, 5));
     EXPECT_TRUE(Gate("  \t   cnOT  ( 2    ;\t3     )             ", 5) == Gate(GateType::CNOT, {2}, {3}, 5));
+    EXPECT_TRUE(Gate("  \t   cnOT  ( 2    ;\t0x3     )             ", 5) == Gate(GateType::CNOT, {2}, {3}, 5));
 
     // kCNOT
     EXPECT_THROW(Gate("kCNOT()", 5), std::runtime_error);
@@ -77,6 +79,7 @@ TEST(Gates, ConstructorString) {
     EXPECT_TRUE(Gate("kcnot(2;4, 1)", 5) == Gate(GateType::kCNOT, {2}, {4, 1}, 5));
     EXPECT_TRUE(Gate("  \t   Kcnot(2;1,0)", 5) == Gate(GateType::kCNOT, {2}, {1, 0}, 5));
     EXPECT_TRUE(Gate("  \t   kCnOt  ( 2    ;\t3   ,  4  )             ", 5) == Gate(GateType::kCNOT, {2}, {3, 4}, 5));
+    EXPECT_TRUE(Gate("  \t   kCnOt  ( 2    ;\t3   ,  0x4  )             ", 5) == Gate(GateType::kCNOT, {2}, {3, 4}, 5));
 
     // SWAP
     EXPECT_THROW(Gate("SWAP()", 5), std::runtime_error);
@@ -85,6 +88,7 @@ TEST(Gates, ConstructorString) {
     EXPECT_TRUE(Gate("swap(2,1)", 5) == Gate(GateType::SWAP, {2, 1}, {}, 5));
     EXPECT_TRUE(Gate("  \t   SWap(2,4)", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
     EXPECT_TRUE(Gate("  \t   SwAp  ( 2    \t   ,  4  )             ", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
+    EXPECT_TRUE(Gate("  \t   SwAp  ( 0x2    \t   ,  4  )             ", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
 
     // CSWAP
     EXPECT_THROW(Gate("CSWAP()", 5), std::runtime_error);
@@ -92,6 +96,7 @@ TEST(Gates, ConstructorString) {
     EXPECT_THROW(Gate("CSWAP(2,0;4,1)", 5), std::runtime_error);
     EXPECT_TRUE(Gate("cswap(2,1;0)", 5) == Gate(GateType::CSWAP, {2, 1}, {0}, 5));
     EXPECT_TRUE(Gate("  \t   cSWAP(0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {2}, 5));
+    EXPECT_TRUE(Gate("  \t   cSWAP(0x0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {2}, 5));
     EXPECT_TRUE(
             Gate("  \t   CswaP  ( 2   ,3 \t   ;\t\t  4  )             ", 5) == Gate(GateType::CSWAP, {2, 3}, {4}, 5));
 }

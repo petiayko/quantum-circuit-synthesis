@@ -261,32 +261,27 @@ std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
 
 // Circuit
 
-Circuit::Circuit(size_t lines_num) {
+Circuit::Circuit(size_t lines_num, size_t memory_lines_num) {
+    if (memory_lines_num && memory_lines_num >= lines_num) {
+        throw std::runtime_error{"Circuit can not have this count of memory lines"};
+    }
     dim_ = lines_num;
+    memory_ = memory_lines_num;
 }
 
-Circuit::Circuit(const std::vector<Gate> &vec) {
+Circuit::Circuit(const std::vector<Gate> &vec, size_t memory_lines_num) {
     if (vec.empty()) {
         return;
     }
+    memory_ = memory_lines_num;
     dim_ = vec.front().dim();
+
+    if (memory_lines_num >= dim_) {
+        throw std::runtime_error{"Circuit can not have this count of memory lines"};
+    }
+
     for (const auto &g: vec) {
         this->add(g);
-    }
-}
-
-Circuit::Circuit(const Substitution &sub) {
-    if (!is_power_of_2(sub.power())) {
-        throw std::runtime_error{"Power of substitution should be power of 2"};
-    }
-    [[maybe_unused]] BinaryMapping bm(sub);
-}
-
-Circuit::Circuit(const BinaryMapping &bm) {
-    try {
-        Substitution sub(bm);
-    } catch (const std::exception &e) {
-        throw std::runtime_error{std::string("Unable to convert binary mapping to substitution: ") + e.what()};
     }
 }
 
@@ -304,9 +299,18 @@ size_t Circuit::dim() const noexcept {
     return dim_;
 }
 
+size_t Circuit::memory() const noexcept {
+    return memory_;
+}
+
 void Circuit::act(std::vector<bool> &vec) const {
     if (vec.size() != dim_) {
         throw std::runtime_error{"Vector length should be equal to Circuit dimension"};
+    }
+    if (memory_) {
+        for (size_t i = vec.size() - 1; i > dim_ - memory_ - 1; i--) {
+            vec[i] = false;
+        }
     }
     for (const auto &g: gates_) {
         g.act(vec);
@@ -326,6 +330,17 @@ void Circuit::act(std::vector<BooleanFunction> &vec) const {
     for (const auto &g: gates_) {
         g.act(vec);
     }
+    if (memory_) {
+        for (auto &bf: vec) {
+            std::vector<bool> bf_values;
+            for (size_t i = 0; i < bf.size(); i++) {
+                if (!(i % static_cast<int>(std::pow(2, memory_)))) {
+                    bf_values.push_back(bf.get_vector()[i]);
+                }
+            }
+            bf = BooleanFunction(bf_values);
+        }
+    }
 }
 
 void Circuit::add(const Gate &g) {
@@ -335,12 +350,23 @@ void Circuit::add(const Gate &g) {
     gates_.push_back(g);
 }
 
+void Circuit::set_memory(size_t memory_lines_num) {
+    if (memory_lines_num >= dim_) {
+        throw std::runtime_error{"Circuit should have at least on line"};
+    }
+    memory_ = memory_lines_num;
+}
+
 bool Circuit::operator==(const Circuit &c) const {
-    return (dim_ == c.dim_ && gates_ == c.gates_);
+    return (dim_ == c.dim_ && memory_ == c.memory_ && gates_ == c.gates_);
 }
 
 std::ostream &operator<<(std::ostream &out, const Circuit &c) noexcept {
-    out << "Lines: " << c.dim_ << '\n';
+    out << "Lines: " << c.dim_;
+    if (c.memory_) {
+        out << "; " << c.memory_;
+    }
+    out << '\n';
     for (const auto &g: c.gates_) {
         out << g << '\n';
     }
@@ -354,6 +380,7 @@ void Circuit::by_string_(const std::string &s) {
     std::stringstream ss(s);
     std::string line;
 
+    // lines number
     while (getline(ss, line, '\n')) {
         trim(line);
         if (line.empty() || line.front() == '#') {
@@ -362,25 +389,41 @@ void Circuit::by_string_(const std::string &s) {
         }
         to_lower(line);
         auto lines_word_pos = line.find("lines:");
-        if (lines_word_pos == std::string::npos) {
+        if (lines_word_pos) {
             throw std::runtime_error{"Invalid string"};
         }
         line = line.substr(lines_word_pos + 6);
         int dim = 0;
-        if (!try_string_to_decimal(line, dim)) {
+        int memory = 0;
+        try {
+            auto nums = string_to_num_vector<int>(line, ';');
+            if (nums.empty() || nums.size() > 2) {
+                throw std::runtime_error{std::string("Invalid lines number: ") + line};
+            }
+            dim = nums.front();
+            if (nums.size() == 2) {
+                memory = nums.back();
+            }
+        } catch (...) {
             throw std::runtime_error{std::string("Invalid lines number: ") + line};
         }
         if (dim < 1) {
             throw std::runtime_error{"Invalid number of lines"};
         }
         dim_ = dim;
+        if (memory < 0 || memory >= dim) {
+            throw std::runtime_error{"Invalid number of memory lines"};
+        }
+        memory_ = memory;
         break;
     }
     if (line.empty()) {
         throw std::runtime_error{"Invalid string"};
     }
 
+    // gate
     while (getline(ss, line, '\n')) {
+        trim(line);
         if (line.empty() || line.front() == '#') {
             continue;
         }

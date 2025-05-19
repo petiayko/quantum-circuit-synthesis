@@ -13,15 +13,34 @@ TEST(Circuits, Constructor) {
     EXPECT_THROW(Circuit("lines: 2\nNOT(3)"), std::runtime_error);
     EXPECT_THROW(Circuit("NOT(3)\nCNOT(0;1)\n"), std::runtime_error);
     EXPECT_THROW(Circuit("NOT(3)\nCNOT(0;1)\nlines: 2"), std::runtime_error);
+    EXPECT_THROW(Circuit("Lines: 3\n; # 1"), std::runtime_error);
+    EXPECT_THROW(Circuit("Lines: 3\n,1"), std::runtime_error);
+    EXPECT_THROW(Circuit("Lines: 13, 2"), std::runtime_error);
+    EXPECT_THROW(Circuit("Lines: 13 4"), std::runtime_error);
+    EXPECT_THROW(Circuit("Lines: 13; 100"), std::runtime_error);
 
-    EXPECT_EQ(Circuit("lines: 3"), Circuit(3));
-    EXPECT_EQ(Circuit("lINES: 3\n"), Circuit(3));
+    EXPECT_EQ(Circuit("lines: 3;0"), Circuit(3));
+    EXPECT_EQ(Circuit("lines: 3;2"), Circuit(3, 2));
+    EXPECT_EQ(Circuit("lINES: 3;1\n"), Circuit(3, 1));
     EXPECT_EQ(Circuit("#\nLines: 3\n"), Circuit(3));
     EXPECT_EQ(Circuit("\n\n\n#\n\n\n\nLines: 3\n\n\n\n"), Circuit(3));
     EXPECT_EQ(Circuit("\t\t     \tLines: \t\t\t       A\t\t\t\t"), Circuit(10));
+    EXPECT_EQ(Circuit("\t\t     \tLines: \t\t\t       A\t\t\t\t ;  \t0x6"), Circuit(10, 6));
+    EXPECT_EQ(Circuit("Lines: A; 0x7\n"), Circuit(10, 7));
+
+    EXPECT_THROW(Circuit(2, 10), std::runtime_error);
+
+    EXPECT_EQ(Circuit(0, 0), Circuit());
+    EXPECT_EQ(Circuit(0, 0), Circuit(0));
+
+    EXPECT_THROW(Circuit("Lines: A\n# text\n#comment\nNOT(B)\n#CNOT(3;0xc)\n\n\nSWAP(8,9)"), std::runtime_error);
+    EXPECT_THROW(Circuit("Lines: A;2\n# text\n#comment\nNOT(B)\n#CNOT(3;0xc)\n\n\nSWAP(8,9)"), std::runtime_error);
+    EXPECT_THROW(Circuit(std::vector<Gate>{Gate("NOT(2)", 10), Gate("SWAP(8,9)", 10)}, 10), std::runtime_error);
 
     EXPECT_EQ(Circuit("Lines: A\n# text\n#comment\nNOT(2)\n#CNOT(3;9)\n\n\nSWAP(8,9)"),
               Circuit(std::vector<Gate>{Gate("NOT(2)", 10), Gate("SWAP(8,9)", 10)}));
+    EXPECT_EQ(Circuit(std::vector<Gate>{Gate("NOT(2)", 10), Gate("SWAP(8,9)", 10)}, 8),
+              Circuit("Lines: 10;8\nNOT(2)\nSWAP(8,9)"));
 }
 
 TEST(Circuits, Act) {
@@ -59,6 +78,61 @@ TEST(Circuits, Act) {
     c1.add(Gate("kCNOT(1;0)", 2));
     c1.act(vec_bf3);
     EXPECT_EQ(vec_bf3, (std::vector<BooleanFunction>{BooleanFunction("0100"), BooleanFunction("1101")}));
+}
+
+TEST(Circuits, Memory) {
+    Circuit c("Lines: 4");
+    EXPECT_EQ(c.memory(), 0);
+    EXPECT_EQ(c.dim(), 4);
+
+    c.set_memory(2);
+    EXPECT_EQ(c.memory(), 2);
+    EXPECT_EQ(c.dim(), 4);
+
+    c.set_memory(3);
+    EXPECT_EQ(c.memory(), 3);
+    EXPECT_EQ(c.dim(), 4);
+
+    EXPECT_THROW(c.set_memory(5), std::runtime_error);
+
+    c.set_memory(0);
+    EXPECT_EQ(c.memory(), 0);
+    EXPECT_EQ(c.dim(), 4);
+
+    Circuit c1("Lines: 4; 0");
+    std::vector<bool> vec{0, 1, 1, 1};
+    c.act(vec);
+    EXPECT_EQ(vec, (std::vector<bool>{0, 1, 1, 1}));
+
+    c1.set_memory(1);
+    c1.act(vec);
+    EXPECT_EQ(vec, (std::vector<bool>{0, 1, 1, 0}));
+
+    c1.set_memory(3);
+    vec = {0, 1, 1, 1};
+    c1.act(vec);
+    EXPECT_EQ(vec, (std::vector<bool>{0, 0, 0, 0}));
+
+    Circuit c2("Lines: 3; 1");
+    std::vector<BooleanFunction> vec_bf{BooleanFunction("01101000"), BooleanFunction("11110111"),
+                                        BooleanFunction("01000100")};
+    c2.act(vec_bf);
+    EXPECT_EQ(vec_bf, (std::vector<BooleanFunction>{BooleanFunction("0110"), BooleanFunction("1101"),
+                                                    BooleanFunction("0000")}));
+
+    c2.add(Gate("NOT(0)", 3));
+    c2.add(Gate("SWAP(0,1)", 3));
+    c2.add(Gate("kCNOT(2;0)", 3));
+    vec_bf = {BooleanFunction("01101000"), BooleanFunction("11110111"), BooleanFunction("01000100")};
+    c2.act(vec_bf);
+    EXPECT_EQ(vec_bf, (std::vector<BooleanFunction>{BooleanFunction("1101"), BooleanFunction("1001"),
+                                                    BooleanFunction("1101")}));
+
+    c2.set_memory(2);
+    vec_bf = {BooleanFunction("01101000"), BooleanFunction("11110111"), BooleanFunction("01000100")};
+    c2.act(vec_bf);
+    EXPECT_EQ(vec_bf,
+              (std::vector<BooleanFunction>{BooleanFunction("10"), BooleanFunction("10"), BooleanFunction("10")}));
 }
 
 TEST(Circuits, Stream) {
