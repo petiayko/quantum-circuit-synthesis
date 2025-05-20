@@ -22,9 +22,9 @@ public:
 
     size_t dim() const noexcept;
 
-    void act(std::vector<bool> &) const;
+    void act(binary_vector &) const;
 
-    void act(std::vector<BooleanFunction> &) const;
+    void act(cf_set &) const;
 
     void inc() noexcept;
 
@@ -58,9 +58,9 @@ public:
 
     size_t memory() const noexcept;
 
-    void act(std::vector<bool> &) const;
+    void act(binary_vector &) const;
 
-    void act(std::vector<BooleanFunction> &) const;
+    void act(cf_set &) const;
 
     void add(const Gate &);
 

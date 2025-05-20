@@ -80,7 +80,7 @@ size_t Gate::dim() const noexcept {
     return dim_;
 }
 
-void Gate::act(std::vector<bool> &vec) const {
+void Gate::act(binary_vector &vec) const {
     if (vec.size() != dim_) {
         throw std::runtime_error{"Vector should have length equals to the Gate dimension"};
     }
@@ -103,7 +103,7 @@ void Gate::act(std::vector<bool> &vec) const {
     }
 }
 
-void Gate::act(std::vector<BooleanFunction> &vec) const {
+void Gate::act(cf_set &vec) const {
     if (vec.size() != dim_) {
         throw std::runtime_error{"Vector should have length equals to the Gate dimension"};
     }
@@ -303,7 +303,7 @@ size_t Circuit::memory() const noexcept {
     return memory_;
 }
 
-void Circuit::act(std::vector<bool> &vec) const {
+void Circuit::act(binary_vector &vec) const {
     if (vec.size() != dim_) {
         throw std::runtime_error{"Vector length should be equal to Circuit dimension"};
     }
@@ -317,7 +317,7 @@ void Circuit::act(std::vector<bool> &vec) const {
     }
 }
 
-void Circuit::act(std::vector<BooleanFunction> &vec) const {
+void Circuit::act(cf_set &vec) const {
     if (vec.size() != dim_) {
         throw std::runtime_error{"Vector should have length equals to the Circuit dimension"};
     }
@@ -334,9 +334,9 @@ void Circuit::act(std::vector<BooleanFunction> &vec) const {
         return;
     }
     for (auto &bf: vec) {
-        std::vector<bool> bf_values;
+        binary_vector bf_values;
         for (size_t i = 0; i < bf.size(); i++) {
-            if (!(i % static_cast<int>(std::pow(2, memory_)))) {
+            if (!(i % (1 << memory_))) {
                 bf_values.push_back(bf.vector()[i]);
             }
         }

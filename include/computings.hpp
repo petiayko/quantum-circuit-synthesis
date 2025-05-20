@@ -68,7 +68,7 @@ void process_config(const std::string &type, const std::string &algo, const std:
             LOG_WARNING("Starting reverse of quantum circuit", "The result will be written as a binary mapping");
         }
 
-        std::vector<BooleanFunction> vec_bf;
+        cf_set vec_bf;
         vec_bf.reserve(c.dim());
         for (size_t i = 0; i < c.dim(); i++) {
             vec_bf.emplace_back(i, c.dim());

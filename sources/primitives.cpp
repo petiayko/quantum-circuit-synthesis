@@ -9,12 +9,12 @@ BooleanFunction::BooleanFunction(size_t n, size_t dim) {
     if (n > dim - 1) {
         throw std::runtime_error{"Number of variable"};
     }
-    size_t len = std::pow(2, dim);
-    size_t counter = 0;
+    size_t len = 1 << dim;
+    int counter = 0;
     bool value = false;
     vec_.reserve(len);
     for (size_t i = 0; i < len; i++) {
-        if (counter == std::pow(2, dim - n - 1)) {
+        if (counter == 1 << (dim - n - 1)) {
             counter = 0;
             value = !value;
         }
@@ -24,11 +24,11 @@ BooleanFunction::BooleanFunction(size_t n, size_t dim) {
 }
 
 BooleanFunction::BooleanFunction(bool bit, size_t dim) {
-    // create const in basis {x_0, x_1, ..., x_{n-1}}
+    // create const f(x_0, x_1, ..., x_{n-1})=bit
     if (!dim) {
         throw std::runtime_error{"Invalid dimension"};
     }
-    for (size_t i = 0; i < std::pow(2, dim); i++) {
+    for (auto i = 0; i < 1 << dim; i++) {
         vec_.push_back(bit);
     }
 }
@@ -158,7 +158,7 @@ std::vector<int> BooleanFunction::RW_spectrum() const noexcept {
     for (size_t u = 0; u < vec_.size(); u++) {
         int sum = 0;
         for (size_t x = 0; x < vec_.size(); x++) {
-            sum += vec_[x] * std::pow(-1, binary_dot(u, x));
+            sum += vec_[x] * static_cast<int>(std::pow(-1, binary_dot(u, x)));
         }
         spectrum.push_back(sum);
     }
@@ -170,7 +170,7 @@ int BooleanFunction::adjacent_zeros() const noexcept {
     double sum = 0;
 
     for (size_t v = 0; v < this->size(); v++) {
-        size_t weight = 0;
+        int weight = 0;
         size_t v_copy = v;
         while (v_copy) {
             weight++;
@@ -194,19 +194,19 @@ BinaryMapping BooleanFunction::extend() const {
     // the values of the original function will be achieved by feeding zeros to additional inputs
     // if f(x1,...,xn) make f1(x1,...,x{n+1})=f+x{n+1}
     // f1(x1,...,xn,0)=f
-    std::vector<bool> bf_values;
+    binary_vector bf_values;
     size_t height;
     std::string truth_table_s;
     size_t width = this->dim();
     if (!this->is_balanced()) {
-        height = std::pow(2, this->dim() + 1) - 1;
+        height = (1 << (this->dim() + 1)) - 1;
         width += 1;
         for (auto bit: vec_) {
             bf_values.push_back(bit);
             bf_values.push_back(!bit);
         }
     } else {
-        height = std::pow(2, this->dim()) - 1;
+        height = (1 << this->dim()) - 1;
         bf_values = vec_;
     }
 
@@ -401,9 +401,9 @@ BinaryMapping BinaryMapping::extend() const {
             truth_table.insert(truth_table.begin(), column_bf.vector());
             continue;
         }
-        std::vector<bool> extension;
+        binary_vector extension;
         for (auto bit: cf_[i - inputs].vector()) {
-            for (size_t _ = 0; _ < std::pow(2, outputs); _++) {
+            for (auto _ = 0; _ < 1 << outputs; _++) {
                 extension.push_back(bit);
             }
         }
@@ -677,7 +677,7 @@ std::vector<std::vector<size_t>> Substitution::cycles() const noexcept {
 bool Substitution::is_odd() const noexcept {
     int indicator = 1;  // is not odd
     for (const auto &cycle: this->cycles()) {
-        indicator *= std::pow(-1, cycle.size() - 1);
+        indicator *= static_cast<int>(std::pow(-1, cycle.size() - 1));
     }
     return indicator == -1;
 }
