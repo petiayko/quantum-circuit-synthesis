@@ -42,4 +42,15 @@ T binary_to_decimal(const std::string &s) {
 }
 
 
+template<typename T>
+inline size_t binary_dot(T a, T b) {
+    unsigned int mask = a & b;
+    int count = 0;
+    while (mask) {
+        count += mask & 1;
+        mask >>= 1;
+    }
+    return count;
+}
+
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_MATH_HPP

@@ -60,8 +60,13 @@ void process_config(const std::string &type, const std::string &algo, const std:
             LOG_ERROR("Application parameters", "Algo was provided for reverse mode");
             throw std::runtime_error{"Algo was provided for reverse mode"};
         }
-        LOG_INFO("Starting converting of quantum circuit into substitution", "");
+        LOG_INFO("Starting reverse of quantum circuit", "");
         Circuit c(file_content);
+
+        if (c.memory()) {
+            LOG_INFO("Starting reverse of quantum circuit", "The quantum circuit has additional memory");
+            LOG_WARNING("Starting reverse of quantum circuit", "The result will be written as a binary mapping");
+        }
 
         std::vector<BooleanFunction> vec_bf;
         vec_bf.reserve(c.dim());
@@ -70,9 +75,13 @@ void process_config(const std::string &type, const std::string &algo, const std:
         }
         c.act(vec_bf);
 
-        Substitution sub(vec_bf);
-        LOG_INFO("Finishing converting of quantum circuit into substitution", "");
-        write_result<Substitution>(output_path, sub);
+        LOG_INFO("Finishing reverse of quantum circuit", "");
+        BinaryMapping bm(vec_bf);
+        if (!c.memory()) {
+            write_result<Substitution>(output_path, bm);
+            return;
+        }
+        write_result<BinaryMapping>(output_path, bm);
         return;
     }
 
@@ -92,6 +101,10 @@ void process_config(const std::string &type, const std::string &algo, const std:
     if (type == "tt") {
         BinaryMapping bm(file_content);
         Circuit c = synthesize(bm, algo);
+        if (c.memory()) {
+            LOG_INFO("Performing quantum circuit synthesis", "Provided binary mapping is not reversible");
+            LOG_WARNING("Performing quantum circuit synthesis", "Result quantum circuit will have additional memory");
+        }
         write_result<Circuit>(output_path, c);
     } else if (type == "sub") {
         Substitution sub(file_content);

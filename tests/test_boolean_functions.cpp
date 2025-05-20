@@ -62,9 +62,9 @@ TEST(BooleanFunction, Methods) {
     EXPECT_EQ(bf_2.weight(), 1);
     EXPECT_EQ(bf_2.is_balanced(), true);
 
-    EXPECT_EQ(bf_1.get_vector(), binary_vector({true, false, false, false, true, false, true, false}));
-    EXPECT_EQ(bf_2.get_vector(), binary_vector({false, true}));
-    EXPECT_EQ(BooleanFunction().get_vector(), binary_vector());
+    EXPECT_EQ(bf_1.vector(), binary_vector({true, false, false, false, true, false, true, false}));
+    EXPECT_EQ(bf_2.vector(), binary_vector({false, true}));
+    EXPECT_EQ(BooleanFunction().vector(), binary_vector());
 
     EXPECT_EQ(BooleanFunction("01").extend(), BinaryMapping({BooleanFunction("01")}));
     EXPECT_TRUE(BooleanFunction("01").extend().is_substitution());
@@ -84,6 +84,30 @@ TEST(BooleanFunction, Methods) {
                         BooleanFunction("0011001100110011"), BooleanFunction("0101100110010110")
             }));
     EXPECT_TRUE(BooleanFunction("00101001").extend().is_substitution());
+
+    EXPECT_EQ(BooleanFunction("01").RW_spectrum(), (std::vector<int>{1, -1}));
+    EXPECT_EQ(BooleanFunction("00").RW_spectrum(), (std::vector<int>{0, 0}));
+    EXPECT_EQ(BooleanFunction("1011").RW_spectrum(), (std::vector<int>{3, 1, -1, 1}));
+    EXPECT_EQ(BooleanFunction("11000100").RW_spectrum(), (std::vector<int>{3, -1, 3, -1, 1, 1, 1, 1}));
+    EXPECT_EQ(BooleanFunction("00000101").RW_spectrum(), (std::vector<int>{2, -2, 0, 0, -2, 2, 0, 0}));
+    EXPECT_EQ(BooleanFunction("1000111000010110").RW_spectrum(),
+              (std::vector<int>{7, 1, 1, -1, -3, -1, -1, 5, 1, 3, 3, 1, -1, 1, 1, -1}));
+
+    EXPECT_EQ(BooleanFunction("01").adjacent_zeros(), 0);
+    EXPECT_EQ(BooleanFunction("00").adjacent_zeros(), 1);
+    EXPECT_EQ(BooleanFunction("1011").adjacent_zeros(), 2);
+    EXPECT_EQ(BooleanFunction("11000100").adjacent_zeros(), 7);
+    EXPECT_EQ(BooleanFunction("00000101").adjacent_zeros(), 8);
+    EXPECT_EQ(BooleanFunction("1000111000010110").adjacent_zeros(), 14);
+    EXPECT_EQ(BooleanFunction("11111111111111111111111111111111").adjacent_zeros(), 80);
+    EXPECT_EQ(BooleanFunction("00000000000000000000000000000000").adjacent_zeros(), 80);
+
+    EXPECT_EQ(BooleanFunction("01").complexity(), 0);
+    EXPECT_EQ(BooleanFunction("00").complexity(), 5);
+    EXPECT_EQ(BooleanFunction("1011").complexity(), 2);
+    EXPECT_EQ(BooleanFunction("11000100").complexity(), 7);
+    EXPECT_EQ(BooleanFunction("00000101").complexity(), 104);
+    EXPECT_EQ(BooleanFunction("1000111000010110").complexity(), 14);
 }
 
 TEST(BooleanFunction, Operators) {

@@ -46,7 +46,7 @@ TEST(Substitutions, Constructor) {
     EXPECT_EQ(s, s2);
     EXPECT_EQ(s, Substitution("0 4 1 2 3 5"));
 
-    auto s_vec = Substitution("0 2 1 3").get_vector();
+    auto s_vec = Substitution("0 2 1 3").vector();
     EXPECT_EQ(s_vec[0], 0);
     EXPECT_EQ(s_vec[1], 2);
     EXPECT_EQ(s_vec[2], 1);
@@ -57,8 +57,8 @@ TEST(Substitutions, Methods) {
     Substitution s("0 2 4 1 3");
     EXPECT_EQ(s.power(), 5);
 
-    auto cycles = s.get_cycles();
-    auto transpositions = s.get_transpositions();
+    auto cycles = s.cycles();
+    auto transpositions = s.transpositions();
     ASSERT_EQ(cycles.size(), 2);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0}));
     EXPECT_EQ(cycles[1], (std::vector<size_t>{1, 2, 4, 3}));
@@ -68,8 +68,8 @@ TEST(Substitutions, Methods) {
                                                                       {4, 3}}));
 
     Substitution s1("0 1 2 3");
-    cycles = s1.get_cycles();
-    transpositions = s1.get_transpositions();
+    cycles = s1.cycles();
+    transpositions = s1.transpositions();
     ASSERT_EQ(cycles.size(), 4);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0}));
     EXPECT_EQ(cycles[1], (std::vector<size_t>{1}));
@@ -80,8 +80,8 @@ TEST(Substitutions, Methods) {
     EXPECT_TRUE(s1.is_identical());
 
     Substitution s2("1 0 3 2 5 4 7 6");
-    cycles = s2.get_cycles();
-    transpositions = s2.get_transpositions();
+    cycles = s2.cycles();
+    transpositions = s2.transpositions();
     ASSERT_EQ(cycles.size(), 4);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 1}));
     EXPECT_EQ(cycles[1], (std::vector<size_t>{2, 3}));
@@ -95,8 +95,8 @@ TEST(Substitutions, Methods) {
     EXPECT_FALSE(s2.is_identical());
 
     Substitution s3("0");
-    cycles = s3.get_cycles();
-    transpositions = s3.get_transpositions();
+    cycles = s3.cycles();
+    transpositions = s3.transpositions();
     ASSERT_EQ(cycles.size(), 1);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0}));
     EXPECT_FALSE(s3.is_odd());

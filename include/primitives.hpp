@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <numeric>
 #include <sstream>
@@ -57,9 +58,15 @@ public:
 
     bool is_balanced() const noexcept;
 
+    std::vector<int> RW_spectrum() const noexcept;
+
+    int adjacent_zeros() const noexcept;
+
+    int complexity() const noexcept;
+
     BinaryMapping extend() const;
 
-    binary_vector get_vector() const noexcept;
+    binary_vector vector() const noexcept;
 
     std::string to_table(char = '\t') const noexcept;
 
@@ -101,7 +108,7 @@ public:
 
     bool operator!=(const BinaryMapping &) const;
 
-    cf_set get_coordinate_functions() const noexcept;
+    cf_set coordinate_functions() const noexcept;
 
     size_t inputs_number() const noexcept;
 
@@ -149,11 +156,11 @@ public:
 
     bool is_identical() const noexcept;
 
-    std::vector<size_t> get_vector() const noexcept;
+    std::vector<size_t> vector() const noexcept;
 
-    std::vector<std::pair<size_t, size_t>> get_transpositions() const noexcept;
+    std::vector<std::pair<size_t, size_t>> transpositions() const noexcept;
 
-    std::vector<std::vector<size_t>> get_cycles() const noexcept;
+    std::vector<std::vector<size_t>> cycles() const noexcept;
 
     bool is_odd() const noexcept;
 

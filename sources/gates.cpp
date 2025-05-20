@@ -330,16 +330,17 @@ void Circuit::act(std::vector<BooleanFunction> &vec) const {
     for (const auto &g: gates_) {
         g.act(vec);
     }
-    if (memory_) {
-        for (auto &bf: vec) {
-            std::vector<bool> bf_values;
-            for (size_t i = 0; i < bf.size(); i++) {
-                if (!(i % static_cast<int>(std::pow(2, memory_)))) {
-                    bf_values.push_back(bf.get_vector()[i]);
-                }
+    if (!memory_) {
+        return;
+    }
+    for (auto &bf: vec) {
+        std::vector<bool> bf_values;
+        for (size_t i = 0; i < bf.size(); i++) {
+            if (!(i % static_cast<int>(std::pow(2, memory_)))) {
+                bf_values.push_back(bf.vector()[i]);
             }
-            bf = BooleanFunction(bf_values);
         }
+        bf = BooleanFunction(bf_values);
     }
 }
 

@@ -147,9 +147,46 @@ size_t BooleanFunction::weight() const noexcept {
     return std::accumulate(vec_.begin(), vec_.end(), 0);
 }
 
-
 bool BooleanFunction::is_balanced() const noexcept {
     return this->weight() * 2 == this->size();
+}
+
+std::vector<int> BooleanFunction::RW_spectrum() const noexcept {
+    std::vector<int> spectrum;
+    spectrum.reserve(vec_.size());
+
+    for (size_t u = 0; u < vec_.size(); u++) {
+        int sum = 0;
+        for (size_t x = 0; x < vec_.size(); x++) {
+            sum += vec_[x] * std::pow(-1, binary_dot(u, x));
+        }
+        spectrum.push_back(sum);
+    }
+    return spectrum;
+}
+
+int BooleanFunction::adjacent_zeros() const noexcept {
+    auto spectrum = this->RW_spectrum();
+    double sum = 0;
+
+    for (size_t v = 0; v < this->size(); v++) {
+        size_t weight = 0;
+        size_t v_copy = v;
+        while (v_copy) {
+            weight++;
+            v_copy &= v_copy - 1;
+        }
+        sum += weight * spectrum[v] * spectrum[v];
+    }
+    return static_cast<int>((this->size() * this->dim() - sum / std::pow(2, static_cast<int>(this->dim()) - 2)) / 2);
+}
+
+int BooleanFunction::complexity() const noexcept {
+    auto spectrum = this->RW_spectrum();
+    return this->adjacent_zeros() + this->dim() * this->size() *
+                                    std::count_if(spectrum.begin(), spectrum.end(), [](int v) {
+                                        return !bool(v);
+                                    });
 }
 
 BinaryMapping BooleanFunction::extend() const {
@@ -164,13 +201,13 @@ BinaryMapping BooleanFunction::extend() const {
     if (!this->is_balanced()) {
         height = std::pow(2, this->dim() + 1) - 1;
         width += 1;
-        for (auto bit: this->get_vector()) {
+        for (auto bit: vec_) {
             bf_values.push_back(bit);
             bf_values.push_back(!bit);
         }
     } else {
         height = std::pow(2, this->dim()) - 1;
-        bf_values = this->get_vector();
+        bf_values = vec_;
     }
 
     size_t even = height;
@@ -187,7 +224,7 @@ BinaryMapping BooleanFunction::extend() const {
     return BinaryMapping(truth_table_s);
 }
 
-binary_vector BooleanFunction::get_vector() const noexcept {
+binary_vector BooleanFunction::vector() const noexcept {
     return vec_;
 }
 
@@ -278,7 +315,7 @@ BinaryMapping::BinaryMapping(const BinaryMapping &mp) {
 BinaryMapping::BinaryMapping(const Substitution &sub) {
     auto power = static_cast<size_t>(std::log2(sub.power()));
     table truth_table(power);
-    for (const auto &v: sub.get_vector()) {
+    for (const auto &v: sub.vector()) {
         auto v_binary = decimal_to_binary(v, power);
         for (size_t i = 0; i < v_binary.size(); i++) {
             truth_table[i].push_back(v_binary[i] == '1');
@@ -323,7 +360,7 @@ bool BinaryMapping::operator!=(const BinaryMapping &mp) const {
     return !this->operator==(mp);
 }
 
-cf_set BinaryMapping::get_coordinate_functions() const noexcept {
+cf_set BinaryMapping::coordinate_functions() const noexcept {
     return cf_;
 }
 
@@ -361,16 +398,16 @@ BinaryMapping BinaryMapping::extend() const {
     for (int i = inputs + outputs - 1; i >= 0; i--) {
         auto column_bf = BooleanFunction(static_cast<size_t>(i), outputs + inputs);
         if (i - inputs < 0) {
-            truth_table.insert(truth_table.begin(), column_bf.get_vector());
+            truth_table.insert(truth_table.begin(), column_bf.vector());
             continue;
         }
         std::vector<bool> extension;
-        for (auto bit: cf_[i - inputs].get_vector()) {
+        for (auto bit: cf_[i - inputs].vector()) {
             for (size_t _ = 0; _ < std::pow(2, outputs); _++) {
                 extension.push_back(bit);
             }
         }
-        truth_table.insert(truth_table.begin(), (BooleanFunction(extension) + column_bf).get_vector());
+        truth_table.insert(truth_table.begin(), (BooleanFunction(extension) + column_bf).vector());
     }
     return BinaryMapping(truth_table);
 }
@@ -378,7 +415,7 @@ BinaryMapping BinaryMapping::extend() const {
 table BinaryMapping::to_table_() const noexcept {
     table result;
     for (const auto &bf: cf_) {
-        result.push_back(bf.get_vector());
+        result.push_back(bf.vector());
     }
     return result;
 }
@@ -489,7 +526,7 @@ Substitution::Substitution(const cf_set &cf) {
     table truth_table(bf_dim);
     std::transform(cf.begin(), cf.end(), truth_table.begin(),
                    [](const auto &bf) {
-                       return bf.get_vector();
+                       return bf.vector();
                    });
     sub_ = std::vector<size_t>(bf_size);
     for (size_t i = 0; i < bf_size; i++) {
@@ -550,7 +587,7 @@ Substitution::Substitution(const Substitution &sub) {
 }
 
 Substitution::Substitution(const BinaryMapping &mp) {
-    sub_ = Substitution(mp.get_coordinate_functions()).sub_;
+    sub_ = Substitution(mp.coordinate_functions()).sub_;
 }
 
 Substitution &Substitution::operator=(const Substitution &sub) {
@@ -599,13 +636,13 @@ bool Substitution::is_identical() const noexcept {
     return true;
 }
 
-std::vector<size_t> Substitution::get_vector() const noexcept {
+std::vector<size_t> Substitution::vector() const noexcept {
     return sub_;
 }
 
-std::vector<std::pair<size_t, size_t>> Substitution::get_transpositions() const noexcept {
+std::vector<std::pair<size_t, size_t>> Substitution::transpositions() const noexcept {
     std::vector<std::pair<size_t, size_t>> transpositions;
-    for (const auto &cycle: this->get_cycles()) {
+    for (const auto &cycle: this->cycles()) {
         if (cycle.size() == 1) {
             continue;
         }
@@ -616,7 +653,7 @@ std::vector<std::pair<size_t, size_t>> Substitution::get_transpositions() const 
     return transpositions;
 }
 
-std::vector<std::vector<size_t>> Substitution::get_cycles() const noexcept {
+std::vector<std::vector<size_t>> Substitution::cycles() const noexcept {
     std::unordered_set<size_t> visited;
     std::vector<std::vector<size_t>> cycles;
 
@@ -639,7 +676,7 @@ std::vector<std::vector<size_t>> Substitution::get_cycles() const noexcept {
 
 bool Substitution::is_odd() const noexcept {
     int indicator = 1;  // is not odd
-    for (const auto &cycle: this->get_cycles()) {
+    for (const auto &cycle: this->cycles()) {
         indicator *= std::pow(-1, cycle.size() - 1);
     }
     return indicator == -1;

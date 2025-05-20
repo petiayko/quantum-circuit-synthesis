@@ -48,7 +48,7 @@ TEST(BinaryMappings, Constructor) {
     EXPECT_EQ(m2, m3);
     EXPECT_NE(m1, BinaryMapping("0\n1"));
 
-    auto vec1 = BinaryMapping("101\n111\n001\n110\n100\n111\n101\n000").get_coordinate_functions();
+    auto vec1 = BinaryMapping("101\n111\n001\n110\n100\n111\n101\n000").coordinate_functions();
     EXPECT_EQ(vec1[0], BooleanFunction("11011110"));
     EXPECT_EQ(vec1[1], BooleanFunction("01010100"));
     EXPECT_EQ(vec1[2], BooleanFunction("11100110"));
@@ -62,7 +62,7 @@ TEST(BinaryMappings, Constructor) {
                                             {1, 0, 0, 0},
                                             {0, 1, 0, 1},
                                             {1, 0, 0, 1},
-                                    })).get_coordinate_functions();
+                                    })).coordinate_functions();
     EXPECT_EQ(vec2[0], BooleanFunction("1101"));
     EXPECT_EQ(vec2[1], BooleanFunction("0010"));
     EXPECT_EQ(vec2[2], BooleanFunction("0100"));
@@ -75,7 +75,7 @@ TEST(BinaryMappings, Constructor) {
     auto vec3 = BinaryMapping(table({
                                             {1, 1, 0, 1, 0, 0, 1, 0},
                                             {0, 1, 1, 1, 1, 0, 0, 0},
-                                    })).get_coordinate_functions();
+                                    })).coordinate_functions();
     EXPECT_EQ(vec3[0], BooleanFunction("11010010"));
     EXPECT_EQ(vec3[1], BooleanFunction("01111000"));
 
@@ -83,7 +83,7 @@ TEST(BinaryMappings, Constructor) {
                                              BooleanFunction("01"),
                                              BooleanFunction("10"),
                                              BooleanFunction("01")
-                                     })).get_coordinate_functions();
+                                     })).coordinate_functions();
     EXPECT_EQ(vec4[0], BooleanFunction("01"));
     EXPECT_EQ(vec4[1], BooleanFunction("10"));
     EXPECT_EQ(vec4[2], BooleanFunction("01"));

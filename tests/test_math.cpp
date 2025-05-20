@@ -63,3 +63,10 @@ TEST(Math, BinaryToDecimal) {
     EXPECT_EQ(binary_to_decimal<int>("10011"), 19);
     EXPECT_EQ(binary_to_decimal<int>("110110010111011000000101"), 14251525);
 }
+
+TEST(Math, BinaryDot) {
+    EXPECT_EQ(binary_dot(0, 1), 0);         // 0 * 1
+    EXPECT_EQ(binary_dot(10, 1), 0);        // 1010 * 0001
+    EXPECT_EQ(binary_dot(7, 3), 2);         // 111 * 11
+    EXPECT_EQ(binary_dot(1023, 2047), 10);  // 1111111111 * 11111111111
+}
