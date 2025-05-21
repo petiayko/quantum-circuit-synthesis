@@ -2,6 +2,7 @@
 
 #include "primitives.hpp"
 
+
 TEST(Substitutions, Constructor) {
     EXPECT_THROW(Substitution(cf_set({})), SubException);
     EXPECT_THROW(Substitution(cf_set({BooleanFunction("1010"), BooleanFunction("10")})), SubException);

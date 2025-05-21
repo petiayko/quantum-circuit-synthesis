@@ -25,6 +25,7 @@ find_package(GTest CONFIG REQUIRED)
 add_library(${PROJECT_NAME} STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/sources/gates.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/sources/primitives.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/sources/synthesis.cpp
 )
 
 add_executable(qcs

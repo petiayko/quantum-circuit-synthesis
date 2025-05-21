@@ -4,8 +4,9 @@
 #include <filesystem>
 
 #include "exseptions.hpp"
-#include "gates.hpp"
 #include "logger.hpp"
+#include "synthesis.hpp"
+
 
 bool overwrite_confirmation() {
     std::cout << "Output file is already exists. Do you want to overwrite it [y/n]? ";
@@ -84,9 +85,12 @@ void process_config(const std::string &type, const std::string &algo, const std:
     if (algo.empty()) {
         throw ArgumentException("Synthesis algorithm was not provided");
     }
-    if (algo == "enum") {
-        LOG_WARNING("Application parameters",
-                    "Selected synthesis algorithm is enumeration (enum), it does not guarantee result and fast execution time");
+    if (algo == "dummy") {
+        LOG_WARNING("Application parameters", "Selected synthesis algorithm is 'dummy', it always builds a quantum "
+                                              "circuit with additional memory");
+        LOG_WARNING("Application parameters", "Selected synthesis algorithm is 'dummy', number of additional memory "
+                                              "lines in the resulting quantum circuit will be equal to the number of "
+                                              "coordinate functions");
     } else if (algo != "rw") {
         throw ArgumentException("Unknown synthesis algorithm: " + algo);
     }
@@ -95,7 +99,7 @@ void process_config(const std::string &type, const std::string &algo, const std:
     if (type == "tt") {
         BinaryMapping bm(file_content);
         Circuit c = synthesize(bm, algo);
-        if (c.memory()) {
+        if (c.memory() && algo == "rw") {
             LOG_INFO("Performing quantum circuit synthesis", "Provided binary mapping is not reversible");
             LOG_WARNING("Performing quantum circuit synthesis",
                         "Resulting quantum circuit will have additional memory");

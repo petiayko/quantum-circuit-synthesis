@@ -1,5 +1,6 @@
 #include "gates.hpp"
 
+
 Gate::Gate(GateType type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
     init_(type, nests, controls, dim);
 }
@@ -431,67 +432,4 @@ void Circuit::by_string_(const std::string &s) {
         }
         gates_.emplace_back(line, dim_);
     }
-}
-
-// Synthesize
-
-Circuit synthesize(const BinaryMapping &bm, const std::string &algo) {
-    if (algo == "enum") {
-        return enumeration_algorithm(bm);
-    } else if (algo == "rw") {
-        return RW_algorithm(bm);
-    }
-    throw SynthException("Unknown algorithm: " + algo);
-}
-
-Circuit synthesize(const Substitution &sub, const std::string &algo = "rw") {
-    if (!is_power_of_2(sub.power())) {
-        throw;
-    }
-    if (algo == "enum") {
-        return enumeration_algorithm(sub);
-    } else if (algo == "rw") {
-        return RW_algorithm(sub);
-    }
-    throw SynthException("Unknown algorithm: " + algo);
-}
-
-Circuit enumeration_algorithm(const BinaryMapping &bm) {
-//    if (bm.inputs_number() != bm.outputs_number()) {
-//        throw std::runtime_error{"Unable to synthesis Circuit for this binary mapping"};
-//    }
-    auto c = Circuit(bm.inputs_number());
-
-    return c;
-}
-
-Circuit RW_algorithm(const BinaryMapping &bm) {
-//    if (bm.inputs_number() != bm.outputs_number()) {
-//        throw std::runtime_error{"Unable to synthesis Circuit for this binary mapping"};
-//    }
-    auto c = Circuit(bm.inputs_number());
-
-    return c;
-}
-
-Circuit enumeration_algorithm(const Substitution &sub) {
-    if (!is_power_of_2(sub.power())) {
-        throw SynthException("Substitution size must be power of 2");
-    }
-    if (sub.is_identical()) {
-        return Circuit(sub.power());
-    }
-    BinaryMapping bm(sub);
-    return enumeration_algorithm(bm);
-}
-
-Circuit RW_algorithm(const Substitution &sub) {
-    if (!is_power_of_2(sub.power())) {
-        throw SynthException("Substitution size should be power of 2");
-    }
-    if (sub.is_identical()) {
-        return Circuit(sub.power());
-    }
-    BinaryMapping bm(sub);
-    return RW_algorithm(bm);
 }

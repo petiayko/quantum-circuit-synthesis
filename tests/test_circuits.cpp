@@ -2,6 +2,7 @@
 
 #include "gates.hpp"
 
+
 TEST(Circuits, Constructor) {
     EXPECT_THROW(Circuit(""), CircuitException);
     EXPECT_THROW(Circuit("Lines: -1"), CircuitException);

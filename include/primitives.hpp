@@ -16,6 +16,7 @@
 #include "math.hpp"
 #include "strings.hpp"
 
+
 using binary_vector = std::vector<bool>;
 using table = std::vector<binary_vector>;
 
@@ -58,6 +59,8 @@ public:
     size_t weight() const noexcept;
 
     bool is_balanced() const noexcept;
+
+    std::vector<bool> mobius_transformation() const noexcept;
 
     std::vector<int> RW_spectrum() const noexcept;
 

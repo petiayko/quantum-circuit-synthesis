@@ -2,6 +2,7 @@
 
 #include "gates.hpp"
 
+
 TEST(Gates, Constructor) {
     EXPECT_THROW(Gate(GateType(-1), {}, {}, 2), GateException);
     EXPECT_THROW(Gate(GateType(0), {}, {}, 2), GateException);

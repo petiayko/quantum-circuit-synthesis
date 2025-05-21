@@ -4,6 +4,7 @@
 #include "primitives.hpp"
 #include "strings.hpp"
 
+
 #define GateType(type) static_cast<GateType>(type)
 
 enum class GateType {
@@ -75,17 +76,5 @@ private:
 
     void by_string_(const std::string &);
 };
-
-Circuit synthesize(const BinaryMapping &, const std::string &);
-
-Circuit synthesize(const Substitution &, const std::string &);
-
-Circuit enumeration_algorithm(const BinaryMapping &);
-
-Circuit enumeration_algorithm(const Substitution &);
-
-Circuit RW_algorithm(const BinaryMapping &);
-
-Circuit RW_algorithm(const Substitution &);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP

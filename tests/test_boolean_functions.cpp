@@ -2,6 +2,7 @@
 
 #include "primitives.hpp"
 
+
 TEST(BooleanFunction, Constructor) {
     EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 0), BFException);
     EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 1), BFException);
@@ -84,6 +85,15 @@ TEST(BooleanFunction, Methods) {
                         BooleanFunction("0011001100110011"), BooleanFunction("0101100110010110")
             }));
     EXPECT_TRUE(BooleanFunction("00101001").extend().is_substitution());
+
+    EXPECT_EQ(BooleanFunction("0000").mobius_transformation(), (std::vector<bool>{0, 0, 0, 0}));
+    EXPECT_EQ(BooleanFunction("1111").mobius_transformation(), (std::vector<bool>{1, 0, 0, 0}));
+    EXPECT_EQ(BooleanFunction("1001").mobius_transformation(), (std::vector<bool>{1, 1, 1, 0}));
+    EXPECT_EQ(BooleanFunction("0110").mobius_transformation(), (std::vector<bool>{0, 1, 1, 0}));
+    EXPECT_EQ(BooleanFunction("1000").mobius_transformation(), (std::vector<bool>{1, 1, 1, 1}));
+    EXPECT_EQ(BooleanFunction("11101101").mobius_transformation(), (std::vector<bool>{1, 0, 0, 1, 0, 0, 1, 0}));
+    EXPECT_EQ(BooleanFunction("00010010").mobius_transformation(), (std::vector<bool>{0, 0, 0, 1, 0, 0, 1, 0}));
+    EXPECT_EQ(BooleanFunction("10000000").mobius_transformation(), (std::vector<bool>{1, 1, 1, 1, 1, 1, 1, 1}));
 
     EXPECT_EQ(BooleanFunction("01").RW_spectrum(), (std::vector<int>{1, -1}));
     EXPECT_EQ(BooleanFunction("00").RW_spectrum(), (std::vector<int>{0, 0}));

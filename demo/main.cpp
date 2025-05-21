@@ -5,6 +5,7 @@
 
 #include "computings.hpp"
 
+
 using configuration = std::map<std::string, std::string>;
 
 static const std::string version = "1.0";
@@ -37,7 +38,7 @@ void print_program_help() {
     std::cout << std::endl;
 
     std::cout << "Synthesis options:" << std::endl;
-    std::cout << "  --algo arg      algorithm to synthesis quantum circuit ('enum', 'rw')" << std::endl;
+    std::cout << "  --algo arg      algorithm to synthesis quantum circuit ('dummy', 'rw')" << std::endl;
     std::cout << std::endl;
 
     std::cout << "Parameters:" << std::endl;

@@ -2,6 +2,7 @@
 
 #include "math.hpp"
 
+
 TEST(Math, IsPowerOf2) {
     EXPECT_TRUE(is_power_of_2(1));
     EXPECT_TRUE(is_power_of_2(2));
@@ -69,4 +70,12 @@ TEST(Math, BinaryDot) {
     EXPECT_EQ(binary_dot(10, 1), 0);        // 1010 * 0001
     EXPECT_EQ(binary_dot(7, 3), 2);         // 111 * 11
     EXPECT_EQ(binary_dot(1023, 2047), 10);  // 1111111111 * 11111111111
+}
+
+TEST(Math, Bits) {
+    EXPECT_EQ(bits_mask(0, 3), (std::vector<size_t>{}));
+    EXPECT_EQ(bits_mask(5, 3), (std::vector<size_t>{0, 2}));
+    EXPECT_EQ(bits_mask(5, 5), (std::vector<size_t>{2, 4}));
+    EXPECT_EQ(bits_mask(15, 4), (std::vector<size_t>{0, 1, 2, 3}));
+    EXPECT_EQ(bits_mask(15, 10), (std::vector<size_t>{6, 7, 8, 9}));
 }

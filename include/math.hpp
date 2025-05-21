@@ -7,6 +7,7 @@
 
 #include "exseptions.hpp"
 
+
 template<class T = size_t>
 inline bool is_power_of_2(T v) {
     return v && !(v & (v - 1));
@@ -53,6 +54,18 @@ inline size_t binary_dot(T a, T b) {
         mask >>= 1;
     }
     return count;
+}
+
+template<typename T = size_t>
+inline std::vector<size_t> bits_mask(T a, int base) {
+    std::vector<size_t> bits;
+    auto a_binary = decimal_to_binary<T>(a, base);
+    for (size_t i = 0; i < a_binary.size(); i++) {
+        if (a_binary[i] == '1') {
+            bits.push_back(i);
+        }
+    }
+    return bits;
 }
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_MATH_HPP

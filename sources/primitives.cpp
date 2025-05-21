@@ -1,5 +1,6 @@
 #include "primitives.hpp"
 
+
 // Boolean function
 BooleanFunction::BooleanFunction(size_t n, size_t dim) {
     // create bf x_n in basis {x_0, x_1, ..., x_{n-1}}
@@ -149,6 +150,21 @@ size_t BooleanFunction::weight() const noexcept {
 
 bool BooleanFunction::is_balanced() const noexcept {
     return this->weight() * 2 == this->size();
+}
+
+std::vector<bool> BooleanFunction::mobius_transformation() const noexcept {
+    std::vector<bool> anf(vec_);
+
+    for (size_t s = 0; s < this->dim(); ++s) {
+        const size_t mask = 1 << s;
+        for (size_t i = 0; i < vec_.size(); i++) {
+            if (i & mask) {
+                anf[i] = anf[i] ^ anf[i ^ mask];
+            }
+        }
+    }
+
+    return anf;
 }
 
 std::vector<int> BooleanFunction::RW_spectrum() const noexcept {

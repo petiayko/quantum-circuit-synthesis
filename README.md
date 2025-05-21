@@ -37,7 +37,7 @@ Operating modes:
 --type arg      type of input ('tt' truth table, 'sub' substitution, 'qc' quantum circuit)
 
 Synthesis options:
---algo arg      algorithm to synthesis quantum circuit ('enum', 'rw')
+--algo arg      algorithm to synthesis quantum circuit ('dummy', 'rw')
 
 Parameters:
 --input arg     path to input file
@@ -67,8 +67,8 @@ Parameters:
 
 * `--alog arg` или `-a arg` определяет алгоритм синтеза квантовой схемы. Обязательный параметр. Аргумент обязательный.
   Допустимые значения аргумента:
-    * `enum` - переборный алгоритм;
-    * `rw` - алгоритм, основанный на спектре Радемахера-Уолша;
+    * `dummy` - алгоритм независимого построения каждой координатной функции отображения;
+    * `rw` - алгоритм, основанный на спектре Радемахера-Уолша координатных функций отображения;
 
 * `--input arg` или `-i arg` определяет путь к файлу с входными данными. Обязательный параметр. Аргумент обязательный.
 
@@ -195,4 +195,10 @@ f_0(1, ..., 1)& f_1(1, ..., 1)& ...& f_m(1, ..., 1)&
 
 ```bash
 ./qcs --type tt --algo rw --input "truth_table.txt"
+```
+
+## Запуск тестов
+
+```bash
+./tests
 ```

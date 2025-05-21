@@ -2,6 +2,7 @@
 
 #include "primitives.hpp"
 
+
 TEST(BinaryMappings, Constructor) {
     EXPECT_THROW(BinaryMapping(cf_set({})), BMException);
     EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("1001"),

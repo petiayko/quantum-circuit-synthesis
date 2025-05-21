@@ -2,6 +2,7 @@
 
 #include "strings.hpp"
 
+
 TEST(Strings, Trim) {
     std::string s = "";
     trim(s);

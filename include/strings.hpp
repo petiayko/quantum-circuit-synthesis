@@ -7,6 +7,7 @@
 
 #include "exseptions.hpp"
 
+
 inline void trim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char ch) {
         return !std::isspace(ch);
