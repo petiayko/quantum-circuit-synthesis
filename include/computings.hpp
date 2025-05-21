@@ -3,6 +3,7 @@
 
 #include <filesystem>
 
+#include "exseptions.hpp"
 #include "gates.hpp"
 #include "logger.hpp"
 
@@ -10,7 +11,7 @@ bool overwrite_confirmation() {
     std::cout << "Output file is already exists. Do you want to overwrite it [y/n]? ";
     std::string answer;
     std::cin >> answer;
-    return (answer == "y" || answer == "Y");
+    return (answer == "n" || answer == "N");
 }
 
 template<typename T>
@@ -26,15 +27,13 @@ void write_result(const std::string &output_path, const T &result) {
             LOG_WARNING("Writing result", "Will be written to cout");
             std::cout << result << std::endl;
             return;
-        } else {
-            LOG_WARNING("Writing result", "File will be overwritten");
         }
+        LOG_WARNING("Writing result", "File will be overwritten");
     }
 
     std::fstream file(output_path, std::ios::out);
     if (!file) {
-        LOG_ERROR("Writing result", "Impossible to use this file");
-        throw std::runtime_error{"Impossible to use this file"};
+        throw IOException("Impossible to use this file");
     }
     file << result;
     file.close();
@@ -43,13 +42,11 @@ void write_result(const std::string &output_path, const T &result) {
 void process_config(const std::string &type, const std::string &algo, const std::string &input_path,
                     const std::string &output_path) {
     if (input_path.empty()) {
-        LOG_ERROR("Application parameters", "Path to input file was not provided");
-        throw std::runtime_error{"Path to input file was not provided"};
+        throw ArgumentException("Path to input file was not provided");
     }
     std::ifstream file(input_path, std::ios::in);
     if (!file.is_open()) {
-        LOG_ERROR("Application parameters", std::string("Unable to open input file: ") + input_path);
-        throw std::runtime_error{std::string("Unable to open input file: ") + input_path};
+        throw IOException("Unable to open input file: " + input_path);
     }
     std::stringstream file_content;
     file_content << file.rdbuf();
@@ -57,8 +54,7 @@ void process_config(const std::string &type, const std::string &algo, const std:
 
     if (type == "qc") {
         if (!algo.empty()) {
-            LOG_ERROR("Application parameters", "Algo was provided for reverse mode");
-            throw std::runtime_error{"Algo was provided for reverse mode"};
+            throw ArgumentException("Algo was provided for reverse mode");
         }
         LOG_INFO("Starting reverse of quantum circuit", "");
         Circuit c(file_content);
@@ -86,24 +82,23 @@ void process_config(const std::string &type, const std::string &algo, const std:
     }
 
     if (algo.empty()) {
-        LOG_ERROR("Application parameters", "Synthesis algorithm was not provided");
-        throw std::runtime_error{"Synthesis algorithm was not provided"};
+        throw ArgumentException("Synthesis algorithm was not provided");
     }
     if (algo == "enum") {
         LOG_WARNING("Application parameters",
-                    "Selected synthesis algorithm is enumeration (enum), it does not guarantee results and fast execution time");
+                    "Selected synthesis algorithm is enumeration (enum), it does not guarantee result and fast execution time");
     } else if (algo != "rw") {
-        LOG_ERROR("Application parameters", std::string("Unknown synthesis algorithm: ") + algo);
-        throw std::runtime_error{std::string("Unknown synthesis algorithm: ") + algo};
+        throw ArgumentException("Unknown synthesis algorithm: " + algo);
     }
 
-    LOG_INFO("Starting of quantum circuit synthesis", "");
+    LOG_INFO("Starting quantum circuit synthesis", "");
     if (type == "tt") {
         BinaryMapping bm(file_content);
         Circuit c = synthesize(bm, algo);
         if (c.memory()) {
             LOG_INFO("Performing quantum circuit synthesis", "Provided binary mapping is not reversible");
-            LOG_WARNING("Performing quantum circuit synthesis", "Result quantum circuit will have additional memory");
+            LOG_WARNING("Performing quantum circuit synthesis",
+                        "Resulting quantum circuit will have additional memory");
         }
         write_result<Circuit>(output_path, c);
     } else if (type == "sub") {
@@ -111,10 +106,9 @@ void process_config(const std::string &type, const std::string &algo, const std:
         Circuit c = synthesize(sub, algo);
         write_result<Circuit>(output_path, c);
     } else {
-        LOG_ERROR("Application parameters", std::string("Unknown type of input: ") + type);
-        throw std::runtime_error{std::string("Unknown type of input: ") + type};
+        throw ArgumentException("Unknown type of input: " + type);
     }
-    LOG_INFO("Finishing of quantum circuit synthesis", "");
+    LOG_INFO("Finishing quantum circuit synthesis", "");
 }
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_COMPUTINGS_HPP

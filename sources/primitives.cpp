@@ -4,10 +4,10 @@
 BooleanFunction::BooleanFunction(size_t n, size_t dim) {
     // create bf x_n in basis {x_0, x_1, ..., x_{n-1}}
     if (!dim) {
-        throw std::runtime_error{"Invalid dimension"};
+        throw BFException("Invalid BF dimension");
     }
     if (n > dim - 1) {
-        throw std::runtime_error{"Number of variable"};
+        throw BFException("Invalid number of bf variables");
     }
     size_t len = 1 << dim;
     int counter = 0;
@@ -26,7 +26,7 @@ BooleanFunction::BooleanFunction(size_t n, size_t dim) {
 BooleanFunction::BooleanFunction(bool bit, size_t dim) {
     // create const f(x_0, x_1, ..., x_{n-1})=bit
     if (!dim) {
-        throw std::runtime_error{"Invalid dimension"};
+        throw BFException("Invalid BF dimension");
     }
     for (auto i = 0; i < 1 << dim; i++) {
         vec_.push_back(bit);
@@ -35,14 +35,14 @@ BooleanFunction::BooleanFunction(bool bit, size_t dim) {
 
 BooleanFunction::BooleanFunction(const binary_vector &v) {
     if (v.size() == 1 || !is_power_of_2(v.size())) {
-        throw std::runtime_error{"Invalid length"};
+        throw BFException("Invalid BF vector length");
     }
     vec_ = v;
 }
 
 BooleanFunction::BooleanFunction(const std::vector<int> &v) {
     if (v.size() == 1 || !is_power_of_2(v.size())) {
-        throw std::runtime_error{"Invalid length"};
+        throw BFException("Invalid BF vector length");
     }
     for (auto i: v) {
         if (i == 1) {
@@ -50,14 +50,14 @@ BooleanFunction::BooleanFunction(const std::vector<int> &v) {
         } else if (!i) {
             vec_.push_back(false);
         } else {
-            throw std::runtime_error{"Unexpected value"};
+            throw BFException("Unexpected value if BF vector: " + std::to_string(i));
         }
     }
 }
 
 BooleanFunction::BooleanFunction(const std::string &s) {
     if (s.size() == 1 || !is_power_of_2(s.size())) {
-        throw std::runtime_error{"Invalid length"};
+        throw BFException("Invalid BF vector length");
     }
     for (auto i: s) {
         if (i == '1') {
@@ -65,7 +65,7 @@ BooleanFunction::BooleanFunction(const std::string &s) {
         } else if (i == '0') {
             vec_.push_back(false);
         } else {
-            throw std::runtime_error{"Unexpected value"};
+            throw BFException("Unexpected value if BF vector: " + std::to_string(i));
         }
     }
 }
@@ -100,7 +100,7 @@ bool BooleanFunction::operator!=(const BooleanFunction &bf) const {
 
 BooleanFunction &BooleanFunction::operator+=(const BooleanFunction &bf) {
     if (this->dim() != bf.dim()) {
-        throw std::runtime_error{"Boolean functions must to be the same dimensions"};
+        throw BFException("Boolean functions must have the same dimensions");
     }
     for (size_t i = 0; i < vec_.size(); i++) {
         vec_[i] = vec_[i] != bf.vec_[i];
@@ -110,7 +110,7 @@ BooleanFunction &BooleanFunction::operator+=(const BooleanFunction &bf) {
 
 BooleanFunction &BooleanFunction::operator*=(const BooleanFunction &bf) {
     if (this->dim() != bf.dim()) {
-        throw std::runtime_error{"Boolean functions must to be the same dimensions"};
+        throw BFException("Boolean functions must have the same dimensions");
     }
     for (size_t i = 0; i < vec_.size(); i++) {
         vec_[i] = vec_[i] && bf.vec_[i];
@@ -120,7 +120,7 @@ BooleanFunction &BooleanFunction::operator*=(const BooleanFunction &bf) {
 
 BooleanFunction &BooleanFunction::operator|=(const BooleanFunction &bf) {
     if (this->dim() != bf.dim()) {
-        throw std::runtime_error{"Boolean functions must to be the same dimensions"};
+        throw BFException("Boolean functions must have the same dimensions");
     }
     for (size_t i = 0; i < vec_.size(); i++) {
         vec_[i] = vec_[i] || bf.vec_[i];
@@ -266,16 +266,13 @@ BooleanFunction operator|(const BooleanFunction &bf1, const BooleanFunction &bf2
 
 BinaryMapping::BinaryMapping(const cf_set &t) {
     if (t.empty()) {
-        throw std::runtime_error{"Empty set of coordinate functions"};
+        throw BMException("Empty set of coordinate functions");
     }
     auto len = t.front().size();
-    if (len == 1) {
-        throw std::runtime_error{"Coordinate function could not be a constant"};
-    }
     for (const auto &bf: t) {
         if (bf.size() != len) {
             cf_.clear();
-            throw std::runtime_error{"Coordinate boolean functions should have the same length"};
+            throw BMException("Coordinate boolean functions must have the same length");
         }
         cf_.push_back(bf);
     }
@@ -283,16 +280,13 @@ BinaryMapping::BinaryMapping(const cf_set &t) {
 
 BinaryMapping::BinaryMapping(const table &t) {
     if (t.empty()) {
-        throw std::runtime_error{"Empty table"};
+        throw BMException("Empty truth table");
     }
     auto len = t.front().size();
-    if (len == 1) {
-        throw std::runtime_error{"Coordinate function could not be a constant"};
-    }
     for (const auto &vec: t) {
         if (vec.size() != len) {
             cf_.clear();
-            throw std::runtime_error{"Coordinate boolean functions should have the same length"};
+            throw BMException("Coordinate boolean functions must have the same length");
         }
         cf_.emplace_back(vec);
     }
@@ -422,7 +416,7 @@ table BinaryMapping::to_table_() const noexcept {
 
 void BinaryMapping::by_string_(const std::string &s) {
     if (s.empty()) {
-        throw std::runtime_error{"Empty truth table"};
+        throw BMException("Empty truth table");
     }
     std::stringstream ss(s);
     std::string line;
@@ -450,7 +444,7 @@ void BinaryMapping::by_string_(const std::string &s) {
                 truth_table[current_col].push_back(true);
                 current_col++;
             } else {
-                throw std::runtime_error{std::string("Unexpected symbol: ") + i};
+                throw BMException(("Unexpected symbol in truth table: ") + i);
             }
         }
     }
@@ -458,7 +452,7 @@ void BinaryMapping::by_string_(const std::string &s) {
                      [first_size = truth_table[0].size()](const auto &v) {
                          return v.size() == first_size;
                      })) {
-        throw std::runtime_error{"All columns in truth table should have equal length"};
+        throw BMException("Coordinate boolean functions must have the same length");
     }
     for (const auto &vec: truth_table) {
         cf_.emplace_back(vec);
@@ -508,7 +502,7 @@ bool is_substitution(const std::vector<size_t> &vec) {
 
 Substitution::Substitution(const cf_set &cf) {
     if (cf.empty()) {
-        throw std::runtime_error{"Empty coordinate function set"};
+        throw SubException("Empty coordinate function set");
     }
 
     auto bf_dim = cf.front().dim();
@@ -518,10 +512,10 @@ Substitution::Substitution(const cf_set &cf) {
                      [bf_dim](const auto &v) {
                          return v.dim() == bf_dim;
                      })) {
-        throw std::runtime_error{"All coordinate functions should have equal length"};
+        throw SubException("Coordinate boolean functions must have the same length");
     }
     if (bf_dim != cf.size()) {
-        throw std::runtime_error{"Length of the coordinate functions must be equal to 2 to the power of their number"};
+        throw SubException("Coordinate boolean functions form an irreversible mapping");
     }
     table truth_table(bf_dim);
     std::transform(cf.begin(), cf.end(), truth_table.begin(),
@@ -538,25 +532,24 @@ Substitution::Substitution(const cf_set &cf) {
     }
     if (!is_substitution(sub_)) {
         sub_.clear();
-        throw std::runtime_error{"Unable to build substitution"};
+        throw SubException("Unable to build substitution");
     }
 }
 
 Substitution::Substitution(const table &t) {
     if (t.empty()) {
-        throw std::runtime_error{"Empty truth table"};
+        throw SubException("Empty truth table");
     }
 
     auto col_size = t.front().size();
-
     if (!std::all_of(t.begin(), t.end(),
                      [col_size](const auto &col) {
                          return col.size() == col_size;
                      })) {
-        throw std::runtime_error{"All truth table columns should have equal length"};
+        throw SubException("Coordinate boolean functions must have the same length");
     }
     if (static_cast<size_t>(std::log2(col_size)) != t.size()) {
-        throw std::runtime_error{"Length of the truth table columns must be equal to 2 to the power of their number"};
+        throw SubException("Coordinate boolean functions form an irreversible mapping");
     }
     sub_ = std::vector<size_t>(col_size);
     for (size_t i = 0; i < col_size; i++) {
@@ -568,7 +561,7 @@ Substitution::Substitution(const table &t) {
     }
     if (!is_substitution(sub_)) {
         sub_.clear();
-        throw std::runtime_error{"Invalid substitution"};
+        throw SubException("Unable to build substitution");
     }
 }
 
@@ -608,15 +601,7 @@ Substitution &Substitution::operator=(const BinaryMapping &mp) {
 }
 
 bool Substitution::operator==(const Substitution &sub) const {
-    if (this->power() != sub.power()) {
-        return false;
-    }
-    for (size_t i = 0; i < sub_.size(); i++) {
-        if (sub_[i] != sub.sub_[i]) {
-            return false;
-        }
-    }
-    return true;
+    return sub_ == sub.sub_;
 }
 
 bool Substitution::operator!=(const Substitution &sub) const {
@@ -684,7 +669,7 @@ bool Substitution::is_odd() const noexcept {
 
 void Substitution::by_string_(const std::string &s) {
     if (s.empty()) {
-        throw std::runtime_error{"Empty substitution"};
+        throw SubException("Empty substitution");
     }
     std::stringstream ss(s);
     std::string line;
@@ -698,14 +683,14 @@ void Substitution::by_string_(const std::string &s) {
         while (line_ss >> value) {
             size_t value_int = 0;
             if (!try_string_to_decimal(value, value_int)) {
-                throw std::runtime_error{std::string("Invalid value: ") + value};
+                throw SubException("Invalid value: " + value);
             }
             sub_.push_back(value_int);
         }
     }
     if (!is_substitution(sub_)) {
         sub_.clear();
-        throw std::runtime_error{"Invalid substitution"};
+        throw SubException("Unable to build substitution");
     }
 }
 

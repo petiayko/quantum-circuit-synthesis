@@ -3,22 +3,22 @@
 #include "primitives.hpp"
 
 TEST(BooleanFunction, Constructor) {
-    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 0), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 1), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 2), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(true, 0), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(false, 0), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(binary_vector{}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(binary_vector{0}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(binary_vector{0, 0, 0, 1, 1}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(std::vector<int>{1}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(std::vector<int>{0, 0, 0, 1, 1}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(std::vector<int>{0, 0, 2, 1, 1}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(std::vector<int>{3}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(""), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("1"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("011"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("021"), std::runtime_error);
+    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 0), BFException);
+    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 1), BFException);
+    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 2), BFException);
+    EXPECT_THROW(BooleanFunction(true, 0), BFException);
+    EXPECT_THROW(BooleanFunction(false, 0), BFException);
+    EXPECT_THROW(BooleanFunction(binary_vector{}), BFException);
+    EXPECT_THROW(BooleanFunction(binary_vector{0}), BFException);
+    EXPECT_THROW(BooleanFunction(binary_vector{0, 0, 0, 1, 1}), BFException);
+    EXPECT_THROW(BooleanFunction(std::vector<int>{1}), BFException);
+    EXPECT_THROW(BooleanFunction(std::vector<int>{0, 0, 0, 1, 1}), BFException);
+    EXPECT_THROW(BooleanFunction(std::vector<int>{0, 0, 2, 1, 1}), BFException);
+    EXPECT_THROW(BooleanFunction(std::vector<int>{3}), BFException);
+    EXPECT_THROW(BooleanFunction(""), BFException);
+    EXPECT_THROW(BooleanFunction("1"), BFException);
+    EXPECT_THROW(BooleanFunction("011"), BFException);
+    EXPECT_THROW(BooleanFunction("021"), BFException);
 
     EXPECT_NO_THROW(BooleanFunction());
     EXPECT_EQ(BooleanFunction(static_cast<size_t>(0), 1), BooleanFunction("01"));
@@ -111,12 +111,12 @@ TEST(BooleanFunction, Methods) {
 }
 
 TEST(BooleanFunction, Operators) {
-    EXPECT_THROW(BooleanFunction("1000") + BooleanFunction("10"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("0011") + BooleanFunction("11011001"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("1000") * BooleanFunction("10"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("0011") * BooleanFunction("11011001"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("1000") | BooleanFunction("10"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("0011") | BooleanFunction("11011001"), std::runtime_error);
+    EXPECT_THROW(BooleanFunction("1000") + BooleanFunction("10"), BFException);
+    EXPECT_THROW(BooleanFunction("0011") + BooleanFunction("11011001"), BFException);
+    EXPECT_THROW(BooleanFunction("1000") * BooleanFunction("10"), BFException);
+    EXPECT_THROW(BooleanFunction("0011") * BooleanFunction("11011001"), BFException);
+    EXPECT_THROW(BooleanFunction("1000") | BooleanFunction("10"), BFException);
+    EXPECT_THROW(BooleanFunction("0011") | BooleanFunction("11011001"), BFException);
 
     EXPECT_EQ(BooleanFunction("0011") + BooleanFunction("1101"), BooleanFunction("1110"));
     EXPECT_EQ(BooleanFunction("1101") + BooleanFunction("0011"), BooleanFunction("1110"));

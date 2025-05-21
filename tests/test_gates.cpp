@@ -3,97 +3,97 @@
 #include "gates.hpp"
 
 TEST(Gates, Constructor) {
-    EXPECT_THROW(Gate(GateType(-1), {}, {}, 2), std::runtime_error);
-    EXPECT_THROW(Gate(GateType(0), {}, {}, 2), std::runtime_error);
-    EXPECT_THROW(Gate(GateType(5), {}, {}, 2), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::NOT, {4}, {}, 1), std::runtime_error);
+    EXPECT_THROW(Gate(GateType(-1), {}, {}, 2), GateException);
+    EXPECT_THROW(Gate(GateType(0), {}, {}, 2), GateException);
+    EXPECT_THROW(Gate(GateType(5), {}, {}, 2), GateException);
+    EXPECT_THROW(Gate(GateType::NOT, {4}, {}, 1), GateException);
 
     // NOT
-    EXPECT_THROW(Gate(GateType::NOT, {}, {}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::NOT, {}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::NOT, {0}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::NOT, {0, 2}, {}, 5), std::runtime_error);
+    EXPECT_THROW(Gate(GateType::NOT, {}, {}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::NOT, {}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::NOT, {0}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::NOT, {0, 2}, {}, 5), GateException);
 
     //CNOT
-    EXPECT_THROW(Gate(GateType::CNOT, {}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::CNOT, {1}, {}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::CNOT, {1}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::CNOT, {0, 1}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::CNOT, {0}, {1, 2}, 5), std::runtime_error);
+    EXPECT_THROW(Gate(GateType::CNOT, {}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CNOT, {1}, {}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CNOT, {1}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CNOT, {0, 1}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CNOT, {0}, {1, 2}, 5), GateException);
 
     //kCNOT
-    EXPECT_THROW(Gate(GateType::kCNOT, {}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::kCNOT, {1}, {}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::kCNOT, {1}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::kCNOT, {1}, {1, 4}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::kCNOT, {0, 1}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::kCNOT, {0}, {1, 1}, 5), std::runtime_error);
+    EXPECT_THROW(Gate(GateType::kCNOT, {}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {1}, {}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {1}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {1}, {1, 4}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {0, 1}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {0}, {1, 1}, 5), GateException);
 
     // SWAP
-    EXPECT_THROW(Gate(GateType::SWAP, {}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::SWAP, {1}, {}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::SWAP, {1}, {}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::SWAP, {0, 1}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::SWAP, {1, 1}, {}, 5), std::runtime_error);
+    EXPECT_THROW(Gate(GateType::SWAP, {}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::SWAP, {1}, {}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::SWAP, {1}, {}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::SWAP, {0, 1}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::SWAP, {1, 1}, {}, 5), GateException);
 
     // CSWAP
-    EXPECT_THROW(Gate(GateType::CSWAP, {}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::CSWAP, {1}, {}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::CSWAP, {1}, {}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::CSWAP, {0, 1}, {1}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::CSWAP, {1, 1}, {}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::CSWAP, {1, 2}, {}, 5), std::runtime_error);
-    EXPECT_THROW(Gate(GateType::CSWAP, {1, 2}, {2}, 5), std::runtime_error);
+    EXPECT_THROW(Gate(GateType::CSWAP, {}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CSWAP, {1}, {}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CSWAP, {1}, {}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CSWAP, {0, 1}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CSWAP, {1, 1}, {}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CSWAP, {1, 2}, {}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CSWAP, {1, 2}, {2}, 5), GateException);
 }
 
 TEST(Gates, ConstructorString) {
-    EXPECT_THROW(Gate("", 5), std::runtime_error);
-    EXPECT_THROW(Gate("gate", 5), std::runtime_error);
-    EXPECT_THROW(Gate("CCNOT(3; 2, 1)", 5), std::runtime_error);
-    EXPECT_THROW(Gate("NOT(30)", 5), std::runtime_error);
+    EXPECT_THROW(Gate("", 5), GateException);
+    EXPECT_THROW(Gate("gate", 5), GateException);
+    EXPECT_THROW(Gate("CCNOT(3; 2, 1)", 5), GateException);
+    EXPECT_THROW(Gate("NOT(30)", 5), GateException);
 
     // NOT
-    EXPECT_THROW(Gate("NOT)", 5), std::runtime_error);
-    EXPECT_THROW(Gate("NOT(", 5), std::runtime_error);
-    EXPECT_THROW(Gate("NOT()", 5), std::runtime_error);
-    EXPECT_THROW(Gate("NOT(2", 5), std::runtime_error);
-    EXPECT_THROW(Gate("NOT(2;4)", 5), std::runtime_error);
-    EXPECT_THROW(Gate("NOT(2,4)", 5), std::runtime_error);
+    EXPECT_THROW(Gate("NOT)", 5), GateException);
+    EXPECT_THROW(Gate("NOT(", 5), GateException);
+    EXPECT_THROW(Gate("NOT()", 5), GateException);
+    EXPECT_THROW(Gate("NOT(2", 5), GateException);
+    EXPECT_THROW(Gate("NOT(2;4)", 5), GateException);
+    EXPECT_THROW(Gate("NOT(2,4)", 5), GateException);
     EXPECT_NO_THROW(Gate("NOT(2)", 5));
     EXPECT_NO_THROW(Gate("  \t   NOT(2)", 5));
     EXPECT_NO_THROW(Gate("  \t   NOT  ( 2         )             ", 5));
     EXPECT_NO_THROW(Gate("  \t   NOT  ( 0x2         )             ", 5));
 
     // CNOT
-    EXPECT_THROW(Gate("CNOT()", 5), std::runtime_error);
-    EXPECT_THROW(Gate("CNOT(2,4)", 5), std::runtime_error);
+    EXPECT_THROW(Gate("CNOT()", 5), GateException);
+    EXPECT_THROW(Gate("CNOT(2,4)", 5), GateException);
     EXPECT_TRUE(Gate("cNoT(2;4)", 5) == Gate(GateType::CNOT, {2}, {4}, 5));
     EXPECT_TRUE(Gate("  \t   cnot(2;1)", 5) == Gate(GateType::CNOT, {2}, {1}, 5));
     EXPECT_TRUE(Gate("  \t   cnOT  ( 2    ;\t3     )             ", 5) == Gate(GateType::CNOT, {2}, {3}, 5));
     EXPECT_TRUE(Gate("  \t   cnOT  ( 2    ;\t0x3     )             ", 5) == Gate(GateType::CNOT, {2}, {3}, 5));
 
     // kCNOT
-    EXPECT_THROW(Gate("kCNOT()", 5), std::runtime_error);
-    EXPECT_THROW(Gate("kCNOT(2,4,3)", 5), std::runtime_error);
-    EXPECT_THROW(Gate("kCNOT(2,4;3)", 5), std::runtime_error);
+    EXPECT_THROW(Gate("kCNOT()", 5), GateException);
+    EXPECT_THROW(Gate("kCNOT(2,4,3)", 5), GateException);
+    EXPECT_THROW(Gate("kCNOT(2,4;3)", 5), GateException);
     EXPECT_TRUE(Gate("kcnot(2;4, 1)", 5) == Gate(GateType::kCNOT, {2}, {4, 1}, 5));
     EXPECT_TRUE(Gate("  \t   Kcnot(2;1,0)", 5) == Gate(GateType::kCNOT, {2}, {1, 0}, 5));
     EXPECT_TRUE(Gate("  \t   kCnOt  ( 2    ;\t3   ,  4  )             ", 5) == Gate(GateType::kCNOT, {2}, {3, 4}, 5));
     EXPECT_TRUE(Gate("  \t   kCnOt  ( 2    ;\t3   ,  0x4  )             ", 5) == Gate(GateType::kCNOT, {2}, {3, 4}, 5));
 
     // SWAP
-    EXPECT_THROW(Gate("SWAP()", 5), std::runtime_error);
-    EXPECT_THROW(Gate("SWAP(2,4;)", 5), std::runtime_error);
-    EXPECT_THROW(Gate("SWAP(2;4)", 5), std::runtime_error);
+    EXPECT_THROW(Gate("SWAP()", 5), GateException);
+    EXPECT_THROW(Gate("SWAP(2,4;)", 5), GateException);
+    EXPECT_THROW(Gate("SWAP(2;4)", 5), GateException);
     EXPECT_TRUE(Gate("swap(2,1)", 5) == Gate(GateType::SWAP, {2, 1}, {}, 5));
     EXPECT_TRUE(Gate("  \t   SWap(2,4)", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
     EXPECT_TRUE(Gate("  \t   SwAp  ( 2    \t   ,  4  )             ", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
     EXPECT_TRUE(Gate("  \t   SwAp  ( 0x2    \t   ,  4  )             ", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
 
     // CSWAP
-    EXPECT_THROW(Gate("CSWAP()", 5), std::runtime_error);
-    EXPECT_THROW(Gate("CSWAP(2,4;)", 5), std::runtime_error);
-    EXPECT_THROW(Gate("CSWAP(2,0;4,1)", 5), std::runtime_error);
+    EXPECT_THROW(Gate("CSWAP()", 5), GateException);
+    EXPECT_THROW(Gate("CSWAP(2,4;)", 5), GateException);
+    EXPECT_THROW(Gate("CSWAP(2,0;4,1)", 5), GateException);
     EXPECT_TRUE(Gate("cswap(2,1;0)", 5) == Gate(GateType::CSWAP, {2, 1}, {0}, 5));
     EXPECT_TRUE(Gate("  \t   cSWAP(0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {2}, 5));
     EXPECT_TRUE(Gate("  \t   cSWAP(0x0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {2}, 5));
@@ -109,7 +109,7 @@ TEST(Gates, ActNOT) {
     auto g5 = Gate("NOT(4)", 5);
 
     std::vector<bool> vector1({1, 0, 0});
-    EXPECT_THROW(g1.act(vector1), std::runtime_error);
+    EXPECT_THROW(g1.act(vector1), GateException);
 
     std::vector<bool> vector2({1, 0, 0, 1, 1});
     g1.act(vector2);
@@ -131,11 +131,11 @@ TEST(Gates, ActNOT) {
 
     std::vector<BooleanFunction> bf_vector1(
             {BooleanFunction("00000000"), BooleanFunction("11010101")});
-    EXPECT_THROW(g6.act(bf_vector1), std::runtime_error);
+    EXPECT_THROW(g6.act(bf_vector1), GateException);
 
     std::vector<BooleanFunction> bf_vector2(
             {BooleanFunction("00000000"), BooleanFunction("11010101"), BooleanFunction("1101")});
-    EXPECT_THROW(g6.act(bf_vector2), std::runtime_error);
+    EXPECT_THROW(g6.act(bf_vector2), GateException);
 
     std::vector<BooleanFunction> bf_vector3(
             {BooleanFunction("00000000"), BooleanFunction("11010101"), BooleanFunction("11111110")});
@@ -158,7 +158,7 @@ TEST(Gates, ActCNOT) {
     auto g5 = Gate("CNOT(1;3)", 5);
 
     std::vector<bool> vector1({1, 0, 0});
-    EXPECT_THROW(g1.act(vector1), std::runtime_error);
+    EXPECT_THROW(g1.act(vector1), GateException);
 
     std::vector<bool> vector2({1, 0, 0, 1, 1});
     g1.act(vector2);
@@ -178,11 +178,11 @@ TEST(Gates, ActCNOT) {
 
     std::vector<BooleanFunction> bf_vector1(
             {BooleanFunction("00000000"), BooleanFunction("11010101")});
-    EXPECT_THROW(g6.act(bf_vector1), std::runtime_error);
+    EXPECT_THROW(g6.act(bf_vector1), GateException);
 
     std::vector<BooleanFunction> bf_vector2(
             {BooleanFunction("00000000"), BooleanFunction("11010101"), BooleanFunction("1101")});
-    EXPECT_THROW(g6.act(bf_vector2), std::runtime_error);
+    EXPECT_THROW(g6.act(bf_vector2), GateException);
 
     std::vector<BooleanFunction> bf_vector3(
             {BooleanFunction("00000000"), BooleanFunction("11010101"), BooleanFunction("11111110")});
@@ -205,7 +205,7 @@ TEST(Gates, ActkCNOT) {
     auto g5 = Gate("kCNOT(1;3,2,4)", 5);
 
     std::vector<bool> vector1({1, 0, 0});
-    EXPECT_THROW(g1.act(vector1), std::runtime_error);
+    EXPECT_THROW(g1.act(vector1), GateException);
 
     std::vector<bool> vector2({1, 0, 0, 1, 1});
     g1.act(vector2);
@@ -225,11 +225,11 @@ TEST(Gates, ActkCNOT) {
 
     std::vector<BooleanFunction> bf_vector1(
             {BooleanFunction("00000000"), BooleanFunction("11010101")});
-    EXPECT_THROW(g6.act(bf_vector1), std::runtime_error);
+    EXPECT_THROW(g6.act(bf_vector1), GateException);
 
     std::vector<BooleanFunction> bf_vector2(
             {BooleanFunction("00000000"), BooleanFunction("11010101"), BooleanFunction("1101")});
-    EXPECT_THROW(g6.act(bf_vector2), std::runtime_error);
+    EXPECT_THROW(g6.act(bf_vector2), GateException);
 
     std::vector<BooleanFunction> bf_vector3(
             {BooleanFunction("00101010"), BooleanFunction("11010101"), BooleanFunction("11111110")});
@@ -252,7 +252,7 @@ TEST(Gates, ActSWAP) {
     auto g5 = Gate("SWAP(1,3)", 5);
 
     std::vector<bool> vector1({1, 0, 0});
-    EXPECT_THROW(g1.act(vector1), std::runtime_error);
+    EXPECT_THROW(g1.act(vector1), GateException);
 
     std::vector<bool> vector2({1, 0, 0, 1, 1});
     g1.act(vector2);
@@ -272,11 +272,11 @@ TEST(Gates, ActSWAP) {
 
     std::vector<BooleanFunction> bf_vector1(
             {BooleanFunction("00000000"), BooleanFunction("11010101")});
-    EXPECT_THROW(g6.act(bf_vector1), std::runtime_error);
+    EXPECT_THROW(g6.act(bf_vector1), GateException);
 
     std::vector<BooleanFunction> bf_vector2(
             {BooleanFunction("00000000"), BooleanFunction("11010101"), BooleanFunction("1101")});
-    EXPECT_THROW(g6.act(bf_vector2), std::runtime_error);
+    EXPECT_THROW(g6.act(bf_vector2), GateException);
 
     std::vector<BooleanFunction> bf_vector3(
             {BooleanFunction("00101010"), BooleanFunction("11010101"), BooleanFunction("11111110")});
@@ -299,7 +299,7 @@ TEST(Gates, ActCSWAP) {
     auto g5 = Gate("CSWAP(1,2;0)", 5);
 
     std::vector<bool> vector1({1, 0, 0});
-    EXPECT_THROW(g1.act(vector1), std::runtime_error);
+    EXPECT_THROW(g1.act(vector1), GateException);
 
     std::vector<bool> vector2({1, 0, 0, 1, 1});
     g1.act(vector2);
@@ -319,11 +319,11 @@ TEST(Gates, ActCSWAP) {
 
     std::vector<BooleanFunction> bf_vector1(
             {BooleanFunction("00000000"), BooleanFunction("11010101")});
-    EXPECT_THROW(g6.act(bf_vector1), std::runtime_error);
+    EXPECT_THROW(g6.act(bf_vector1), GateException);
 
     std::vector<BooleanFunction> bf_vector2(
             {BooleanFunction("00000000"), BooleanFunction("11010101"), BooleanFunction("1101")});
-    EXPECT_THROW(g6.act(bf_vector2), std::runtime_error);
+    EXPECT_THROW(g6.act(bf_vector2), GateException);
 
     std::vector<BooleanFunction> bf_vector3(
             {BooleanFunction("00101010"), BooleanFunction("11010101"), BooleanFunction("11111110")});

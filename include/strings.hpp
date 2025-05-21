@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "exseptions.hpp"
+
 inline void trim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char ch) {
         return !std::isspace(ch);
@@ -17,7 +19,7 @@ inline void trim(std::string &s) {
 template<typename T = size_t>
 inline T strict_stoi(const std::string &s, int base = 10) {
     if (s.empty()) {
-        throw std::runtime_error{"Empty string"};
+        throw StringException("Empty string");
     }
 
     size_t pos;
@@ -26,15 +28,15 @@ inline T strict_stoi(const std::string &s, int base = 10) {
     try {
         value = std::stoi(s, &pos, base);
     } catch (const std::invalid_argument &) {
-        throw std::runtime_error{std::string("Invalid number: ") + s};
+        throw StringException("Invalid number: " + s);
     } catch (const std::out_of_range &) {
-        throw std::runtime_error{std::string("Number out of range: ") + s};
+        throw StringException("Number out of range: " + s);
     }
     while (pos < s.size() && std::isspace(s[pos])) {
         pos++;
     }
     if (pos != s.size()) {
-        throw std::runtime_error{std::string("Extra characters after number: ") + s};
+        throw StringException("Extra characters after number: " + s);
     }
     return value;
 }
@@ -81,7 +83,7 @@ inline std::vector<T> string_to_num_vector(const std::string &s, char sep = ' ')
             continue;
         }
         if (!try_string_to_decimal<T>(num_s, num)) {
-            throw std::runtime_error{std::string("Invalid num: ") + num_s};
+            throw StringException("Invalid num: " + num_s);
         }
         result.push_back(num);
     }

@@ -5,13 +5,15 @@
 #include <cmath>
 #include <string>
 
+#include "exseptions.hpp"
+
 template<class T = size_t>
-bool is_power_of_2(T v) {
+inline bool is_power_of_2(T v) {
     return v && !(v & (v - 1));
 }
 
 template<class T = size_t>
-std::string decimal_to_binary(T v, size_t l = 0) {
+inline std::string decimal_to_binary(T v, size_t l = 0) {
     std::string result;
     if (!v) {
         result = "0";
@@ -28,7 +30,7 @@ std::string decimal_to_binary(T v, size_t l = 0) {
 }
 
 template<class T = size_t>
-T binary_to_decimal(const std::string &s) {
+inline T binary_to_decimal(const std::string &s) {
     if (s.empty()) {
         return 0;
     }
@@ -36,7 +38,7 @@ T binary_to_decimal(const std::string &s) {
         if (bit == '0' || bit == '1') {
             continue;
         }
-        throw std::runtime_error{"Unexpected symbol in binary notation"};
+        throw MathException(("Unexpected symbol in binary notation: ") + bit);
     }
     return std::stoi(s, nullptr, 2);
 }
@@ -44,7 +46,7 @@ T binary_to_decimal(const std::string &s) {
 
 template<typename T>
 inline size_t binary_dot(T a, T b) {
-    unsigned int mask = a & b;
+    int mask = a & b;
     int count = 0;
     while (mask) {
         count += mask & 1;
