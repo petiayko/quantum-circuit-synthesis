@@ -22,11 +22,11 @@ jobs:
         build_type: [ Release ]
         c_compiler: [ gcc ]
         include:
-          - os: windows-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-            artifact_name: qcs-windows
-            binary_name: qcs.exe
+#          - os: windows-latest
+#            c_compiler: gcc
+#            cpp_compiler: g++
+#            artifact_name: qcs-windows
+#            binary_name: qcs.exe
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
