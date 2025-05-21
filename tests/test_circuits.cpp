@@ -136,6 +136,23 @@ TEST(Circuits, Memory) {
               (std::vector<BooleanFunction>{BooleanFunction("10"), BooleanFunction("10"), BooleanFunction("10")}));
 }
 
+TEST(Circuits, Production) {
+    {
+        Circuit c("Lines: 4");
+        EXPECT_EQ(c.produce_mapping(), Substitution("0 1 2 3 4 5 6 7 8 9 A B C D E F"));
+    }
+    {
+        Circuit c("Lines: 3\nNOT(2)\nCNOT(2; 1)\nCNOT(2; 0)\nkCNOT(2; 0, 1)");
+        EXPECT_EQ(c.produce_mapping(), Substitution("1 0 2 3 4 5 6 7"));
+    }
+    {
+        Circuit c("Lines: 3; 1\nNOT(2)\nCNOT(2; 1)\nCNOT(2; 0)\nkCNOT(2; 0, 1)");
+        EXPECT_EQ(c.produce_mapping(), BinaryMapping(table{{0, 0, 1, 1},
+                                                           {0, 1, 0, 1},
+                                                           {1, 0, 0, 0}}));
+    }
+}
+
 TEST(Circuits, Stream) {
     std::stringstream out_stream;
 

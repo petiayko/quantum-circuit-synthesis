@@ -112,6 +112,10 @@ public:
 
     bool operator!=(const BinaryMapping &) const;
 
+    bool operator==(const Substitution &) const;
+
+    bool operator!=(const Substitution &) const;
+
     cf_set coordinate_functions() const noexcept;
 
     size_t inputs_number() const noexcept;
@@ -155,6 +159,10 @@ public:
     bool operator==(const Substitution &) const;
 
     bool operator!=(const Substitution &) const;
+
+    bool operator==(const BinaryMapping &) const;
+
+    bool operator!=(const BinaryMapping &) const;
 
     size_t power() const noexcept;
 

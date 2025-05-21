@@ -180,7 +180,7 @@ void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vec
                 throw GateException("Gate CNOT should have an only nest line");
             }
             if (controls.size() != 1) {
-                throw GateException("Gate CNOT should have an only nest line");
+                throw GateException("Gate CNOT should have an only control line");
             }
             break;
         case GateType::kCNOT:
@@ -191,7 +191,7 @@ void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vec
                 throw GateException("Gate kCNOT should have an only nest line");
             }
             if (controls.empty()) {
-                throw GateException("Gate kCNOT should have at least one nest line");
+                throw GateException("Gate kCNOT should have at least one control line");
             }
             break;
         case GateType::SWAP:
@@ -213,7 +213,7 @@ void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vec
                 throw GateException("Gate CSWAP should have two nest lines");
             }
             if (controls.size() != 1) {
-                throw GateException("Gate CSWAP should have an only nest line");
+                throw GateException("Gate CSWAP should have an only control line");
             }
             break;
         default:
@@ -304,6 +304,13 @@ size_t Circuit::memory() const noexcept {
     return memory_;
 }
 
+void Circuit::set_memory(size_t memory_lines_num) {
+    if (memory_lines_num >= dim_) {
+        throw CircuitException("Circuit must have a number of memory lines not less than the number of lines");
+    }
+    memory_ = memory_lines_num;
+}
+
 void Circuit::act(binary_vector &vec) const {
     if (vec.size() != dim_) {
         throw CircuitException("Input vector must have length equals to the Circuit dimension");
@@ -353,11 +360,14 @@ void Circuit::add(const Gate &g) {
     gates_.push_back(g);
 }
 
-void Circuit::set_memory(size_t memory_lines_num) {
-    if (memory_lines_num >= dim_) {
-        throw CircuitException("Circuit must have a number of memory lines not less than the number of lines");
+BinaryMapping Circuit::produce_mapping() const noexcept {
+    cf_set vec_bf;
+    vec_bf.reserve(this->dim());
+    for (size_t i = 0; i < this->dim(); i++) {
+        vec_bf.emplace_back(i, this->dim());
     }
-    memory_ = memory_lines_num;
+    this->act(vec_bf);
+    return BinaryMapping(vec_bf);
 }
 
 bool Circuit::operator==(const Circuit &c) const {

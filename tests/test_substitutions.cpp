@@ -23,6 +23,7 @@ TEST(Substitutions, Constructor) {
                                      {1, 0, 0, 0}})), SubException);
 
     EXPECT_THROW(Substitution(""), SubException);
+    EXPECT_THROW(Substitution("0"), SubException);
     EXPECT_THROW(Substitution("1"), SubException);
     EXPECT_THROW(Substitution("0 1 3"), SubException);
     EXPECT_THROW(Substitution("0 1 1 2"), SubException);
@@ -30,7 +31,6 @@ TEST(Substitutions, Constructor) {
     EXPECT_THROW(Substitution("0 1 2 3 4 5 6 7 8 9 A B C D E F G"), SubException);
     EXPECT_THROW(Substitution("# 0 1 2 3 4 5 6 7 8 9 A B C D E F"), SubException);
 
-    EXPECT_NO_THROW(Substitution("0"));
     EXPECT_NO_THROW(Substitution("3           2 1 0"));
     EXPECT_NO_THROW(Substitution("3\t2\t1\t0"));
     EXPECT_NO_THROW(Substitution("0 1 2 3 4 5 6 7 8 9 A B C D E F"));
@@ -95,14 +95,14 @@ TEST(Substitutions, Methods) {
                                                                       {6, 7}}));
     EXPECT_FALSE(s2.is_identical());
 
-    Substitution s3("0");
+    Substitution s3("1 0");
     cycles = s3.cycles();
     transpositions = s3.transpositions();
     ASSERT_EQ(cycles.size(), 1);
-    EXPECT_EQ(cycles[0], (std::vector<size_t>{0}));
-    EXPECT_FALSE(s3.is_odd());
-    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{}));
-    EXPECT_TRUE(s3.is_identical());
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 1}));
+    EXPECT_TRUE(s3.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 1}}));
+    EXPECT_FALSE(s3.is_identical());
 }
 
 TEST(Substitutions, Stream) {
@@ -114,9 +114,9 @@ TEST(Substitutions, Stream) {
     EXPECT_NO_THROW(Substitution(out_stream.str()));
 
     out_stream.str("");
-    s = Substitution("0");
+    s = Substitution("1 0");
     out_stream << s;
-    EXPECT_EQ(out_stream.str(), "0 ");
+    EXPECT_EQ(out_stream.str(), "1 0 ");
     EXPECT_NO_THROW(Substitution(out_stream.str()));
 
     std::ifstream file("../tests/assets/sub.txt", std::ios::in);
@@ -134,14 +134,20 @@ TEST(Substitutions, BinaryMappings) {
     auto mp = BinaryMapping(cf_set({BooleanFunction("1010"), BooleanFunction("1001")}));
     auto s = Substitution(mp);
     EXPECT_EQ(s, Substitution("3 0 2 1"));
+    EXPECT_TRUE(s == mp);
+    EXPECT_TRUE(mp == s);
 
     mp = BinaryMapping(cf_set({BooleanFunction("1001"), BooleanFunction("1010")}));
     s = Substitution(mp);
     EXPECT_EQ(s, Substitution("3 0 1 2"));
+    EXPECT_TRUE(s == mp);
+    EXPECT_TRUE(mp == s);
 
     mp = BinaryMapping(cf_set({BooleanFunction("01110010"), BooleanFunction("11100100"), BooleanFunction("10110001")}));
     s = mp;
     EXPECT_EQ(s, Substitution("3 6 7 5 0 2 4 1"));
+    EXPECT_TRUE(s == mp);
+    EXPECT_TRUE(mp == s);
 
     auto mp_cursed_1 = BinaryMapping(cf_set({BooleanFunction("1001"), BooleanFunction("1001")}));
     auto mp_cursed_2 = BinaryMapping(cf_set({BooleanFunction("1101"), BooleanFunction("0011")}));

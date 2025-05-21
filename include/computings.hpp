@@ -65,15 +65,8 @@ void process_config(const std::string &type, const std::string &algo, const std:
             LOG_WARNING("Starting reverse of quantum circuit", "The result will be written as a binary mapping");
         }
 
-        cf_set vec_bf;
-        vec_bf.reserve(c.dim());
-        for (size_t i = 0; i < c.dim(); i++) {
-            vec_bf.emplace_back(i, c.dim());
-        }
-        c.act(vec_bf);
-
+        BinaryMapping bm = c.produce_mapping();
         LOG_INFO("Finishing reverse of quantum circuit", "");
-        BinaryMapping bm(vec_bf);
         if (!c.memory()) {
             write_result<Substitution>(output_path, bm);
             return;

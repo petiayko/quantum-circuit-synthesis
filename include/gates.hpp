@@ -57,13 +57,15 @@ public:
 
     size_t memory() const noexcept;
 
+    void set_memory(size_t);
+
     void act(binary_vector &) const;
 
     void act(cf_set &) const;
 
     void add(const Gate &);
 
-    void set_memory(size_t);
+    BinaryMapping produce_mapping() const noexcept;
 
     bool operator==(const Circuit &) const;
 

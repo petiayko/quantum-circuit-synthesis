@@ -222,6 +222,8 @@ TEST(BinaryMapping, Substitutions) {
     Substitution sub("3 0 2 1");
     BinaryMapping bm(sub);
     EXPECT_EQ(bm, BinaryMapping(cf_set({BooleanFunction("1010"), BooleanFunction("1001")})));
+    EXPECT_TRUE(sub == bm);
+    EXPECT_TRUE(bm == sub);
 
     BinaryMapping bm1 = sub;
     EXPECT_EQ(bm1, BinaryMapping(cf_set({BooleanFunction("1010"), BooleanFunction("1001")})));

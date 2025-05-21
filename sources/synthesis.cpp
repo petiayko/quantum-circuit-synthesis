@@ -5,7 +5,7 @@ Circuit synthesize(const BinaryMapping &bm, const std::string &algo) {
     if (algo == "dummy") {
         return dummy_algorithm(bm);
     } else if (algo == "rw") {
-        return RW_algorithm(bm);
+        return RW_algorithm(bm.extend());
     }
     throw SynthException("Unknown synthesis algorithm: " + algo);
 }
@@ -20,7 +20,7 @@ Circuit synthesize(const Substitution &sub, const std::string &algo) {
 }
 
 Circuit dummy_algorithm(const BinaryMapping &bm) {
-    auto bm_bf = bm.coordinate_functions();
+    const auto bm_bf = bm.coordinate_functions();
     std::vector<std::vector<bool>> bm_anf;
     bm_anf.resize(bm_bf.size());
     std::transform(bm_bf.cbegin(), bm_bf.cend(), bm_anf.begin(), [](const BooleanFunction &bf) {
@@ -44,7 +44,24 @@ Circuit dummy_algorithm(const BinaryMapping &bm) {
 }
 
 Circuit RW_algorithm(const BinaryMapping &bm) {
+    auto bm_extend = bm.extend();
+    const auto bm_cf = bm_extend.coordinate_functions();
+
+    std::vector<std::vector<int>> bf_spectrum;
+    bf_spectrum.resize(bm_extend.outputs_number());
+    std::transform(bm_cf.cbegin(), bm_cf.cend(), bf_spectrum.begin(), [](const BooleanFunction &bf) {
+        return bf.RW_spectrum();
+    });
+
+    std::vector<int> bf_complexity;
+    bf_complexity.resize(bm.outputs_number());
+    std::transform(bm_cf.cbegin(), bm_cf.cend(), bf_complexity.begin(), [](const BooleanFunction &bf) {
+        return bf.complexity();
+    });
+
     auto c = Circuit(bm.inputs_number());
+    c.set_memory(bm_extend.outputs_number() - bm.outputs_number());
+
 
     return c;
 }

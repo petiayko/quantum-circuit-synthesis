@@ -84,15 +84,7 @@ BooleanFunction &BooleanFunction::operator=(const BooleanFunction &bf) {
 }
 
 bool BooleanFunction::operator==(const BooleanFunction &bf) const {
-    if (this->size() != bf.size()) {
-        return false;
-    }
-    for (size_t i = 0; i < this->size(); i++) {
-        if (vec_[i] != bf.vec_[i]) {
-            return false;
-        }
-    }
-    return true;
+    return vec_ == bf.vec_;
 }
 
 bool BooleanFunction::operator!=(const BooleanFunction &bf) const {
@@ -355,19 +347,19 @@ BinaryMapping &BinaryMapping::operator=(const Substitution &sub) {
 }
 
 bool BinaryMapping::operator==(const BinaryMapping &mp) const {
-    if (this->inputs_number() != mp.inputs_number() || this->outputs_number() != mp.outputs_number()) {
-        return false;
-    }
-    for (size_t i = 0; i < cf_.size(); i++) {
-        if (cf_[i] != mp.cf_[i]) {
-            return false;
-        }
-    }
-    return true;
+    return cf_ == mp.cf_;
 }
 
 bool BinaryMapping::operator!=(const BinaryMapping &mp) const {
     return !this->operator==(mp);
+}
+
+bool BinaryMapping::operator==(const Substitution &sub) const {
+    return this->operator==(BinaryMapping(sub));
+}
+
+bool BinaryMapping::operator!=(const Substitution &sub) const {
+    return !this->operator==(sub);
 }
 
 cf_set BinaryMapping::coordinate_functions() const noexcept {
@@ -503,7 +495,7 @@ std::ostream &operator<<(std::ostream &out, const BinaryMapping &mp) noexcept {
 // Substitution
 
 bool is_substitution(const std::vector<size_t> &vec) {
-    if (vec.empty()) {
+    if (vec.size() < 2) {
         return false;
     }
     std::unordered_set<size_t> checked;
@@ -622,6 +614,18 @@ bool Substitution::operator==(const Substitution &sub) const {
 
 bool Substitution::operator!=(const Substitution &sub) const {
     return !this->operator==(sub);
+}
+
+bool Substitution::operator==(const BinaryMapping &bm) const {
+    try {
+        return this->operator==(Substitution(bm));
+    } catch (...) {
+        return false;
+    }
+}
+
+bool Substitution::operator!=(const BinaryMapping &bm) const {
+    return !this->operator==(bm);
 }
 
 size_t Substitution::power() const noexcept {
