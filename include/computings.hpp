@@ -11,7 +11,7 @@ bool overwrite_confirmation() {
     std::cout << "Output file is already exists. Do you want to overwrite it [y/n]? ";
     std::string answer;
     std::cin >> answer;
-    return (answer == "n" || answer == "N");
+    return !(answer == "n" || answer == "N");
 }
 
 template<typename T>
