@@ -40,10 +40,10 @@ TEST(Math, DecimalToBinary) {
 }
 
 TEST(Math, BinaryToDecimal) {
-    EXPECT_THROW(binary_to_decimal("0010 1101"), std::runtime_error);
-    EXPECT_THROW(binary_to_decimal("12"), std::runtime_error);
-    EXPECT_THROW(binary_to_decimal("0010.1101"), std::runtime_error);
-    EXPECT_THROW(binary_to_decimal("001021101"), std::runtime_error);
+    EXPECT_THROW(binary_to_decimal("0010 1101"), MathException);
+    EXPECT_THROW(binary_to_decimal("12"), MathException);
+    EXPECT_THROW(binary_to_decimal("0010.1101"), MathException);
+    EXPECT_THROW(binary_to_decimal("001021101"), MathException);
 
     EXPECT_EQ(binary_to_decimal("0"), 0);
     EXPECT_EQ(binary_to_decimal("1"), 1);

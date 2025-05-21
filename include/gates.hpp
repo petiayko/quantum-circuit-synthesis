@@ -26,8 +26,6 @@ public:
 
     void act(cf_set &) const;
 
-    void inc() noexcept;
-
     bool operator==(const Gate &) const;
 
     friend std::ostream &operator<<(std::ostream &, const Gate &) noexcept;

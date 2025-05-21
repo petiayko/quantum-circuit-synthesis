@@ -3,38 +3,25 @@
 #include "primitives.hpp"
 
 TEST(BinaryMappings, Constructor) {
-    EXPECT_THROW(BinaryMapping(cf_set({})), std::runtime_error);
-    EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("0"), BooleanFunction("1")})), std::runtime_error);
+    EXPECT_THROW(BinaryMapping(cf_set({})), BMException);
     EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("1001"),
                                        BooleanFunction("10")})),
-                 std::runtime_error);
-    EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("01"),
-                                       BooleanFunction("10"),
-                                       BooleanFunction("0")})),
-                 std::runtime_error);
+                 BMException);
+    EXPECT_THROW(BinaryMapping(cf_set({BooleanFunction("0101"),
+                                       BooleanFunction("1000"),
+                                       BooleanFunction("01")})),
+                 BMException);
 
-    EXPECT_THROW(BinaryMapping(table({})), std::runtime_error);
-    EXPECT_THROW(BinaryMapping(table({{}})), std::runtime_error);
-    EXPECT_THROW(BinaryMapping(table({{1},
-                                      {0},
-                                      {}})), std::runtime_error);
-    EXPECT_THROW(BinaryMapping(table({{1},
-                                      {0}})), std::runtime_error);
-    EXPECT_THROW(BinaryMapping(table({{1},
-                                      {0, 1},
-                                      {1}})), std::runtime_error);
-    EXPECT_THROW(BinaryMapping(table({{1, 1},
-                                      {0, 1},
-                                      {1}})), std::runtime_error);
-    EXPECT_THROW(BinaryMapping(table({{1, 1, 1},
-                                      {1, 0, 1},
-                                      {1, 0, 0}})), std::runtime_error);
+    EXPECT_THROW(BinaryMapping(table({})), BMException);
+    EXPECT_THROW(BinaryMapping(table({{1, 0, 0, 1},
+                                      {0, 1, 1, 1},
+                                      {1, 0}})), BMException);
 
-    EXPECT_THROW(BinaryMapping(""), std::runtime_error);
-    EXPECT_THROW(BinaryMapping("001\n110\n1 0"), std::runtime_error);
-    EXPECT_THROW(BinaryMapping("001\n110\n101\n01"), std::runtime_error);
-    EXPECT_THROW(BinaryMapping("001\n110\n121\n011"), std::runtime_error);
-    EXPECT_THROW(BinaryMapping("#001\n110\n101\n011"), std::runtime_error);
+    EXPECT_THROW(BinaryMapping(""), BMException);
+    EXPECT_THROW(BinaryMapping("001\n110\n1 0"), BMException);
+    EXPECT_THROW(BinaryMapping("001\n110\n101\n01"), BMException);
+    EXPECT_THROW(BinaryMapping("001\n110\n121\n011"), BMException);
+    EXPECT_THROW(BinaryMapping("#001\n110\n101\n011"), BFException);
 
     EXPECT_NO_THROW(BinaryMapping("001\n110\n\n101\n011"));
     EXPECT_NO_THROW(BinaryMapping("0 0 1\n1 1 0\n1 0 1\n0 0 0"));
@@ -224,10 +211,10 @@ TEST(BinaryMapping, Stream) {
                               "11\t100\n");
 
     std::ifstream file1("../tests/assets/sub.txt", std::ios::in);
-    EXPECT_THROW((BinaryMapping(file1)), std::runtime_error);
+    EXPECT_THROW((BinaryMapping(file1)), BMException);
 
     std::ifstream file2("../tests/assets/qc.txt", std::ios::in);
-    EXPECT_THROW((BinaryMapping(file2)), std::runtime_error);
+    EXPECT_THROW((BinaryMapping(file2)), BMException);
 }
 
 TEST(BinaryMapping, Substitutions) {

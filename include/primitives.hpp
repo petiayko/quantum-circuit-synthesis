@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "exseptions.hpp"
 #include "math.hpp"
 #include "strings.hpp"
 

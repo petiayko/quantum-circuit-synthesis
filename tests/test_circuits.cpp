@@ -3,21 +3,21 @@
 #include "gates.hpp"
 
 TEST(Circuits, Constructor) {
-    EXPECT_THROW(Circuit(""), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines: -1"), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines: 0"), std::runtime_error);
-    EXPECT_THROW(Circuit("#Lines: 2"), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines 3\nNOT(1)"), std::runtime_error);
-    EXPECT_THROW(Circuit("4\nNOT(1)"), std::runtime_error);
-    EXPECT_THROW(Circuit(": 4\nNOT(1)"), std::runtime_error);
-    EXPECT_THROW(Circuit("lines: 2\nNOT(3)"), std::runtime_error);
-    EXPECT_THROW(Circuit("NOT(3)\nCNOT(0;1)\n"), std::runtime_error);
-    EXPECT_THROW(Circuit("NOT(3)\nCNOT(0;1)\nlines: 2"), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines: 3\n; # 1"), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines: 3\n,1"), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines: 13, 2"), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines: 13 4"), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines: 13; 100"), std::runtime_error);
+    EXPECT_THROW(Circuit(""), CircuitException);
+    EXPECT_THROW(Circuit("Lines: -1"), CircuitException);
+    EXPECT_THROW(Circuit("Lines: 0"), CircuitException);
+    EXPECT_THROW(Circuit("#Lines: 2"), CircuitException);
+    EXPECT_THROW(Circuit("Lines 3\nNOT(1)"), CircuitException);
+    EXPECT_THROW(Circuit("4\nNOT(1)"), CircuitException);
+    EXPECT_THROW(Circuit(": 4\nNOT(1)"), CircuitException);
+    EXPECT_THROW(Circuit("lines: 2\nNOT(3)"), GateException);
+    EXPECT_THROW(Circuit("NOT(3)\nCNOT(0;1)\n"), CircuitException);
+    EXPECT_THROW(Circuit("NOT(3)\nCNOT(0;1)\nlines: 2"), CircuitException);
+    EXPECT_THROW(Circuit("Lines: 3\n; # 1"), GateException);
+    EXPECT_THROW(Circuit("Lines: 3\n,1"), GateException);
+    EXPECT_THROW(Circuit("Lines: 13, 2"), CircuitException);
+    EXPECT_THROW(Circuit("Lines: 13 4"), CircuitException);
+    EXPECT_THROW(Circuit("Lines: 13; 100"), CircuitException);
 
     EXPECT_EQ(Circuit("lines: 3;0"), Circuit(3));
     EXPECT_EQ(Circuit("lines: 3;2"), Circuit(3, 2));
@@ -28,14 +28,14 @@ TEST(Circuits, Constructor) {
     EXPECT_EQ(Circuit("\t\t     \tLines: \t\t\t       A\t\t\t\t ;  \t0x6"), Circuit(10, 6));
     EXPECT_EQ(Circuit("Lines: A; 0x7\n"), Circuit(10, 7));
 
-    EXPECT_THROW(Circuit(2, 10), std::runtime_error);
+    EXPECT_THROW(Circuit(2, 10), CircuitException);
 
     EXPECT_EQ(Circuit(0, 0), Circuit());
     EXPECT_EQ(Circuit(0, 0), Circuit(0));
 
-    EXPECT_THROW(Circuit("Lines: A\n# text\n#comment\nNOT(B)\n#CNOT(3;0xc)\n\n\nSWAP(8,9)"), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines: A;2\n# text\n#comment\nNOT(B)\n#CNOT(3;0xc)\n\n\nSWAP(8,9)"), std::runtime_error);
-    EXPECT_THROW(Circuit(std::vector<Gate>{Gate("NOT(2)", 10), Gate("SWAP(8,9)", 10)}, 10), std::runtime_error);
+    EXPECT_THROW(Circuit("Lines: A\n# text\n#comment\nNOT(B)\n#CNOT(3;0xc)\n\n\nSWAP(8,9)"), GateException);
+    EXPECT_THROW(Circuit("Lines: A;2\n# text\n#comment\nNOT(B)\n#CNOT(3;0xc)\n\n\nSWAP(8,9)"), GateException);
+    EXPECT_THROW(Circuit(std::vector<Gate>{Gate("NOT(2)", 10), Gate("SWAP(8,9)", 10)}, 10), CircuitException);
 
     EXPECT_EQ(Circuit("Lines: A\n# text\n#comment\nNOT(2)\n#CNOT(3;9)\n\n\nSWAP(8,9)"),
               Circuit(std::vector<Gate>{Gate("NOT(2)", 10), Gate("SWAP(8,9)", 10)}));
@@ -45,9 +45,9 @@ TEST(Circuits, Constructor) {
 
 TEST(Circuits, Act) {
     std::vector<bool> vec{0, 1};
-    EXPECT_THROW(Circuit("Lines: 0").act(vec), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines: 1").act(vec), std::runtime_error);
-    EXPECT_THROW(Circuit("Lines: 3").act(vec), std::runtime_error);
+    EXPECT_THROW(Circuit("Lines: 0").act(vec), CircuitException);
+    EXPECT_THROW(Circuit("Lines: 1").act(vec), CircuitException);
+    EXPECT_THROW(Circuit("Lines: 3").act(vec), CircuitException);
 
     Circuit c("Lines: 4");
     std::vector<bool> vec1{0, 1, 1, 1};
@@ -63,11 +63,11 @@ TEST(Circuits, Act) {
 
     Circuit c1("Lines: 2");
     std::vector<BooleanFunction> vec_bf{BooleanFunction("0110")};
-    EXPECT_THROW(c1.act(vec_bf), std::runtime_error);
+    EXPECT_THROW(c1.act(vec_bf), CircuitException);
     std::vector<BooleanFunction> vec_bf1{BooleanFunction("0110"), BooleanFunction("1101"), BooleanFunction("0000")};
-    EXPECT_THROW(c1.act(vec_bf1), std::runtime_error);
+    EXPECT_THROW(c1.act(vec_bf1), CircuitException);
     std::vector<BooleanFunction> vec_bf2{BooleanFunction("0110"), BooleanFunction("11010010")};
-    EXPECT_THROW(c1.act(vec_bf2), std::runtime_error);
+    EXPECT_THROW(c1.act(vec_bf2), CircuitException);
 
     std::vector<BooleanFunction> vec_bf3{BooleanFunction("0110"), BooleanFunction("0100")};
     c1.act(vec_bf3);
@@ -93,7 +93,7 @@ TEST(Circuits, Memory) {
     EXPECT_EQ(c.memory(), 3);
     EXPECT_EQ(c.dim(), 4);
 
-    EXPECT_THROW(c.set_memory(5), std::runtime_error);
+    EXPECT_THROW(c.set_memory(5), CircuitException);
 
     c.set_memory(0);
     EXPECT_EQ(c.memory(), 0);
@@ -186,8 +186,8 @@ TEST(Circuits, Stream) {
     EXPECT_EQ(c1, Circuit(std::vector<Gate>{Gate("NOT(1)", 4), Gate("CSWAP(3,1;0)", 4), Gate("kCNOT(0;1,2,3)", 4)}));
 
     std::ifstream file1("../tests/assets/map.txt", std::ios::in);
-    EXPECT_THROW((Circuit(file1)), std::runtime_error);
+    EXPECT_THROW((Circuit(file1)), CircuitException);
 
     std::ifstream file2("../tests/assets/sub.txt", std::ios::in);
-    EXPECT_THROW((Circuit(file2)), std::runtime_error);
+    EXPECT_THROW((Circuit(file2)), CircuitException);
 }

@@ -3,31 +3,31 @@
 #include "primitives.hpp"
 
 TEST(Substitutions, Constructor) {
-    EXPECT_THROW(Substitution(cf_set({})), std::runtime_error);
-    EXPECT_THROW(Substitution(cf_set({BooleanFunction("1010"), BooleanFunction("10")})), std::runtime_error);
+    EXPECT_THROW(Substitution(cf_set({})), SubException);
+    EXPECT_THROW(Substitution(cf_set({BooleanFunction("1010"), BooleanFunction("10")})), SubException);
     EXPECT_THROW(Substitution(cf_set({BooleanFunction("1010"), BooleanFunction("1001"), BooleanFunction("1010")})),
-                 std::runtime_error);
-    EXPECT_THROW(Substitution(cf_set({BooleanFunction("1010"), BooleanFunction("1010")})), std::runtime_error);
+                 SubException);
+    EXPECT_THROW(Substitution(cf_set({BooleanFunction("1010"), BooleanFunction("1010")})), SubException);
 
-    EXPECT_THROW(Substitution(table({})), std::runtime_error);
-    EXPECT_THROW(Substitution(table({{}})), std::runtime_error);
+    EXPECT_THROW(Substitution(table({})), SubException);
+    EXPECT_THROW(Substitution(table({{}})), SubException);
     EXPECT_THROW(Substitution(table({{0},
-                                     {1}})), std::runtime_error);
+                                     {1}})), SubException);
     EXPECT_THROW(Substitution(table({{1, 0, 1, 0},
-                                     {1, 0}})), std::runtime_error);
+                                     {1, 0}})), SubException);
     EXPECT_THROW(Substitution(table({{1, 0, 1, 0},
                                      {1, 0, 0, 1},
-                                     {1, 0, 0, 1}})), std::runtime_error);
+                                     {1, 0, 0, 1}})), SubException);
     EXPECT_THROW(Substitution(table({{1, 0, 1, 0},
-                                     {1, 0, 0, 0}})), std::runtime_error);
+                                     {1, 0, 0, 0}})), SubException);
 
-    EXPECT_THROW(Substitution(""), std::runtime_error);
-    EXPECT_THROW(Substitution("1"), std::runtime_error);
-    EXPECT_THROW(Substitution("0 1 3"), std::runtime_error);
-    EXPECT_THROW(Substitution("0 1 1 2"), std::runtime_error);
-    EXPECT_THROW(Substitution("0 1 2 r 3"), std::runtime_error);
-    EXPECT_THROW(Substitution("0 1 2 3 4 5 6 7 8 9 A B C D E F G"), std::runtime_error);
-    EXPECT_THROW(Substitution("# 0 1 2 3 4 5 6 7 8 9 A B C D E F"), std::runtime_error);
+    EXPECT_THROW(Substitution(""), SubException);
+    EXPECT_THROW(Substitution("1"), SubException);
+    EXPECT_THROW(Substitution("0 1 3"), SubException);
+    EXPECT_THROW(Substitution("0 1 1 2"), SubException);
+    EXPECT_THROW(Substitution("0 1 2 r 3"), SubException);
+    EXPECT_THROW(Substitution("0 1 2 3 4 5 6 7 8 9 A B C D E F G"), SubException);
+    EXPECT_THROW(Substitution("# 0 1 2 3 4 5 6 7 8 9 A B C D E F"), SubException);
 
     EXPECT_NO_THROW(Substitution("0"));
     EXPECT_NO_THROW(Substitution("3           2 1 0"));
@@ -123,10 +123,10 @@ TEST(Substitutions, Stream) {
     EXPECT_EQ(s, Substitution("11 0 1 2 5 14 4 10 3 15 6 7 13 8 12 9"));
 
     std::ifstream file1("../tests/assets/map.txt", std::ios::in);
-    EXPECT_THROW((Substitution(file1)), std::runtime_error);
+    EXPECT_THROW((Substitution(file1)), SubException);
 
     std::ifstream file2("../tests/assets/qc.txt", std::ios::in);
-    EXPECT_THROW((Substitution(file2)), std::runtime_error);
+    EXPECT_THROW((Substitution(file2)), SubException);
 }
 
 TEST(Substitutions, BinaryMappings) {
@@ -147,10 +147,10 @@ TEST(Substitutions, BinaryMappings) {
     auto mp_cursed_3 = BinaryMapping(
             cf_set({BooleanFunction("01110010"), BooleanFunction("11100100"), BooleanFunction("10110001"),
                     BooleanFunction("01010101")}));
-    EXPECT_THROW((Substitution(mp_cursed_1)), std::runtime_error);
-    EXPECT_THROW((Substitution(mp_cursed_2)), std::runtime_error);
-    EXPECT_THROW((Substitution(mp_cursed_3)), std::runtime_error);
-    EXPECT_THROW((s = mp_cursed_1), std::runtime_error);
-    EXPECT_THROW((s = mp_cursed_2), std::runtime_error);
-    EXPECT_THROW((s = mp_cursed_3), std::runtime_error);
+    EXPECT_THROW((Substitution(mp_cursed_1)), SubException);
+    EXPECT_THROW((Substitution(mp_cursed_2)), SubException);
+    EXPECT_THROW((Substitution(mp_cursed_3)), SubException);
+    EXPECT_THROW((s = mp_cursed_1), SubException);
+    EXPECT_THROW((s = mp_cursed_2), SubException);
+    EXPECT_THROW((s = mp_cursed_3), SubException);
 }

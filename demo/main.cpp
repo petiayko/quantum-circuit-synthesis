@@ -25,7 +25,7 @@ void print_program_help() {
     print_program_info();
 
     std::cout << "Generic options:" << std::endl;
-    std::cout << "  --version       print version std::string" << std::endl;
+    std::cout << "  --version       print version" << std::endl;
     std::cout << "  --help          produce help message" << std::endl;
     std::cout << "  --log arg       minimum level of logging ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')"
               << std::endl;
@@ -78,12 +78,12 @@ configuration parse_arguments(int argc, char *argv[]) {
 
         auto it = arguments_map.find(arg);
         if (it == arguments_map.end()) {
-            throw std::runtime_error{"Unknown argument: " + arg};
+            throw ArgumentException("Unknown argument: " + arg);
         }
 
         std::string full_arg_name = it->second;
         if (arguments_accounting[full_arg_name]) {
-            throw std::runtime_error{"Duplicate argument: " + arg};
+            throw ArgumentException("Duplicate argument: " + arg);
         }
         arguments_accounting[full_arg_name] = true;
         if (i + 1 >= argc || argv[i + 1][0] == '-') {
@@ -91,7 +91,7 @@ configuration parse_arguments(int argc, char *argv[]) {
                 config[full_arg_name] = "";
                 i++;
             } else {
-                throw std::runtime_error{"Missing value for argument: " + arg};
+                throw ArgumentException("Missing value for argument " + arg);
             }
         } else {
             config[full_arg_name] = argv[i + 1];
@@ -106,8 +106,8 @@ int main(int argc, char *argv[]) {
     configuration config;
     try {
         config = parse_arguments(argc, argv);
-    } catch (const std::exception &e) {
-        LOG_ERROR("Handling parameters", std::string("Error: ") + e.what());
+    } catch (const ArgumentException &e) {
+        LOG_ERROR("Processing parameters", std::string("Error: ") + e.what());
         return 1;
     }
 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
 
     it = config.find("--input");
     if (it == config.end()) {
-        LOG_ERROR("Handling parameters", "Path to input file was not provided");
+        LOG_ERROR("Processing parameters", "Path to input file was not provided");
         return 1;
     }
     auto input = it->second;
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
 
     it = config.find("--type");
     if (it == config.end()) {
-        LOG_ERROR("Handling parameters", "Type of input was not provided");
+        LOG_ERROR("Processing parameters", "Type of input was not provided");
         return 1;
     }
     auto type = it->second;
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
     } else if (log_level_s == "debug") {
         log_level = LogLevel::DEBUG;
     } else {
-        LOG_ERROR("Handling parameters", "Wrong log level was provided");
+        LOG_ERROR("Processing parameters", "Wrong log level was provided");
         return -1;
     }
     Logger::get_instance().set_level(log_level);
