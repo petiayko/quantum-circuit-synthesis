@@ -128,6 +128,13 @@ BooleanFunction &BooleanFunction::operator~() noexcept {
     return *this;
 }
 
+BooleanFunction::operator bool() const {
+    if (!this->is_constant()) {
+        throw BFException("Unable to cast BF into bool");
+    }
+    return vec_.front();
+}
+
 size_t BooleanFunction::size() const noexcept {
     return vec_.size();
 }
@@ -142,6 +149,12 @@ size_t BooleanFunction::weight() const noexcept {
 
 bool BooleanFunction::is_balanced() const noexcept {
     return this->weight() * 2 == this->size();
+}
+
+bool BooleanFunction::is_constant() const noexcept {
+    return !bool(std::count_if(vec_.cbegin(), vec_.cend(), [bit = vec_.front()](bool b) {
+        return bit != b;
+    }));
 }
 
 std::vector<bool> BooleanFunction::mobius_transformation() const noexcept {

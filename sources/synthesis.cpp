@@ -76,113 +76,99 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
     auto bm_cf = bm_extend.coordinate_functions();
     const auto outputs = bm_extend.outputs_number();
 
-//    std::vector<std::vector<int>> bm_spectrum;
-//    bm_spectrum.resize(bm_extend.outputs_number());
-//    std::transform(bm_cf.cbegin(), bm_cf.cend(), bm_spectrum.begin(), [](const BooleanFunction &bf) {
-//        return bf.RW_spectrum();
-//    });
-
     auto c = Circuit(bm.inputs_number());
     c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
 
-    [[maybe_unused]] bool status = true;
+    std::vector<bool> statistic(outputs, false);
+//    int i = -1;
+    int i = outputs;
     while (true) {
         if (c.produce_mapping() == bm_extend) {
             break;
         }
-
-//        for (int i = outputs - 1; i >= 0; i--) {
-        int i = outputs;
-        for (;;) {
-            if (c.produce_mapping() == bm_extend) {
-                break;
-            }
-            i--;
-            if (i < 0) {
-                i = outputs - 1;
-            }
-            size_t nest = i;
-            if (bm_cf[i] == BooleanFunction(nest, outputs)) {
-                continue;
-            }
-            auto complexity = bm_cf[i].complexity();
-            std::vector<size_t> best_controls;
-            int max_complexity_diff = 0;
-
-            // CNOT
-            for (const auto &controls: generate_controls(1, outputs, i)) {
-                auto g = Gate(GateType::CNOT, {nest}, controls, outputs);
-                g.act(bm_cf);
-                auto complexity_new = bm_cf[i].complexity();
-                if (complexity_new - complexity > max_complexity_diff) {
-                    max_complexity_diff = complexity_new - complexity;
-                    best_controls = controls;
-                }
-                g.act(bm_cf);
-            }
-            if (max_complexity_diff) {
-                auto g = Gate(GateType::CNOT, {nest}, best_controls, outputs);
-                c.add(g);
-                g.act(bm_cf);
-//                if (!i) {
-//                    i = outputs - 1;
-//                }
-//                i++;
-                continue;
-            }
-
-            // kCNOT 2
-            for (const auto &controls: generate_controls(2, outputs, i)) {
-                auto g = Gate(GateType::kCNOT, {nest}, controls, outputs);
-                g.act(bm_cf);
-                auto complexity_new = bm_cf[i].complexity();
-                if (complexity_new - complexity > max_complexity_diff) {
-                    max_complexity_diff = complexity_new - complexity;
-                    best_controls = controls;
-                }
-                g.act(bm_cf);
-            }
-            if (max_complexity_diff) {
-                auto g = Gate(GateType::kCNOT, {nest}, best_controls, outputs);
-                c.add(g);
-                g.act(bm_cf);
-//                if (!i) {
-//                    i = outputs - 1;
-//                }
-//                i++;
-                continue;
-            }
-
-            // kCNOT 3
-            for (const auto &controls: generate_controls(3, outputs, i)) {
-                auto g = Gate(GateType::kCNOT, {nest}, controls, outputs);
-                g.act(bm_cf);
-                auto complexity_new = bm_cf[i].complexity();
-                if (complexity_new - complexity > max_complexity_diff) {
-                    max_complexity_diff = complexity_new - complexity;
-                    best_controls = controls;
-                }
-                g.act(bm_cf);
-            }
-            if (max_complexity_diff) {
-                auto g = Gate(GateType::kCNOT, {nest}, best_controls, outputs);
-                c.add(g);
-                g.act(bm_cf);
-//                if (!i) {
-//                    i = outputs - 1;
-//                }
-//i++;
-                continue;
-            }
-
-            // else
-//            status = false;
+        if (static_cast<size_t>(std::count_if(statistic.cbegin(), statistic.cend(), [](bool status) {
+            return status;
+        })) == outputs) {
             break;
         }
-//        if (!status && c.produce_mapping() != bm_extend) {
-        if (c.produce_mapping() != bm_extend) {
-            throw SynthException("Unable to synthesize Circuit");
+
+//        i = (i + 1) % outputs;
+        i--;
+        if (i < 0) {
+            i = outputs - 1;
         }
+        size_t nest = i;
+
+        if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
+            statistic[nest] = true;
+            continue;
+        } else if (bm_cf[nest] == ~BooleanFunction(nest, outputs)) {
+            auto g = Gate(GateType::NOT, {nest}, {}, outputs);
+            c.add(g);
+            g.act(bm_cf);
+            statistic[nest] = true;
+            continue;
+        }
+
+        auto complexity = bm_cf[nest].complexity();
+        std::vector<size_t> best_controls;
+        int max_complexity_diff = 0;
+
+        // CNOT
+        for (const auto &controls: generate_controls(1, outputs, i)) {
+            auto g = Gate(GateType::CNOT, {nest}, controls, outputs);
+            g.act(bm_cf);
+            auto complexity_new = bm_cf[nest].complexity();
+            if (complexity_new - complexity > max_complexity_diff) {
+                max_complexity_diff = complexity_new - complexity;
+                best_controls = controls;
+            }
+            g.act(bm_cf);
+        }
+        if (max_complexity_diff) {
+            auto g = Gate(GateType::CNOT, {nest}, best_controls, outputs);
+            c.add(g);
+            g.act(bm_cf);
+            continue;
+        }
+
+        // kCNOT 2
+        for (const auto &controls: generate_controls(2, outputs, i)) {
+            auto g = Gate(GateType::kCNOT, {nest}, controls, outputs);
+            g.act(bm_cf);
+            auto complexity_new = bm_cf[nest].complexity();
+            if (complexity_new - complexity > max_complexity_diff) {
+                max_complexity_diff = complexity_new - complexity;
+                best_controls = controls;
+            }
+            g.act(bm_cf);
+        }
+        if (max_complexity_diff) {
+            auto g = Gate(GateType::kCNOT, {nest}, best_controls, outputs);
+            c.add(g);
+            g.act(bm_cf);
+            continue;
+        }
+
+        // kCNOT 3
+        for (const auto &controls: generate_controls(3, outputs, i)) {
+            auto g = Gate(GateType::kCNOT, {nest}, controls, outputs);
+            g.act(bm_cf);
+            auto complexity_new = bm_cf[nest].complexity();
+            if (complexity_new - complexity > max_complexity_diff) {
+                max_complexity_diff = complexity_new - complexity;
+                best_controls = controls;
+            }
+            g.act(bm_cf);
+        }
+        if (max_complexity_diff) {
+            auto g = Gate(GateType::kCNOT, {nest}, best_controls, outputs);
+            c.add(g);
+            g.act(bm_cf);
+            continue;
+        }
+
+        throw SynthException("Unable to synthesize Circuit");
     }
 
     return c;

@@ -30,6 +30,7 @@ TEST(Substitutions, Constructor) {
     EXPECT_THROW(Substitution("0 1 2 r 3"), SubException);
     EXPECT_THROW(Substitution("0 1 2 3 4 5 6 7 8 9 A B C D E F G"), SubException);
     EXPECT_THROW(Substitution("# 0 1 2 3 4 5 6 7 8 9 A B C D E F"), SubException);
+    EXPECT_THROW(Substitution("15 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"), SubException);
 
     EXPECT_NO_THROW(Substitution("3           2 1 0"));
     EXPECT_NO_THROW(Substitution("3\t2\t1\t0"));

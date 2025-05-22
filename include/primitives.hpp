@@ -52,6 +52,8 @@ public:
 
     BooleanFunction &operator~() noexcept;
 
+    operator bool() const;
+
     size_t size() const noexcept;
 
     size_t dim() const noexcept;
@@ -59,6 +61,8 @@ public:
     size_t weight() const noexcept;
 
     bool is_balanced() const noexcept;
+
+    bool is_constant() const noexcept;
 
     std::vector<bool> mobius_transformation() const noexcept;
 

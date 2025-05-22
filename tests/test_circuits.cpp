@@ -157,6 +157,14 @@ TEST(Circuits, Production) {
                                                            {0, 1, 0, 1},
                                                            {1, 0, 0, 0}}));
     }
+    {
+        Circuit c("Lines: 3\nNOT(2)\nCNOT(1; 2)\nkCNOT(0; 1, 2)\n");
+        EXPECT_EQ(c.produce_mapping(), Substitution("7 0 1 2 3 4 5 6"));
+    }
+    {
+        Circuit c("Lines: 3\nNOT(2)\nCNOT(1; 2)\nCNOT(1; 2)\n");
+        EXPECT_EQ(c.produce_mapping(), Substitution("1 0 3 2 5 4 7 6"));
+    }
 }
 
 TEST(Circuits, Stream) {

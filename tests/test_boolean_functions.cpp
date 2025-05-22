@@ -55,35 +55,45 @@ TEST(BooleanFunction, Methods) {
     EXPECT_EQ(bf_1.size(), 8);
     EXPECT_EQ(bf_1.dim(), 3);
     EXPECT_EQ(bf_1.weight(), 3);
-    EXPECT_EQ(bf_1.is_balanced(), false);
+    EXPECT_FALSE(bf_1.is_balanced());
+    EXPECT_FALSE(bf_1.is_constant());
 
     BooleanFunction bf_2("01");
     EXPECT_EQ(bf_2.size(), 2);
     EXPECT_EQ(bf_2.dim(), 1);
     EXPECT_EQ(bf_2.weight(), 1);
-    EXPECT_EQ(bf_2.is_balanced(), true);
+    EXPECT_TRUE(bf_2.is_balanced());
+    EXPECT_FALSE(bf_2.is_constant());
+
+    EXPECT_TRUE(BooleanFunction("11").is_constant());
+    EXPECT_TRUE(BooleanFunction("11"));
+    EXPECT_TRUE(BooleanFunction("1111").is_constant());
+    EXPECT_TRUE(BooleanFunction("1111"));
+    EXPECT_TRUE(BooleanFunction("00").is_constant());
+    EXPECT_FALSE(BooleanFunction("00"));
+    EXPECT_TRUE(BooleanFunction("00000000").is_constant());
+    EXPECT_FALSE(BooleanFunction("00000000"));
 
     EXPECT_EQ(bf_1.vector(), binary_vector({true, false, false, false, true, false, true, false}));
     EXPECT_EQ(bf_2.vector(), binary_vector({false, true}));
     EXPECT_EQ(BooleanFunction().vector(), binary_vector());
 
-    EXPECT_EQ(BooleanFunction("01").extend(), BinaryMapping({BooleanFunction("01")}));
+    EXPECT_EQ(BooleanFunction("01").extend(), BinaryMapping(cf_set{BooleanFunction("01")}));
     EXPECT_TRUE(BooleanFunction("01").extend().is_substitution());
-    EXPECT_EQ(BooleanFunction("00").extend(), BinaryMapping({BooleanFunction("0011"), BooleanFunction("0101")}));
+    EXPECT_EQ(BooleanFunction("00").extend(), BinaryMapping(cf_set{BooleanFunction("0011"), BooleanFunction("0101")}));
     EXPECT_TRUE(BooleanFunction("00").extend().is_substitution());
-    EXPECT_EQ(BooleanFunction("1111").extend(),
-              BinaryMapping({BooleanFunction("00001111"), BooleanFunction("00110011"), BooleanFunction("10101010")}));
+    EXPECT_EQ(BooleanFunction("1111").extend(), BinaryMapping(
+            cf_set{BooleanFunction("00001111"), BooleanFunction("00110011"), BooleanFunction("10101010")}));
     EXPECT_TRUE(BooleanFunction("1111").extend().is_substitution());
-    EXPECT_EQ(BooleanFunction("1001").extend(), BinaryMapping({BooleanFunction("0011"), BooleanFunction("1001")}));
+    EXPECT_EQ(BooleanFunction("1001").extend(),
+              BinaryMapping(cf_set{BooleanFunction("0011"), BooleanFunction("1001")}));
     EXPECT_TRUE(BooleanFunction("1001").extend().is_substitution());
-    EXPECT_EQ(BooleanFunction("1101").extend(),
-              BinaryMapping({BooleanFunction("00001111"), BooleanFunction("00110011"), BooleanFunction("10100110")}));
+    EXPECT_EQ(BooleanFunction("1101").extend(), BinaryMapping(
+            cf_set{BooleanFunction("00001111"), BooleanFunction("00110011"), BooleanFunction("10100110")}));
     EXPECT_TRUE(BooleanFunction("1101").extend().is_substitution());
     EXPECT_EQ(BooleanFunction("00101001").extend(), BinaryMapping(
-            {
-                BooleanFunction("0000000011111111"), BooleanFunction("0000111100001111"),
-                        BooleanFunction("0011001100110011"), BooleanFunction("0101100110010110")
-            }));
+            cf_set{BooleanFunction("0000000011111111"), BooleanFunction("0000111100001111"),
+                   BooleanFunction("0011001100110011"), BooleanFunction("0101100110010110")}));
     EXPECT_TRUE(BooleanFunction("00101001").extend().is_substitution());
 
     EXPECT_EQ(BooleanFunction("0000").mobius_transformation(), (std::vector<bool>{0, 0, 0, 0}));
