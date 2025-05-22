@@ -146,6 +146,12 @@ TEST(Circuits, Production) {
         EXPECT_EQ(c.produce_mapping(), Substitution("1 0 2 3 4 5 6 7"));
     }
     {
+        Circuit c("Lines: 3\n"
+                  "NOT(2)\nCNOT(2; 1)\nCNOT(2; 0)\nkCNOT(2; 0, 1)\n"
+                  "kCNOT(2; 0, 1)\nCNOT(2; 0)\nCNOT(2; 1)\nNOT(2)");
+        EXPECT_EQ(c.produce_mapping(), Substitution("0 1 2 3 4 5 6 7"));
+    }
+    {
         Circuit c("Lines: 3; 1\nNOT(2)\nCNOT(2; 1)\nCNOT(2; 0)\nkCNOT(2; 0, 1)");
         EXPECT_EQ(c.produce_mapping(), BinaryMapping(table{{0, 0, 1, 1},
                                                            {0, 1, 0, 1},

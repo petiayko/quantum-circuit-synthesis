@@ -97,6 +97,7 @@ TEST(BooleanFunction, Methods) {
 
     EXPECT_EQ(BooleanFunction("01").RW_spectrum(), (std::vector<int>{1, -1}));
     EXPECT_EQ(BooleanFunction("00").RW_spectrum(), (std::vector<int>{0, 0}));
+    EXPECT_EQ(BooleanFunction("0110").RW_spectrum(), (std::vector<int>{2, 0, 0, -2}));
     EXPECT_EQ(BooleanFunction("1011").RW_spectrum(), (std::vector<int>{3, 1, -1, 1}));
     EXPECT_EQ(BooleanFunction("11000100").RW_spectrum(), (std::vector<int>{3, -1, 3, -1, 1, 1, 1, 1}));
     EXPECT_EQ(BooleanFunction("00000101").RW_spectrum(), (std::vector<int>{2, -2, 0, 0, -2, 2, 0, 0}));
@@ -105,6 +106,7 @@ TEST(BooleanFunction, Methods) {
 
     EXPECT_EQ(BooleanFunction("01").adjacent_zeros(), 0);
     EXPECT_EQ(BooleanFunction("00").adjacent_zeros(), 1);
+    EXPECT_EQ(BooleanFunction("0110").adjacent_zeros(), 0);
     EXPECT_EQ(BooleanFunction("1011").adjacent_zeros(), 2);
     EXPECT_EQ(BooleanFunction("11000100").adjacent_zeros(), 7);
     EXPECT_EQ(BooleanFunction("00000101").adjacent_zeros(), 8);
@@ -114,6 +116,7 @@ TEST(BooleanFunction, Methods) {
 
     EXPECT_EQ(BooleanFunction("01").complexity(), 0);
     EXPECT_EQ(BooleanFunction("00").complexity(), 5);
+    EXPECT_EQ(BooleanFunction("0110").complexity(), 16);
     EXPECT_EQ(BooleanFunction("1011").complexity(), 2);
     EXPECT_EQ(BooleanFunction("11000100").complexity(), 7);
     EXPECT_EQ(BooleanFunction("00000101").complexity(), 104);

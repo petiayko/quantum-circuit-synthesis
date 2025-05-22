@@ -43,25 +43,122 @@ Circuit dummy_algorithm(const BinaryMapping &bm) {
     return c;
 }
 
+void generate_controls_(size_t len, size_t max, size_t exclude, size_t start, std::vector<size_t> &current,
+                        std::vector<std::vector<size_t>> &result) {
+    if (current.size() == len) {
+        result.push_back(current);
+        return;
+    }
+
+    for (size_t i = start; i < max; i++) {
+        if (i == exclude) {
+            continue;
+        }
+        current.push_back(i);
+        generate_controls_(len, max, exclude, i + 1, current, result);
+        current.pop_back();
+    }
+}
+
+std::vector<std::vector<size_t>> generate_controls(size_t len, size_t max, size_t exclude) {
+    if (len > max - (exclude < max)) {
+        return {};
+    }
+
+    std::vector<std::vector<size_t>> result;
+    std::vector<size_t> current;
+    generate_controls_(len, max, exclude, 0, current, result);
+    return result;
+}
+
 Circuit RW_algorithm(const BinaryMapping &bm) {
     auto bm_extend = bm.extend();
-    const auto bm_cf = bm_extend.coordinate_functions();
+    auto bm_cf = bm_extend.coordinate_functions();
+    const auto outputs = bm_extend.outputs_number();
 
-    std::vector<std::vector<int>> bf_spectrum;
-    bf_spectrum.resize(bm_extend.outputs_number());
-    std::transform(bm_cf.cbegin(), bm_cf.cend(), bf_spectrum.begin(), [](const BooleanFunction &bf) {
+    std::vector<std::vector<int>> bm_spectrum;
+    bm_spectrum.resize(bm_extend.outputs_number());
+    std::transform(bm_cf.cbegin(), bm_cf.cend(), bm_spectrum.begin(), [](const BooleanFunction &bf) {
         return bf.RW_spectrum();
     });
 
-    std::vector<int> bf_complexity;
-    bf_complexity.resize(bm.outputs_number());
-    std::transform(bm_cf.cbegin(), bm_cf.cend(), bf_complexity.begin(), [](const BooleanFunction &bf) {
-        return bf.complexity();
-    });
-
     auto c = Circuit(bm.inputs_number());
-    c.set_memory(bm_extend.outputs_number() - bm.outputs_number());
+    c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
 
+    bool status = true;
+    while (true) {
+        if (c.produce_mapping() == bm_extend) {
+            break;
+        }
+        size_t i = 0;
+        for (; i < outputs; i++) {
+            // CNOT
+            std::vector<size_t> best_controls;
+            int max_complexity = 0;
+            for (const auto &controls: generate_controls(1, outputs, i)) {
+                auto g = Gate(GateType::CNOT, {i}, controls, outputs);
+                auto complexity = bm_cf[i].complexity();
+                g.act(bm_cf);
+                auto complexity_new = bm_cf[i].complexity();
+                if (complexity_new - complexity > max_complexity) {
+                    max_complexity = complexity_new - complexity;
+                    best_controls = controls;
+                }
+                g.act(bm_cf);
+            }
+            if (max_complexity) {
+                auto g = Gate(GateType::CNOT, {i}, best_controls, outputs);
+                c.add(g);
+                g.act(bm_cf);
+                continue;
+            }
+
+            // kCNOT 2
+            for (const auto &controls: generate_controls(2, outputs, i)) {
+                auto g = Gate(GateType::kCNOT, {i}, controls, outputs);
+                auto complexity = bm_cf[i].complexity();
+                g.act(bm_cf);
+                auto complexity_new = bm_cf[i].complexity();
+                if (complexity_new - complexity > max_complexity) {
+                    max_complexity = complexity_new - complexity;
+                    best_controls = controls;
+                }
+                g.act(bm_cf);
+            }
+            if (max_complexity) {
+                auto g = Gate(GateType::kCNOT, {i}, best_controls, outputs);
+                c.add(g);
+                g.act(bm_cf);
+                continue;
+            }
+
+            // kCNOT 3
+            for (const auto &controls: generate_controls(3, outputs, i)) {
+                auto g = Gate(GateType::kCNOT, {i}, controls, outputs);
+                auto complexity = bm_cf[i].complexity();
+                g.act(bm_cf);
+                auto complexity_new = bm_cf[i].complexity();
+                if (complexity_new - complexity > max_complexity) {
+                    max_complexity = complexity_new - complexity;
+                    best_controls = controls;
+                }
+                g.act(bm_cf);
+            }
+            if (max_complexity) {
+                auto g = Gate(GateType::kCNOT, {i}, best_controls, outputs);
+                c.add(g);
+                g.act(bm_cf);
+                continue;
+            }
+
+            // else
+            status = false;
+            break;
+        }
+        if (!status) {
+            throw SynthException("Unable to synthesize Circuit");
+        }
+    }
 
     return c;
 }
@@ -79,7 +176,7 @@ Circuit RW_algorithm(const Substitution &sub) {
         throw SynthException("Substitution size should be power of 2");
     }
     if (sub.is_identical()) {
-        return Circuit(sub.power());
+        return Circuit(std::log2(sub.power()));
     }
     BinaryMapping bm(sub);
     return RW_algorithm(bm);
