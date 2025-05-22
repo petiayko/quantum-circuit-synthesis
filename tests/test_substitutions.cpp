@@ -122,7 +122,7 @@ TEST(Substitutions, Stream) {
 
     std::ifstream file("../tests/assets/sub.txt", std::ios::in);
     s = Substitution(file);
-    EXPECT_EQ(s, Substitution("11 0 1 2 5 14 4 10 3 15 6 7 13 8 12 9"));
+    EXPECT_EQ(s, Substitution("3 B 2 A 0 7 1 6 F 8 E 9 D 5 C 4"));
 
     std::ifstream file1("../tests/assets/map.txt", std::ios::in);
     EXPECT_THROW((Substitution(file1)), SubException);

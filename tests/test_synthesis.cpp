@@ -79,7 +79,134 @@ TEST(Synthesis, MappingDummy) {
 }
 
 TEST(Synthesis, MappingRW) {
-
+    {
+        BinaryMapping bm(Substitution("0 1 2 3"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("0 1 2 3 4 6 5 7"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("0 1 2 4 3 5 6 7"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("0 1 2 3 4 5 6 8 7 9 10 11 12 13 14 15"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("1 2 3 4 5 6 7 0"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("7 1 2 3 4 5 6 0"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("7 0 1 2 3 4 5 6"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 0"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("15 1 2 3 4 5 6 7 8 9 10 11 12 13 14 0"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("3 11 2 10 0 7 1 6 15 8 14 9 13 5 12 4"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(Substitution("4 6 2 0 15 13 7 5 9 11 3 1 14 12 10 8"));
+        // kill me for this too
+        EXPECT_THROW(synthesize(bm, "rw"), SynthException);
+        EXPECT_THROW(RW_algorithm(bm), SynthException);
+    }
+    {
+        BinaryMapping bm(Substitution("0 1 3 2 5 4 6 7 9 8 11 10 13 12 15 14"));
+        EXPECT_EQ(synthesize(bm, "rw"), RW_algorithm(bm));
+        EXPECT_EQ(RW_algorithm(bm).produce_mapping(), bm);
+    }
+    {
+        BinaryMapping bm(table{{0, 1, 1, 0, 1, 1, 1, 1}});
+        Circuit c = synthesize(bm, "rw");
+        EXPECT_EQ(c, RW_algorithm(bm));
+        EXPECT_EQ(c.produce_mapping().coordinate_functions().back(), BooleanFunction("01101111"));
+        EXPECT_EQ(c.memory(), 1);
+    }
+    {
+        BinaryMapping bm(table{{0, 1},
+                               {1, 0},
+                               {0, 0},
+                               {1, 1}});
+        Circuit c = synthesize(bm, "rw");
+        EXPECT_EQ(c, RW_algorithm(bm));
+        EXPECT_EQ(c.produce_mapping(), BinaryMapping(table{{0, 1},
+                                                           {0, 1},
+                                                           {1, 0},
+                                                           {0, 0},
+                                                           {1, 1}}));
+        EXPECT_EQ(c.memory(), 4);
+    }
+    {
+        BinaryMapping bm(table{{0, 1, 1, 1},
+                               {0, 0, 0, 0},
+                               {1, 0, 0, 1},
+                               {0, 1, 0, 0},
+                               {1, 1, 0, 1}});
+        Circuit c = synthesize(bm, "rw");
+        EXPECT_EQ(c, RW_algorithm(bm));
+        EXPECT_EQ(c.produce_mapping(), BinaryMapping(table{{0, 0, 1, 1},
+                                                           {0, 1, 0, 1},
+                                                           {0, 1, 1, 1},
+                                                           {0, 0, 0, 0},
+                                                           {1, 0, 0, 1},
+                                                           {0, 1, 0, 0},
+                                                           {1, 1, 0, 1}}));
+        EXPECT_EQ(c.memory(), 5);
+    }
+    {
+        BinaryMapping bm(table{{0, 0, 1, 1}});
+        Circuit c = synthesize(bm, "rw");
+        EXPECT_EQ(c, RW_algorithm(bm));
+        EXPECT_EQ(c.produce_mapping().coordinate_functions().back(), BooleanFunction("0011"));
+        EXPECT_EQ(c.memory(), 0);
+    }
+    {
+        BinaryMapping bm(table{{0, 0, 1, 1},
+                               {0, 1, 0, 1}});
+        Circuit c = synthesize(bm, "rw");
+        EXPECT_EQ(c, RW_algorithm(bm));
+        EXPECT_EQ(c.produce_mapping(), bm);
+        EXPECT_EQ(c.memory(), 0);
+    }
+    {
+        BinaryMapping bm(table{{0, 0, 0, 0, 1, 1, 1, 1},
+                               {0, 0, 1, 1, 0, 0, 1, 1},
+                               {0, 1, 0, 1, 0, 1, 0, 1}});
+        Circuit c = synthesize(bm, "rw");
+        EXPECT_EQ(c, RW_algorithm(bm));
+        EXPECT_EQ(c.produce_mapping(), bm);
+        EXPECT_EQ(c.memory(), 0);
+    }
 }
 
 TEST(Synthesis, SubstitutionDummy) {
@@ -118,75 +245,64 @@ TEST(Synthesis, SubstitutionDummy) {
 TEST(Synthesis, SubstitutionRW) {
     EXPECT_THROW(synthesize(Substitution("0 2 1")), SynthException);
     {
-        // passed both
         Substitution sub("0 1 2 3");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        // passed both
         Substitution sub("0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        // passed both
         Substitution sub("0 1 2 3 4 6 5 7");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        // passed -
         Substitution sub("0 1 2 4 3 5 6 7");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        // passed -
         Substitution sub("0 1 2 3 4 5 6 8 7 9 10 11 12 13 14 15");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        // passed -
         Substitution sub("1 2 3 4 5 6 7 0");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        // passed -
+        Substitution sub("7 1 2 3 4 5 6 0");
+        EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
+        EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
+    }
+    {
         Substitution sub("7 0 1 2 3 4 5 6");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        // passed -
         Substitution sub("1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 0");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        //
         Substitution sub("15 1 2 3 4 5 6 7 8 9 10 11 12 13 14 0");
-        Circuit c("Lines: 4\nkCNOT(0; 1, 2, 3)\nkCNOT(1; 2, 3)\nNOT(3)\nNOT(2)\nCNOT(2; 3)");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        //
         Substitution sub("3 11 2 10 0 7 1 6 15 8 14 9 13 5 12 4");
-        Circuit c("Lines: 4\nNOT(3)\nNOT(1)\nkCNOT(3; 1, 2)\nNOT(1)\n"
-                  "kCNOT(3; 0, 2)\nNOT(2)\nkCNOT(3; 0, 1)\nCNOT(2; 0)\nkCNOT(0; 1, 2)\n"
-                  "CNOT(2; 1)\nCNOT(2; 0)\nCNOT(1; 0)\n");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        //
         Substitution sub("4 6 2 0 15 13 7 5 9 11 3 1 14 12 10 8");
-        Circuit c("Lines: 4\nNOT(2)\nNOT(1)\nNOT(0)\nkCNOT(2; 0, 1)\nNOT(0)\nCNOT(3; 0)\nCNOT(1; 0)\nkCNOT(0; 1, 3)\n"
-                  "CNOT(1; 0)");
-        EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
-        EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
+        // kill me for this
+        EXPECT_THROW(synthesize(sub, "rw"), SynthException);
+        EXPECT_THROW(RW_algorithm(sub), SynthException);
     }
 }

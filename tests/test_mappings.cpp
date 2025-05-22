@@ -210,10 +210,10 @@ TEST(BinaryMapping, Stream) {
 
     std::ifstream file("../tests/assets/map.txt", std::ios::in);
     BinaryMapping bm2(file);
-    EXPECT_EQ(bm2.to_table(), "00\t011\n"
-                              "01\t110\n"
-                              "10\t000\n"
-                              "11\t100\n");
+    EXPECT_EQ(bm2.to_table(), "00\t0110\n"
+                              "01\t1110\n"
+                              "10\t0001\n"
+                              "11\t1100\n");
 
     std::ifstream file1("../tests/assets/sub.txt", std::ios::in);
     EXPECT_THROW((BinaryMapping(file1)), BMException);

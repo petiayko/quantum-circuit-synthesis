@@ -64,6 +64,8 @@ public:
 
     bool is_constant() const noexcept;
 
+    size_t variable() const;
+
     std::vector<bool> mobius_transformation() const noexcept;
 
     std::vector<int> RW_spectrum() const noexcept;
@@ -144,6 +146,8 @@ private:
 
 class Substitution {
 public:
+    explicit Substitution(const std::vector<size_t> &);
+
     explicit Substitution(const cf_set &);
 
     explicit Substitution(const table &);

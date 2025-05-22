@@ -380,6 +380,10 @@ BinaryMapping Circuit::produce_mapping() const noexcept {
     return BinaryMapping(vec_bf);
 }
 
+bool Circuit::simplify() noexcept {
+    return false;
+}
+
 bool Circuit::operator==(const Circuit &c) const {
     return (dim_ == c.dim_ && memory_ == c.memory_ && gates_ == c.gates_);
 }

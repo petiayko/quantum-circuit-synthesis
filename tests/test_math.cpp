@@ -21,23 +21,47 @@ TEST(Math, IsPowerOf2) {
 
 
 TEST(Math, DecimalToBinary) {
-    EXPECT_EQ(decimal_to_binary(0), "0");
-    EXPECT_EQ(decimal_to_binary(1), "1");
-    EXPECT_EQ(decimal_to_binary(2), "10");
-    EXPECT_EQ(decimal_to_binary(19), "10011");
-    EXPECT_EQ(decimal_to_binary(14251525), "110110010111011000000101");
+    EXPECT_EQ(decimal_to_binary_s(0), "0");
+    EXPECT_EQ(decimal_to_binary_s(1), "1");
+    EXPECT_EQ(decimal_to_binary_s(2), "10");
+    EXPECT_EQ(decimal_to_binary_s(19), "10011");
+    EXPECT_EQ(decimal_to_binary_s(14251525), "110110010111011000000101");
 
-    EXPECT_EQ(decimal_to_binary(0, 20), "00000000000000000000");
-    EXPECT_EQ(decimal_to_binary(1, 20), "00000000000000000001");
-    EXPECT_EQ(decimal_to_binary(2, 20), "00000000000000000010");
-    EXPECT_EQ(decimal_to_binary(19, 20), "00000000000000010011");
-    EXPECT_EQ(decimal_to_binary(14251525, 20), "110110010111011000000101");
+    EXPECT_EQ(decimal_to_binary_s(0, 20), "00000000000000000000");
+    EXPECT_EQ(decimal_to_binary_s(1, 20), "00000000000000000001");
+    EXPECT_EQ(decimal_to_binary_s(2, 20), "00000000000000000010");
+    EXPECT_EQ(decimal_to_binary_s(19, 20), "00000000000000010011");
+    EXPECT_EQ(decimal_to_binary_s(14251525, 20), "110110010111011000000101");
 
-    EXPECT_EQ(decimal_to_binary<int>(0), "0");
-    EXPECT_EQ(decimal_to_binary<int>(1), "1");
-    EXPECT_EQ(decimal_to_binary<int>(2), "10");
-    EXPECT_EQ(decimal_to_binary<int>(19), "10011");
-    EXPECT_EQ(decimal_to_binary<int>(14251525), "110110010111011000000101");
+    EXPECT_EQ(decimal_to_binary_s<int>(0), "0");
+    EXPECT_EQ(decimal_to_binary_s<int>(1), "1");
+    EXPECT_EQ(decimal_to_binary_s<int>(2), "10");
+    EXPECT_EQ(decimal_to_binary_s<int>(19), "10011");
+    EXPECT_EQ(decimal_to_binary_s<int>(14251525), "110110010111011000000101");
+
+    EXPECT_EQ(decimal_to_binary_v(0), (std::vector<bool>{0}));
+    EXPECT_EQ(decimal_to_binary_v(1), (std::vector<bool>{1}));
+    EXPECT_EQ(decimal_to_binary_v(2), (std::vector<bool>{1, 0}));
+    EXPECT_EQ(decimal_to_binary_v(19), (std::vector<bool>{1, 0, 0, 1, 1}));
+    EXPECT_EQ(decimal_to_binary_v(14251525),
+              (std::vector<bool>{1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1}));
+
+    EXPECT_EQ(decimal_to_binary_v(0, 20), (std::vector<bool>(20, false)));
+    EXPECT_EQ(decimal_to_binary_v(1, 20),
+              (std::vector<bool>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}));
+    EXPECT_EQ(decimal_to_binary_v(2, 20),
+              (std::vector<bool>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0}));
+    EXPECT_EQ(decimal_to_binary_v(19, 20),
+              (std::vector<bool>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1}));
+    EXPECT_EQ(decimal_to_binary_v(14251525, 20),
+              (std::vector<bool>{1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1}));
+
+    EXPECT_EQ(decimal_to_binary_v<int>(0), (std::vector<bool>{0}));
+    EXPECT_EQ(decimal_to_binary_v<int>(1), (std::vector<bool>{1}));
+    EXPECT_EQ(decimal_to_binary_v<int>(2), (std::vector<bool>{1, 0}));
+    EXPECT_EQ(decimal_to_binary_v<int>(19), (std::vector<bool>{1, 0, 0, 1, 1}));
+    EXPECT_EQ(decimal_to_binary_v<int>(14251525),
+              (std::vector<bool>{1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1}));
 }
 
 TEST(Math, BinaryToDecimal) {

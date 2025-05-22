@@ -67,6 +67,8 @@ public:
 
     void insert(const Gate &, size_t = 0);
 
+    bool simplify() noexcept;
+
     BinaryMapping produce_mapping() const noexcept;
 
     bool operator==(const Circuit &) const;

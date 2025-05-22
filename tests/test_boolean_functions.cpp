@@ -39,14 +39,14 @@ TEST(BooleanFunction, Constructor) {
     EXPECT_EQ(bf_s, bf_v_int);
     EXPECT_EQ(bf_s, bf_s_copy_1);
 
-    BooleanFunction bf_s_uneq_1("1010");
-    BooleanFunction bf_s_uneq_2("10101111");
-    EXPECT_NE(bf_s, bf_s_uneq_1);
-    EXPECT_NE(bf_s, bf_s_uneq_2);
-    EXPECT_NE(bf_s_uneq_1, bf_s_uneq_2);
+    BooleanFunction bf_s_cursed_1("1010");
+    BooleanFunction bf_s_cursed_2("10101111");
+    EXPECT_NE(bf_s, bf_s_cursed_1);
+    EXPECT_NE(bf_s, bf_s_cursed_2);
+    EXPECT_NE(bf_s_cursed_1, bf_s_cursed_2);
 
-    BooleanFunction bf_s_copy_2 = bf_s_uneq_1;
-    EXPECT_EQ(bf_s_copy_2, bf_s_uneq_1);
+    BooleanFunction bf_s_copy_2 = bf_s_cursed_1;
+    EXPECT_EQ(bf_s_copy_2, bf_s_cursed_1);
 }
 
 
@@ -73,6 +73,22 @@ TEST(BooleanFunction, Methods) {
     EXPECT_FALSE(BooleanFunction("00"));
     EXPECT_TRUE(BooleanFunction("00000000").is_constant());
     EXPECT_FALSE(BooleanFunction("00000000"));
+
+    EXPECT_EQ(BooleanFunction("01").variable(), 0);
+    EXPECT_EQ(BooleanFunction("0011").variable(), 0);
+    EXPECT_EQ(BooleanFunction("00110011").variable(), 1);
+    EXPECT_EQ(BooleanFunction("01010101").variable(), 2);
+    EXPECT_EQ(BooleanFunction("0000000011111111").variable(), 0);
+    EXPECT_EQ(BooleanFunction("0000111100001111").variable(), 1);
+    EXPECT_EQ(BooleanFunction("0011001100110011").variable(), 2);
+    EXPECT_EQ(BooleanFunction("0101010101010101").variable(), 3);
+    EXPECT_THROW(BooleanFunction("00").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("10").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("11").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("00000000").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("1111").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("10101010").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("11111111111111110000000000000000").variable(), BFException);
 
     EXPECT_EQ(bf_1.vector(), binary_vector({true, false, false, false, true, false, true, false}));
     EXPECT_EQ(bf_2.vector(), binary_vector({false, true}));

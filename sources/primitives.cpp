@@ -157,6 +157,15 @@ bool BooleanFunction::is_constant() const noexcept {
     }));
 }
 
+size_t BooleanFunction::variable() const {
+    for (size_t i = 0; i < this->dim(); i++) {
+        if (this->operator==(BooleanFunction(i, this->dim()))) {
+            return i;
+        }
+    }
+    throw BFException("BF is not variable");
+}
+
 std::vector<bool> BooleanFunction::mobius_transformation() const noexcept {
     std::vector<bool> anf(vec_);
 
@@ -235,11 +244,11 @@ BinaryMapping BooleanFunction::extend() const {
     size_t odd = height - 1;
     for (auto bit: bf_values) {
         if (bit) {
-            truth_table_s += decimal_to_binary(height - odd, width) + '\n';
+            truth_table_s += decimal_to_binary_s(height - odd, width) + '\n';
             odd -= 2;
             continue;
         }
-        truth_table_s += decimal_to_binary(height - even, width) + '\n';
+        truth_table_s += decimal_to_binary_s(height - even, width) + '\n';
         even -= 2;
     }
     return BinaryMapping(truth_table_s);
@@ -253,7 +262,7 @@ std::string BooleanFunction::to_table(char sep) const noexcept {
     std::string out;
     std::string set;
     for (size_t i = 0; i < this->size(); i++) {
-        out += decimal_to_binary(i, this->dim()) + sep + (vec_[i] ? '1' : '0') + '\n';
+        out += decimal_to_binary_s(i, this->dim()) + sep + (vec_[i] ? '1' : '0') + '\n';
     }
     return out;
 }
@@ -331,7 +340,7 @@ BinaryMapping::BinaryMapping(const Substitution &sub) {
     auto power = static_cast<size_t>(std::log2(sub.power()));
     table truth_table(power);
     for (const auto &v: sub.vector()) {
-        auto v_binary = decimal_to_binary(v, power);
+        auto v_binary = decimal_to_binary_s(v, power);
         for (size_t i = 0; i < v_binary.size(); i++) {
             truth_table[i].push_back(v_binary[i] == '1');
         }
@@ -444,6 +453,7 @@ void BinaryMapping::by_string_(const std::string &s) {
     table truth_table;
 
     while (getline(ss, line, '\n')) {
+        trim(line);
         if (line.empty() || line.front() == '#') {
             continue;
         }
@@ -484,7 +494,7 @@ std::string BinaryMapping::to_table(char sep) const noexcept {
     auto truth_table = this->to_table_();
     std::string result;
     for (size_t i = 0; i < truth_table.front().size(); i++) {
-        result += decimal_to_binary(i, this->inputs_number()) + sep;
+        result += decimal_to_binary_s(i, this->inputs_number()) + sep;
         for (auto &j: truth_table) {
             result += (j[i] ? '1' : '0');
         }
@@ -519,6 +529,17 @@ bool is_substitution(const std::vector<size_t> &vec) {
         checked.insert(v);
     }
     return checked.size() == vec.size();
+}
+
+Substitution::Substitution(const std::vector<size_t> &v) {
+    if (v.empty()) {
+        throw SubException("Empty coordinate function set");
+    }
+    sub_ = v;
+    if (!is_substitution(sub_)) {
+        sub_.clear();
+        throw SubException("Unable to build substitution");
+    }
 }
 
 Substitution::Substitution(const cf_set &cf) {
@@ -709,6 +730,7 @@ void Substitution::by_string_(const std::string &s) {
     std::string value;
 
     while (getline(ss, line, '\n')) {
+        trim(line);
         if (line.empty() || line.front() == '#') {
             continue;
         }
