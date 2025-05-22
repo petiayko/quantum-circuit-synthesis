@@ -80,7 +80,6 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
     c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
 
     std::vector<bool> statistic(outputs, false);
-//    int i = -1;
     int i = outputs;
     while (true) {
         if (c.produce_mapping() == bm_extend) {
@@ -92,7 +91,6 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
             break;
         }
 
-//        i = (i + 1) % outputs;
         i--;
         if (i < 0) {
             i = outputs - 1;
@@ -104,7 +102,7 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
             continue;
         } else if (bm_cf[nest] == ~BooleanFunction(nest, outputs)) {
             auto g = Gate(GateType::NOT, {nest}, {}, outputs);
-            c.add(g);
+            c.insert(g, 0);
             g.act(bm_cf);
             statistic[nest] = true;
             continue;
@@ -127,7 +125,7 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
         }
         if (max_complexity_diff) {
             auto g = Gate(GateType::CNOT, {nest}, best_controls, outputs);
-            c.add(g);
+            c.insert(g, 0);
             g.act(bm_cf);
             continue;
         }
@@ -145,7 +143,7 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
         }
         if (max_complexity_diff) {
             auto g = Gate(GateType::kCNOT, {nest}, best_controls, outputs);
-            c.add(g);
+            c.insert(g, 0);
             g.act(bm_cf);
             continue;
         }
@@ -163,12 +161,14 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
         }
         if (max_complexity_diff) {
             auto g = Gate(GateType::kCNOT, {nest}, best_controls, outputs);
-            c.add(g);
+            c.insert(g, 0);
             g.act(bm_cf);
             continue;
         }
 
-        throw SynthException("Unable to synthesize Circuit");
+        statistic[nest] = true;
+        continue;
+//        throw SynthException("Unable to synthesize Circuit");
     }
 
     return c;

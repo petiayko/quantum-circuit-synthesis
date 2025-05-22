@@ -44,6 +44,22 @@ TEST(Circuits, Constructor) {
               Circuit("Lines: 10;8\nNOT(2)\nSWAP(8,9)"));
 }
 
+TEST(Circuits, Insert) {
+    Circuit c("Lines: 3");
+    c.add(Gate(GateType::SWAP, {0, 2}, {}, 3));
+    c.add(Gate(GateType::CNOT, {1}, {0}, 3));
+
+    EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 4), 0), CircuitException);
+    EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 2), 0), CircuitException);
+    EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 3), 3), CircuitException);
+
+    c.insert(Gate(GateType::NOT, {0}, {}, 3));
+    c.insert(Gate(GateType::kCNOT, {1}, {0, 2}, 3), 1);
+    c.insert(Gate(GateType::CSWAP, {0, 2}, {1}, 3), 4);
+
+    EXPECT_EQ(c, Circuit("Lines: 3\nNOT(0)\nkCNOT(1; 0, 2)\nSWAP(0, 2)\nCNOT(1; 0)\nCSWAP(0, 2; 1)"));
+}
+
 TEST(Circuits, Act) {
     std::vector<bool> vec{0, 1};
     EXPECT_THROW(Circuit("Lines: 0").act(vec), CircuitException);

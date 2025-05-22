@@ -360,6 +360,16 @@ void Circuit::add(const Gate &g) {
     gates_.push_back(g);
 }
 
+void Circuit::insert(const Gate &g, size_t pos) {
+    if (g.dim() != dim_) {
+        throw CircuitException("Circuit and Gate must have equal dimensions");
+    }
+    if (pos > gates_.size()) {
+        throw CircuitException("Provided pos out of range");
+    }
+    gates_.insert(gates_.begin() + pos, g);
+}
+
 BinaryMapping Circuit::produce_mapping() const noexcept {
     cf_set vec_bf;
     vec_bf.reserve(this->dim());

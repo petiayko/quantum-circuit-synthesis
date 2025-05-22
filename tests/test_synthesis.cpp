@@ -120,57 +120,48 @@ TEST(Synthesis, SubstitutionRW) {
     {
         // passed both
         Substitution sub("0 1 2 3");
-        Circuit c("Lines: 2");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
         // passed both
         Substitution sub("0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15");
-        Circuit c("Lines: 4");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
         // passed both
         Substitution sub("0 1 2 3 4 6 5 7");
-        Circuit c("Lines: 3\nCNOT(2; 1)\nkCNOT(1; 0, 2)\nCNOT(2; 1)");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
         // passed -
         Substitution sub("0 1 2 4 3 5 6 7");
-        Circuit c("Lines: 3\nCNOT(2; 0)\nCNOT(1; 0)\nkCNOT(0; 1, 2)\nCNOT(2; 0)\nCNOT(1; 0)\n");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
         // passed -
         Substitution sub("0 1 2 3 4 5 6 8 7 9 10 11 12 13 14 15");
-        Circuit c("Lines: 4\nCNOT(3; 0)\nCNOT(2; 0)\nCNOT(1; 0)\n"
-                  "kCNOT(0; 1, 2, 3)\nCNOT(3; 0)\nCNOT(2; 0)\nCNOT(1; 0)\n");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        // passed +
+        // passed -
         Substitution sub("1 2 3 4 5 6 7 0");
-        Circuit c("Lines: 3\nkCNOT(0; 1, 2)\nNOT(2)\nNOT(1)\nCNOT(1; 2)\n");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
         // passed -
         Substitution sub("7 0 1 2 3 4 5 6");
-        Circuit c("Lines: 3\nNOT(2)\nCNOT(1; 2)\nkCNOT(0; 1, 2)\n");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
     {
-        // passed +
+        // passed -
         Substitution sub("1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 0");
-        Circuit c("Lines: 4\nkCNOT(0; 1, 2, 3)\nkCNOT(1; 2, 3)\nNOT(3)\nNOT(2)\nCNOT(2; 3)");
         EXPECT_EQ(synthesize(sub, "rw"), RW_algorithm(sub));
         EXPECT_EQ(RW_algorithm(sub).produce_mapping(), sub);
     }
