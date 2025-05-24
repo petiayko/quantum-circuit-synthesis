@@ -1,5 +1,6 @@
 #include "gates.hpp"
 
+
 Gate::Gate(GateType type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
     init_(type, nests, controls, dim);
 }
@@ -7,7 +8,7 @@ Gate::Gate(GateType type, const std::vector<size_t> &nests, const std::vector<si
 Gate::Gate(const std::string &s, size_t dim) {
     // NAME(0, 1; 2, 3)
     if (s.empty()) {
-        throw std::runtime_error{"Empty string"};
+        throw GateException("Empty string");
     }
     std::string s_copy(s);
     to_lower(s_copy);
@@ -15,7 +16,7 @@ Gate::Gate(const std::string &s, size_t dim) {
 
     auto open_bracket_pos = s_copy.find('(');
     if (open_bracket_pos == std::string::npos) {
-        throw std::runtime_error{"Invalid string"};
+        throw GateException("Invalid gate format");
     }
     auto gate_name = s_copy.substr(0, open_bracket_pos);
     trim(gate_name);
@@ -23,14 +24,14 @@ Gate::Gate(const std::string &s, size_t dim) {
 
     auto close_bracket_pos = s_copy.find(')');
     if (s_copy.empty()) {
-        throw std::runtime_error{"Invalid string"};
+        throw GateException("Invalid gate format");
     }
     auto gate_params = s_copy.substr(0, close_bracket_pos);
     trim(gate_params);
     s_copy = s_copy.substr(close_bracket_pos + 1);
 
     if (!s_copy.empty()) {
-        throw std::runtime_error{"Invalid string"};
+        throw GateException("Invalid gate format");
     }
 
     auto semicolumn_pos = gate_params.find(';');
@@ -47,30 +48,30 @@ Gate::Gate(const std::string &s, size_t dim) {
     if (gate_name == "not") {
         type = GateType::NOT;
         if (semicolumn_pos != std::string::npos) {
-            throw std::runtime_error{"Invalid NOT gate format"};
+            throw GateException("Invalid NOT gate format");
         }
     } else if (gate_name == "cnot") {
         type = GateType::CNOT;
         if (semicolumn_pos == std::string::npos) {
-            throw std::runtime_error{"Invalid CNOT gate format"};
+            throw GateException("Invalid CNOT gate format");
         }
     } else if (gate_name == "kcnot") {
         type = GateType::kCNOT;
         if (semicolumn_pos == std::string::npos) {
-            throw std::runtime_error{"Invalid kCNOT gate format"};
+            throw GateException("Invalid kCNOT gate format");
         }
     } else if (gate_name == "swap") {
         type = GateType::SWAP;
         if (semicolumn_pos != std::string::npos) {
-            throw std::runtime_error{"Invalid SWAP gate format"};
+            throw GateException("Invalid SWAP gate format");
         }
     } else if (gate_name == "cswap") {
         type = GateType::CSWAP;
         if (semicolumn_pos == std::string::npos) {
-            throw std::runtime_error{"Invalid CSWAP gate format"};
+            throw GateException("Invalid CSWAP gate format");
         }
     } else {
-        throw std::runtime_error{"Unknown gate type: " + gate_name};
+        throw GateException("Unknown gate type: " + gate_name);
     }
 
     init_(type, string_to_num_vector(nests_line, ','), string_to_num_vector(controls_line, ','), dim);
@@ -80,9 +81,9 @@ size_t Gate::dim() const noexcept {
     return dim_;
 }
 
-void Gate::act(std::vector<bool> &vec) const {
+void Gate::act(binary_vector &vec) const {
     if (vec.size() != dim_) {
-        throw std::runtime_error{"Vector should have length equals to the Gate dimension"};
+        throw GateException("Input vector must have length equals to the Gate dimension");
     }
     if (type_ == GateType::NOT) {
         vec[nests_.front()] = !vec[nests_.front()];
@@ -103,15 +104,15 @@ void Gate::act(std::vector<bool> &vec) const {
     }
 }
 
-void Gate::act(std::vector<BooleanFunction> &vec) const {
+void Gate::act(cf_set &vec) const {
     if (vec.size() != dim_) {
-        throw std::runtime_error{"Vector should have length equals to the Gate dimension"};
+        throw GateException("Input coordinate boolean functions vector must have length equals to the Gate dimension");
     }
     if (!std::all_of(vec.begin(), vec.end(),
                      [bf_size = std::pow(2, dim_)](const auto &v) {
                          return v.size() == bf_size;
                      })) {
-        throw std::runtime_error{"All boolean functions should have the same dimensions as Gate"};
+        throw GateException("Coordinate boolean functions must have the same dimensions as Gate");
     }
 
     if (type_ == GateType::NOT) {
@@ -145,78 +146,78 @@ bool Gate::operator==(const Gate &g) const {
 void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
     for (auto num: nests) {
         if (num > dim - 1) {
-            throw std::runtime_error{std::string("Invalid nest line: ") + std::to_string(num)};
+            throw GateException("Invalid nest line: " + std::to_string(num));
         }
         if (std::count(nests.begin(), nests.end(), num) != 1) {
-            throw std::runtime_error{std::string("Nest line selected more the once: ") + std::to_string(num)};
+            throw GateException("Nest line selected more that once: " + std::to_string(num));
         }
     }
     for (auto num: controls) {
         if (num > dim - 1) {
-            throw std::runtime_error{std::string("Invalid control line: ") + std::to_string(num)};
+            throw GateException("Invalid control line: " + std::to_string(num));
         }
         if (std::count(controls.begin(), controls.end(), num) != 1) {
-            throw std::runtime_error{std::string("Nest line selected more the once: ") + std::to_string(num)};
+            throw GateException("Nest line selected more that once: " + std::to_string(num));
         }
         if (std::find(nests.begin(), nests.end(), num) != nests.end()) {
-            throw std::runtime_error{std::string("Line selected as nest and control: ") + std::to_string(num)};
+            throw GateException("Line selected as nest and control: " + std::to_string(num));
         }
     }
     switch (type) {
         case GateType::NOT:
             if (nests.size() != 1) {
-                throw std::runtime_error{"Gate NOT should have an only nest line"};
+                throw GateException("Gate NOT should have an only nest line");
             }
             if (!controls.empty()) {
-                throw std::runtime_error{"Gate NOT should not have control lines"};
+                throw GateException("Gate NOT should not have control lines");
             }
             break;
         case GateType::CNOT:
             if (dim < 2) {
-                throw std::runtime_error{"Gate CNOT should have dimension equals at least 2"};
+                throw GateException("Gate CNOT should have dimension equals at least 2");
             }
             if (nests.size() != 1) {
-                throw std::runtime_error{"Gate CNOT should have an only nest line"};
+                throw GateException("Gate CNOT should have an only nest line");
             }
-            if (controls.empty() || controls.size() != 1) {
-                throw std::runtime_error{"Gate CNOT should have an only nest line"};
+            if (controls.size() != 1) {
+                throw GateException("Gate CNOT should have an only control line");
             }
             break;
         case GateType::kCNOT:
             if (dim < 2) {
-                throw std::runtime_error{"Gate kCNOT should have dimension equals at least 2"};
+                throw GateException("Gate kCNOT should have dimension equals at least 2");
             }
             if (nests.size() != 1) {
-                throw std::runtime_error{"Gate kCNOT should have an only nest line"};
+                throw GateException("Gate kCNOT should have an only nest line");
             }
             if (controls.empty()) {
-                throw std::runtime_error{"Gate kCNOT should have at least one nest line"};
+                throw GateException("Gate kCNOT should have at least one control line");
             }
             break;
         case GateType::SWAP:
             if (dim < 2) {
-                throw std::runtime_error{"Gate SWAP should have dimension equals at least 2"};
+                throw GateException("Gate SWAP should have dimension equals at least 2");
             }
             if (nests.size() != 2) {
-                throw std::runtime_error{"Gate SWAP should have two nest line"};
+                throw GateException("Gate SWAP should have two nest lines");
             }
             if (!controls.empty()) {
-                throw std::runtime_error{"Gate SWAP should not have control lines"};
+                throw GateException("Gate SWAP should not have control lines");
             }
             break;
         case GateType::CSWAP:
             if (dim < 3) {
-                throw std::runtime_error{"Gate CSWAP should have dimension equals at least 3"};
+                throw GateException("Gate CSWAP should have dimension equals at least 3");
             }
             if (nests.size() != 2) {
-                throw std::runtime_error{"Gate CSWAP should have two nest line"};
+                throw GateException("Gate CSWAP should have two nest lines");
             }
-            if (controls.empty() || controls.size() != 1) {
-                throw std::runtime_error{"Gate CSWAP should have at least one nest line"};
+            if (controls.size() != 1) {
+                throw GateException("Gate CSWAP should have an only control line");
             }
             break;
         default:
-            throw std::runtime_error{std::string("Unknown gate type: ") + std::to_string(static_cast<int>(type))};
+            throw GateException("Unknown gate type: " + std::to_string(static_cast<int>(type)));
     }
 
     type_ = type;
@@ -261,32 +262,27 @@ std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
 
 // Circuit
 
-Circuit::Circuit(size_t lines_num) {
+Circuit::Circuit(size_t lines_num, size_t memory_lines_num) {
+    if (memory_lines_num && memory_lines_num >= lines_num) {
+        throw CircuitException("Circuit must have a number of memory lines not less than the number of lines");
+    }
     dim_ = lines_num;
+    memory_ = memory_lines_num;
 }
 
-Circuit::Circuit(const std::vector<Gate> &vec) {
+Circuit::Circuit(const std::vector<Gate> &vec, size_t memory_lines_num) {
     if (vec.empty()) {
-        return;
+        throw CircuitException("Empty gates vector");
     }
+    memory_ = memory_lines_num;
     dim_ = vec.front().dim();
+
+    if (memory_lines_num >= dim_) {
+        throw CircuitException("Circuit must have a number of memory lines not less than the number of lines");
+    }
+
     for (const auto &g: vec) {
         this->add(g);
-    }
-}
-
-Circuit::Circuit(const Substitution &sub) {
-    if (!is_power_of_2(sub.power())) {
-        throw std::runtime_error{"Power of substitution should be power of 2"};
-    }
-    [[maybe_unused]] BinaryMapping bm(sub);
-}
-
-Circuit::Circuit(const BinaryMapping &bm) {
-    try {
-        Substitution sub(bm);
-    } catch (const std::exception &e) {
-        throw std::runtime_error{std::string("Unable to convert binary mapping to substitution: ") + e.what()};
     }
 }
 
@@ -304,43 +300,100 @@ size_t Circuit::dim() const noexcept {
     return dim_;
 }
 
-void Circuit::act(std::vector<bool> &vec) const {
+size_t Circuit::memory() const noexcept {
+    return memory_;
+}
+
+void Circuit::set_memory(size_t memory_lines_num) {
+    if (memory_lines_num >= dim_) {
+        throw CircuitException("Circuit must have a number of memory lines not less than the number of lines");
+    }
+    memory_ = memory_lines_num;
+}
+
+void Circuit::act(binary_vector &vec) const {
     if (vec.size() != dim_) {
-        throw std::runtime_error{"Vector length should be equal to Circuit dimension"};
+        throw CircuitException("Input vector must have length equals to the Circuit dimension");
+    }
+    if (memory_) {
+        for (size_t i = vec.size() - 1; i > dim_ - memory_ - 1; i--) {
+            vec[i] = false;
+        }
     }
     for (const auto &g: gates_) {
         g.act(vec);
     }
 }
 
-void Circuit::act(std::vector<BooleanFunction> &vec) const {
+void Circuit::act(cf_set &vec) const {
     if (vec.size() != dim_) {
-        throw std::runtime_error{"Vector should have length equals to the Circuit dimension"};
+        throw CircuitException(
+                "Input coordinate boolean functions vector must have length equals to the Circuit dimension");
     }
     if (!std::all_of(vec.begin(), vec.end(),
                      [bf_size = std::pow(2, dim_)](const auto &v) {
                          return v.size() == bf_size;
                      })) {
-        throw std::runtime_error{"All boolean functions should have the same dimensions as Circuit"};
+        throw CircuitException("Coordinate boolean functions must have the same dimensions as Circuit");
     }
     for (const auto &g: gates_) {
         g.act(vec);
+    }
+    if (!memory_) {
+        return;
+    }
+    for (auto &bf: vec) {
+        binary_vector bf_values;
+        for (size_t i = 0; i < bf.size(); i++) {
+            if (!(i % (1 << memory_))) {
+                bf_values.push_back(bf.vector()[i]);
+            }
+        }
+        bf = BooleanFunction(bf_values);
     }
 }
 
 void Circuit::add(const Gate &g) {
     if (g.dim() != dim_) {
-        throw std::runtime_error{"Circuit and gate should have equal dimensions"};
+        throw CircuitException("Circuit and Gate must have equal dimensions");
     }
     gates_.push_back(g);
 }
 
+void Circuit::insert(const Gate &g, size_t pos) {
+    if (g.dim() != dim_) {
+        throw CircuitException("Circuit and Gate must have equal dimensions");
+    }
+    if (pos > gates_.size()) {
+        throw CircuitException("Provided pos out of range");
+    }
+    gates_.insert(gates_.begin() + pos, g);
+}
+
+BinaryMapping Circuit::produce_mapping() const noexcept {
+    cf_set vec_bf;
+    vec_bf.reserve(this->dim());
+    for (size_t i = 0; i < this->dim(); i++) {
+        vec_bf.emplace_back(i, this->dim());
+    }
+    this->act(vec_bf);
+    return BinaryMapping(vec_bf);
+}
+
+bool Circuit::simplify() noexcept {
+    return false;
+}
+
 bool Circuit::operator==(const Circuit &c) const {
-    return (dim_ == c.dim_ && gates_ == c.gates_);
+    return (dim_ == c.dim_ && memory_ == c.memory_ && gates_ == c.gates_);
 }
 
 std::ostream &operator<<(std::ostream &out, const Circuit &c) noexcept {
-    out << "Lines: " << c.dim_ << '\n';
+    out << "Lines: " << c.dim_;
+    if (c.memory_) {
+        out << "; " << c.memory_;
+    }
+    out << '\n';
     for (const auto &g: c.gates_) {
         out << g << '\n';
     }
@@ -349,11 +402,12 @@ std::ostream &operator<<(std::ostream &out, const Circuit &c) noexcept {
 
 void Circuit::by_string_(const std::string &s) {
     if (s.empty()) {
-        throw std::runtime_error{"Empty string"};
+        throw CircuitException("Empty string");
     }
     std::stringstream ss(s);
     std::string line;
 
+    // lines number
     while (getline(ss, line, '\n')) {
         trim(line);
         if (line.empty() || line.front() == '#') {
@@ -362,25 +416,41 @@ void Circuit::by_string_(const std::string &s) {
         }
         to_lower(line);
         auto lines_word_pos = line.find("lines:");
-        if (lines_word_pos == std::string::npos) {
-            throw std::runtime_error{"Invalid string"};
+        if (lines_word_pos) {
+            throw CircuitException("Invalid string");
         }
         line = line.substr(lines_word_pos + 6);
         int dim = 0;
-        if (!try_string_to_decimal(line, dim)) {
-            throw std::runtime_error{std::string("Invalid lines number: ") + line};
-        }
-        if (dim < 1) {
-            throw std::runtime_error{"Invalid number of lines"};
+        int memory = 0;
+        try {
+            auto nums = string_to_num_vector<int>(line, ';');
+            if (nums.empty() || nums.size() > 2) {
+                throw CircuitException("Invalid lines number: " + line);
+            }
+            dim = nums.front();
+            if (nums.size() == 2) {
+                memory = nums.back();
+            }
+        } catch (...) {
+            throw CircuitException("Invalid lines number: " + line);
         }
         dim_ = dim;
+        if (memory < 0) {
+            throw CircuitException("Number of memory lines must be a positive integer");
+        }
+        if (memory >= dim) {
+            throw CircuitException("Circuit must have a number of memory lines not less than the number of lines");
+        }
+        memory_ = memory;
         break;
     }
     if (line.empty()) {
-        throw std::runtime_error{"Invalid string"};
+        throw CircuitException("Invalid string");
     }
 
+    // gate
     while (getline(ss, line, '\n')) {
+        trim(line);
         if (line.empty() || line.front() == '#') {
             continue;
         }

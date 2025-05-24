@@ -25,6 +25,7 @@ find_package(GTest CONFIG REQUIRED)
 add_library(${PROJECT_NAME} STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/sources/gates.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/sources/primitives.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/sources/synthesis.cpp
 )
 
 add_executable(qcs
@@ -46,6 +47,7 @@ if (BUILD_TESTS)
             tests/test_substitutions.cpp
             tests/test_gates.cpp
             tests/test_circuits.cpp
+            tests/test_synthesis.cpp
 
             tests/test_math.cpp
             tests/test_strings.cpp

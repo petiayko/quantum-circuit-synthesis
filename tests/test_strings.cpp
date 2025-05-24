@@ -2,6 +2,7 @@
 
 #include "strings.hpp"
 
+
 TEST(Strings, Trim) {
     std::string s = "";
     trim(s);
@@ -25,14 +26,14 @@ TEST(Strings, Trim) {
 }
 
 TEST(Strings, StrictStoi) {
-    EXPECT_THROW(strict_stoi("4,"), std::runtime_error);
-    EXPECT_THROW(strict_stoi("4."), std::runtime_error);
-    EXPECT_THROW(strict_stoi("4,5"), std::runtime_error);
-    EXPECT_THROW(strict_stoi("4 ff"), std::runtime_error);
-    EXPECT_THROW(strict_stoi("4 23"), std::runtime_error);
-    EXPECT_THROW(strict_stoi("A"), std::runtime_error);
-    EXPECT_THROW(strict_stoi("0x5"), std::runtime_error);
-    EXPECT_THROW(strict_stoi(""), std::runtime_error);
+    EXPECT_THROW(strict_stoi("4,"), StringException);
+    EXPECT_THROW(strict_stoi("4."), StringException);
+    EXPECT_THROW(strict_stoi("4,5"), StringException);
+    EXPECT_THROW(strict_stoi("4 ff"), StringException);
+    EXPECT_THROW(strict_stoi("4 23"), StringException);
+    EXPECT_THROW(strict_stoi("A"), StringException);
+    EXPECT_THROW(strict_stoi("0x5"), StringException);
+    EXPECT_THROW(strict_stoi(""), StringException);
 
     EXPECT_EQ(strict_stoi("   2      \t "), 2);
     EXPECT_EQ(strict_stoi("   2      \t ", 16), std::stoi("   2      \t ", nullptr, 16));
@@ -72,10 +73,10 @@ TEST(Strings, StringToDecimal) {
 }
 
 TEST(Strings, StringToVector) {
-    EXPECT_THROW(string_to_num_vector("0 3    2 r 32"), std::runtime_error);
-    EXPECT_THROW(string_to_num_vector("0, 3  ,  2, 32"), std::runtime_error);
-    EXPECT_THROW(string_to_num_vector("1, 2, 3, 4; 5, 2", ','), std::runtime_error);
-    EXPECT_THROW(string_to_num_vector(","), std::runtime_error);
+    EXPECT_THROW(string_to_num_vector("0 3    2 r 32"), StringException);
+    EXPECT_THROW(string_to_num_vector("0, 3  ,  2, 32"), StringException);
+    EXPECT_THROW(string_to_num_vector("1, 2, 3, 4; 5, 2", ','), StringException);
+    EXPECT_THROW(string_to_num_vector(","), StringException);
 
     EXPECT_EQ(string_to_num_vector(""), std::vector<size_t>());
     EXPECT_EQ(string_to_num_vector(",", ','), std::vector<size_t>());

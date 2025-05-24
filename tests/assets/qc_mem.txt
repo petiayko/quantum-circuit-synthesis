@@ -1,0 +1,5 @@
+Lines: 3; 1
+NOT(0)
+CNOT(0; 2)
+SWAP(1, 2)
+kCNOT(2; 0, 1)
