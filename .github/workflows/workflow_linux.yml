@@ -25,9 +25,10 @@ jobs:
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
       - name: Collect binaries
-        run: >
+        run: |
           mkdir -p binaries
           cp ${{github.workspace}}/build/qcs binaries/
+          cp ${{github.workspace}}/build/tests binaries/
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
@@ -38,7 +39,6 @@ jobs:
           retention-days: 5
 
   test:
-    name: Test
     needs: build
     runs-on: ubuntu-latest
 
