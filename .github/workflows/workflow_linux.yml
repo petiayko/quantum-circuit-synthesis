@@ -1,4 +1,4 @@
-# took from https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+# took from https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
 
 name: QCS Build and Test (linux)
 
@@ -27,6 +27,7 @@ jobs:
       - name: Collect binaries
         run: |
           mkdir -p binaries
+          chmod +x qcs tests
           cp ${{github.workspace}}/build/qcs binaries/
           cp ${{github.workspace}}/build/tests binaries/
 
@@ -46,4 +47,4 @@ jobs:
       - uses: actions/checkout@v4
 
       - working-directory: ${{github.workspace}}/build
-        run: ./tests
+        run: ctest -C ${{env.BUILD_TYPE}}
