@@ -20,10 +20,7 @@ string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
 
-if (CMAKE_COMPILER_IS_GNUCXX)
-    message(STATUS "GCC detected, adding compile flags")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -pedantic -Wall -Wextra -Werror")
-endif (CMAKE_COMPILER_IS_GNUCXX)
+add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 
 add_library(${PROJECT_NAME} STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/sources/gates.cpp
