@@ -41,6 +41,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(qcs ${PROJECT_NAME})
 
 if (BUILD_TESTS)
+    # https://google.github.io/googletest/quickstart-cmake.html
     add_executable(tests
             ${CMAKE_CURRENT_SOURCE_DIR}
             tests/test_boolean_functions.cpp
@@ -54,7 +55,8 @@ if (BUILD_TESTS)
             tests/test_strings.cpp
     )
 
-    target_link_libraries(tests ${PROJECT_NAME} GTest::gtest_main)
     enable_testing()
-    add_test(NAME unit_tests COMMAND tests)
+    target_link_libraries(tests ${PROJECT_NAME} GTest::gtest_main)
+    include(GoogleTest)
+    gtest_discover_tests(tests)
 endif ()
