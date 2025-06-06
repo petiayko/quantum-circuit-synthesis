@@ -29,8 +29,6 @@ jobs:
           mkdir -p binaries
           cp ${{github.workspace}}/build/qcs binaries/
           cp ${{github.workspace}}/build/tests binaries/
-          cd binaries/
-          chmod +x qcs tests
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
@@ -54,4 +52,6 @@ jobs:
           path: binaries
 
       - working-directory: binaries
-        run: ./tests
+        run: |
+          chmod +x tests
+          ./tests
