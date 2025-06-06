@@ -47,5 +47,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - working-directory: ${{github.workspace}}/build
-        run: ctest -C ${{env.BUILD_TYPE}}
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: qcs-linux
+          path: binaries/*
+
+      - working-directory: binaries
+        run: ./tests
