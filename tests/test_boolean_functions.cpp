@@ -2,20 +2,24 @@
 
 #include "primitives.hpp"
 
+
 TEST(BooleanFunction, Constructor) {
-    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 0), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 1), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 2), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(true, 0), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(false, 0), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(binary_vector{}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(binary_vector{0, 0, 0, 1, 1}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(std::vector<int>{0, 0, 0, 1, 1}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(std::vector<int>{0, 0, 2, 1, 1}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(std::vector<int>{3}), std::runtime_error);
-    EXPECT_THROW(BooleanFunction(""), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("011"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("021"), std::runtime_error);
+    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 0), BFException);
+    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 1), BFException);
+    EXPECT_THROW(BooleanFunction(static_cast<size_t>(2), 2), BFException);
+    EXPECT_THROW(BooleanFunction(true, 0), BFException);
+    EXPECT_THROW(BooleanFunction(false, 0), BFException);
+    EXPECT_THROW(BooleanFunction(binary_vector{}), BFException);
+    EXPECT_THROW(BooleanFunction(binary_vector{0}), BFException);
+    EXPECT_THROW(BooleanFunction(binary_vector{0, 0, 0, 1, 1}), BFException);
+    EXPECT_THROW(BooleanFunction(std::vector<int>{1}), BFException);
+    EXPECT_THROW(BooleanFunction(std::vector<int>{0, 0, 0, 1, 1}), BFException);
+    EXPECT_THROW(BooleanFunction(std::vector<int>{0, 0, 2, 1, 1}), BFException);
+    EXPECT_THROW(BooleanFunction(std::vector<int>{3}), BFException);
+    EXPECT_THROW(BooleanFunction(""), BFException);
+    EXPECT_THROW(BooleanFunction("1"), BFException);
+    EXPECT_THROW(BooleanFunction("011"), BFException);
+    EXPECT_THROW(BooleanFunction("021"), BFException);
 
     EXPECT_NO_THROW(BooleanFunction());
     EXPECT_EQ(BooleanFunction(static_cast<size_t>(0), 1), BooleanFunction("01"));
@@ -35,14 +39,14 @@ TEST(BooleanFunction, Constructor) {
     EXPECT_EQ(bf_s, bf_v_int);
     EXPECT_EQ(bf_s, bf_s_copy_1);
 
-    BooleanFunction bf_s_uneq_1("1010");
-    BooleanFunction bf_s_uneq_2("10101111");
-    EXPECT_NE(bf_s, bf_s_uneq_1);
-    EXPECT_NE(bf_s, bf_s_uneq_2);
-    EXPECT_NE(bf_s_uneq_1, bf_s_uneq_2);
+    BooleanFunction bf_s_cursed_1("1010");
+    BooleanFunction bf_s_cursed_2("10101111");
+    EXPECT_NE(bf_s, bf_s_cursed_1);
+    EXPECT_NE(bf_s, bf_s_cursed_2);
+    EXPECT_NE(bf_s_cursed_1, bf_s_cursed_2);
 
-    BooleanFunction bf_s_copy_2 = bf_s_uneq_1;
-    EXPECT_EQ(bf_s_copy_2, bf_s_uneq_1);
+    BooleanFunction bf_s_copy_2 = bf_s_cursed_1;
+    EXPECT_EQ(bf_s_copy_2, bf_s_cursed_1);
 }
 
 
@@ -51,33 +55,107 @@ TEST(BooleanFunction, Methods) {
     EXPECT_EQ(bf_1.size(), 8);
     EXPECT_EQ(bf_1.dim(), 3);
     EXPECT_EQ(bf_1.weight(), 3);
-    EXPECT_EQ(bf_1.is_balanced(), false);
+    EXPECT_FALSE(bf_1.is_balanced());
+    EXPECT_FALSE(bf_1.is_constant());
 
-    BooleanFunction bf_2("0");
-    EXPECT_EQ(bf_2.size(), 1);
-    EXPECT_EQ(bf_2.dim(), 0);
-    EXPECT_EQ(bf_2.weight(), 0);
-    EXPECT_EQ(bf_2.is_balanced(), false);
+    BooleanFunction bf_2("01");
+    EXPECT_EQ(bf_2.size(), 2);
+    EXPECT_EQ(bf_2.dim(), 1);
+    EXPECT_EQ(bf_2.weight(), 1);
+    EXPECT_TRUE(bf_2.is_balanced());
+    EXPECT_FALSE(bf_2.is_constant());
 
-    BooleanFunction bf_3("01");
-    EXPECT_EQ(bf_3.size(), 2);
-    EXPECT_EQ(bf_3.dim(), 1);
-    EXPECT_EQ(bf_3.weight(), 1);
-    EXPECT_EQ(bf_3.is_balanced(), true);
+    EXPECT_TRUE(BooleanFunction("11").is_constant());
+    EXPECT_TRUE(BooleanFunction("11"));
+    EXPECT_TRUE(BooleanFunction("1111").is_constant());
+    EXPECT_TRUE(BooleanFunction("1111"));
+    EXPECT_TRUE(BooleanFunction("00").is_constant());
+    EXPECT_FALSE(BooleanFunction("00"));
+    EXPECT_TRUE(BooleanFunction("00000000").is_constant());
+    EXPECT_FALSE(BooleanFunction("00000000"));
 
-    EXPECT_EQ(bf_1.get_vector(), binary_vector({true, false, false, false, true, false, true, false}));
-    EXPECT_EQ(bf_2.get_vector(), binary_vector({false}));
-    EXPECT_EQ(bf_3.get_vector(), binary_vector({false, true}));
-    EXPECT_EQ(BooleanFunction().get_vector(), binary_vector());
+    EXPECT_EQ(BooleanFunction("01").variable(), 0);
+    EXPECT_EQ(BooleanFunction("0011").variable(), 0);
+    EXPECT_EQ(BooleanFunction("00110011").variable(), 1);
+    EXPECT_EQ(BooleanFunction("01010101").variable(), 2);
+    EXPECT_EQ(BooleanFunction("0000000011111111").variable(), 0);
+    EXPECT_EQ(BooleanFunction("0000111100001111").variable(), 1);
+    EXPECT_EQ(BooleanFunction("0011001100110011").variable(), 2);
+    EXPECT_EQ(BooleanFunction("0101010101010101").variable(), 3);
+    EXPECT_THROW(BooleanFunction("00").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("10").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("11").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("00000000").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("1111").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("10101010").variable(), BFException);
+    EXPECT_THROW(BooleanFunction("11111111111111110000000000000000").variable(), BFException);
+
+    EXPECT_EQ(bf_1.vector(), binary_vector({true, false, false, false, true, false, true, false}));
+    EXPECT_EQ(bf_2.vector(), binary_vector({false, true}));
+    EXPECT_EQ(BooleanFunction().vector(), binary_vector());
+
+    EXPECT_EQ(BooleanFunction("01").extend(), BinaryMapping(cf_set{BooleanFunction("01")}));
+    EXPECT_TRUE(BooleanFunction("01").extend().is_substitution());
+    EXPECT_EQ(BooleanFunction("00").extend(), BinaryMapping(cf_set{BooleanFunction("0011"), BooleanFunction("0101")}));
+    EXPECT_TRUE(BooleanFunction("00").extend().is_substitution());
+    EXPECT_EQ(BooleanFunction("1111").extend(), BinaryMapping(
+            cf_set{BooleanFunction("00001111"), BooleanFunction("00110011"), BooleanFunction("10101010")}));
+    EXPECT_TRUE(BooleanFunction("1111").extend().is_substitution());
+    EXPECT_EQ(BooleanFunction("1001").extend(),
+              BinaryMapping(cf_set{BooleanFunction("0011"), BooleanFunction("1001")}));
+    EXPECT_TRUE(BooleanFunction("1001").extend().is_substitution());
+    EXPECT_EQ(BooleanFunction("1101").extend(), BinaryMapping(
+            cf_set{BooleanFunction("00001111"), BooleanFunction("00110011"), BooleanFunction("10100110")}));
+    EXPECT_TRUE(BooleanFunction("1101").extend().is_substitution());
+    EXPECT_EQ(BooleanFunction("00101001").extend(), BinaryMapping(
+            cf_set{BooleanFunction("0000000011111111"), BooleanFunction("0000111100001111"),
+                   BooleanFunction("0011001100110011"), BooleanFunction("0101100110010110")}));
+    EXPECT_TRUE(BooleanFunction("00101001").extend().is_substitution());
+
+    EXPECT_EQ(BooleanFunction("0000").mobius_transformation(), (std::vector<bool>{0, 0, 0, 0}));
+    EXPECT_EQ(BooleanFunction("1111").mobius_transformation(), (std::vector<bool>{1, 0, 0, 0}));
+    EXPECT_EQ(BooleanFunction("1001").mobius_transformation(), (std::vector<bool>{1, 1, 1, 0}));
+    EXPECT_EQ(BooleanFunction("0110").mobius_transformation(), (std::vector<bool>{0, 1, 1, 0}));
+    EXPECT_EQ(BooleanFunction("1000").mobius_transformation(), (std::vector<bool>{1, 1, 1, 1}));
+    EXPECT_EQ(BooleanFunction("11101101").mobius_transformation(), (std::vector<bool>{1, 0, 0, 1, 0, 0, 1, 0}));
+    EXPECT_EQ(BooleanFunction("00010010").mobius_transformation(), (std::vector<bool>{0, 0, 0, 1, 0, 0, 1, 0}));
+    EXPECT_EQ(BooleanFunction("10000000").mobius_transformation(), (std::vector<bool>{1, 1, 1, 1, 1, 1, 1, 1}));
+
+    EXPECT_EQ(BooleanFunction("01").RW_spectrum(), (std::vector<int>{1, -1}));
+    EXPECT_EQ(BooleanFunction("00").RW_spectrum(), (std::vector<int>{0, 0}));
+    EXPECT_EQ(BooleanFunction("0110").RW_spectrum(), (std::vector<int>{2, 0, 0, -2}));
+    EXPECT_EQ(BooleanFunction("1011").RW_spectrum(), (std::vector<int>{3, 1, -1, 1}));
+    EXPECT_EQ(BooleanFunction("11000100").RW_spectrum(), (std::vector<int>{3, -1, 3, -1, 1, 1, 1, 1}));
+    EXPECT_EQ(BooleanFunction("00000101").RW_spectrum(), (std::vector<int>{2, -2, 0, 0, -2, 2, 0, 0}));
+    EXPECT_EQ(BooleanFunction("1000111000010110").RW_spectrum(),
+              (std::vector<int>{7, 1, 1, -1, -3, -1, -1, 5, 1, 3, 3, 1, -1, 1, 1, -1}));
+
+    EXPECT_EQ(BooleanFunction("01").adjacent_zeros(), 0);
+    EXPECT_EQ(BooleanFunction("00").adjacent_zeros(), 1);
+    EXPECT_EQ(BooleanFunction("0110").adjacent_zeros(), 0);
+    EXPECT_EQ(BooleanFunction("1011").adjacent_zeros(), 2);
+    EXPECT_EQ(BooleanFunction("11000100").adjacent_zeros(), 7);
+    EXPECT_EQ(BooleanFunction("00000101").adjacent_zeros(), 8);
+    EXPECT_EQ(BooleanFunction("1000111000010110").adjacent_zeros(), 14);
+    EXPECT_EQ(BooleanFunction("11111111111111111111111111111111").adjacent_zeros(), 80);
+    EXPECT_EQ(BooleanFunction("00000000000000000000000000000000").adjacent_zeros(), 80);
+
+    EXPECT_EQ(BooleanFunction("01").complexity(), 0);
+    EXPECT_EQ(BooleanFunction("00").complexity(), 5);
+    EXPECT_EQ(BooleanFunction("0110").complexity(), 16);
+    EXPECT_EQ(BooleanFunction("1011").complexity(), 2);
+    EXPECT_EQ(BooleanFunction("11000100").complexity(), 7);
+    EXPECT_EQ(BooleanFunction("00000101").complexity(), 104);
+    EXPECT_EQ(BooleanFunction("1000111000010110").complexity(), 14);
 }
 
 TEST(BooleanFunction, Operators) {
-    EXPECT_THROW(BooleanFunction("1000") + BooleanFunction("10"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("0011") + BooleanFunction("11011001"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("1000") * BooleanFunction("10"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("0011") * BooleanFunction("11011001"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("1000") | BooleanFunction("10"), std::runtime_error);
-    EXPECT_THROW(BooleanFunction("0011") | BooleanFunction("11011001"), std::runtime_error);
+    EXPECT_THROW(BooleanFunction("1000") + BooleanFunction("10"), BFException);
+    EXPECT_THROW(BooleanFunction("0011") + BooleanFunction("11011001"), BFException);
+    EXPECT_THROW(BooleanFunction("1000") * BooleanFunction("10"), BFException);
+    EXPECT_THROW(BooleanFunction("0011") * BooleanFunction("11011001"), BFException);
+    EXPECT_THROW(BooleanFunction("1000") | BooleanFunction("10"), BFException);
+    EXPECT_THROW(BooleanFunction("0011") | BooleanFunction("11011001"), BFException);
 
     EXPECT_EQ(BooleanFunction("0011") + BooleanFunction("1101"), BooleanFunction("1110"));
     EXPECT_EQ(BooleanFunction("1101") + BooleanFunction("0011"), BooleanFunction("1110"));

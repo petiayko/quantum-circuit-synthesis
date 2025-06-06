@@ -4,6 +4,7 @@
 #include "primitives.hpp"
 #include "strings.hpp"
 
+
 #define GateType(type) static_cast<GateType>(type)
 
 enum class GateType {
@@ -22,9 +23,9 @@ public:
 
     size_t dim() const noexcept;
 
-    void act(std::vector<bool> &) const;
+    void act(binary_vector &) const;
 
-    void act(std::vector<BooleanFunction> &) const;
+    void act(cf_set &) const;
 
     bool operator==(const Gate &) const;
 
@@ -42,13 +43,11 @@ private:
 
 class Circuit {
 public:
-    explicit Circuit(size_t);
+    Circuit() = default;
 
-    explicit Circuit(const std::vector<Gate> &);
+    explicit Circuit(size_t, size_t = 0);
 
-    explicit Circuit(const Substitution &);
-
-    explicit Circuit(const BinaryMapping &);
+    explicit Circuit(const std::vector<Gate> &, size_t = 0);
 
     explicit Circuit(const std::string &);
 
@@ -56,11 +55,21 @@ public:
 
     size_t dim() const noexcept;
 
-    void act(std::vector<bool> &) const;
+    size_t memory() const noexcept;
 
-    void act(std::vector<BooleanFunction> &) const;
+    void set_memory(size_t);
+
+    void act(binary_vector &) const;
+
+    void act(cf_set &) const;
 
     void add(const Gate &);
+
+    void insert(const Gate &, size_t = 0);
+
+    bool simplify() noexcept;
+
+    BinaryMapping produce_mapping() const noexcept;
 
     bool operator==(const Circuit &) const;
 
@@ -68,6 +77,7 @@ public:
 
 private:
     size_t dim_{};
+    size_t memory_{};
     std::vector<Gate> gates_;
 
     void by_string_(const std::string &);
