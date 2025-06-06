@@ -12,13 +12,10 @@ FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
 )
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
-IF (WIN32)
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
-ENDIF ()
-
-project(quantum_circuit_synthesis VERSION 0.1.0)
+project(quantum_circuit_synthesis VERSION 1.0)
 string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
@@ -42,6 +39,7 @@ target_link_libraries(qcs ${PROJECT_NAME})
 
 if (BUILD_TESTS)
     # https://google.github.io/googletest/quickstart-cmake.html
+    enable_testing()
     add_executable(tests
             ${CMAKE_CURRENT_SOURCE_DIR}
             tests/test_boolean_functions.cpp
@@ -55,7 +53,6 @@ if (BUILD_TESTS)
             tests/test_strings.cpp
     )
 
-    enable_testing()
     target_link_libraries(tests ${PROJECT_NAME} GTest::gtest_main)
     include(GoogleTest)
     gtest_discover_tests(tests)
