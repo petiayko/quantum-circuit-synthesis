@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
     if (it != config.end()) {
         algo = it->second;
         trim(algo);
-        to_lower(type);
+        to_lower(algo);
     }
 
     it = config.find("--output");
