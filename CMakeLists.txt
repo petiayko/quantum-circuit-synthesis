@@ -7,20 +7,20 @@ set(CMAKE_EXE_LINKER_FLAGS "-static")
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_COVERAGE "Build code coverage" ON)
 
-include("cmake/HunterGate.cmake")
-
-HunterGate(
-        URL "https://github.com/cpp-pm/hunter/archive/v0.23.317.tar.gz"
-        SHA1 "fbdd94b1966d351384e27b02c8d134915b1131d6"
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
 )
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
-project(quantum_circuit_synthesis VERSION 0.1.0)
+project(quantum_circuit_synthesis VERSION 1.0)
 string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
 
-hunter_add_package(GTest)
-find_package(GTest CONFIG REQUIRED)
+add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 
 add_library(${PROJECT_NAME} STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/sources/gates.cpp
@@ -40,6 +40,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(qcs ${PROJECT_NAME})
 
 if (BUILD_TESTS)
+    # https://google.github.io/googletest/quickstart-cmake.html
+    enable_testing()
     add_executable(tests
             ${CMAKE_CURRENT_SOURCE_DIR}
             tests/test_boolean_functions.cpp
@@ -54,6 +56,6 @@ if (BUILD_TESTS)
     )
 
     target_link_libraries(tests ${PROJECT_NAME} GTest::gtest_main)
-    enable_testing()
-    add_test(NAME unit_tests COMMAND tests)
+    include(GoogleTest)
+    gtest_discover_tests(tests)
 endif ()

@@ -1,0 +1,68 @@
+# took from https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
+
+name: QCS Build and Test (windows)
+
+on:
+  push:
+    branches: [ ]
+  pull_request:
+    branches: [ "!master" ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install dependencies
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+          choco install ninja
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          mkdir build
+          cd build
+          cmake -G "Ninja" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
+
+      - name: Build
+        shell: bash
+        run: |
+          cd build
+          cmake --build . --config ${{env.BUILD_TYPE}}
+
+      - name: Collect binaries
+        run: |
+          mkdir -p binaries
+          cp ${{github.workspace}}/build/qcs.exe binaries/
+          cp ${{github.workspace}}/build/tests.exe binaries/
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcs-windows
+          path: binaries/*
+          if-no-files-found: error
+          retention-days: 5
+
+  test:
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: qcs-windows
+          path: binaries
+
+      - working-directory: binaries
+        run: ./tests.exe
