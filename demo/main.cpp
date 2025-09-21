@@ -8,7 +8,7 @@
 
 using configuration = std::map<std::string, std::string>;
 
-static const std::string version = "1.0";
+static const std::string version = "1.0.1";
 static const std::string program_name = "qcs";
 
 void print_program_info() {
