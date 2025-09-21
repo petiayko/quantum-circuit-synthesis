@@ -4,10 +4,11 @@
 #include "exseptions.hpp"
 #include "gates.hpp"
 
+Circuit simplification(const Circuit &);
 
-Circuit synthesize(const BinaryMapping &, const std::string & = "rw");
+Circuit synthesize(const BinaryMapping &, const std::string & = "rw", bool simplify = false);
 
-Circuit synthesize(const Substitution &, const std::string & = "rw");
+Circuit synthesize(const Substitution &, const std::string & = "rw", bool simplify = false);
 
 Circuit dummy_algorithm(const BinaryMapping &);
 

@@ -9,7 +9,7 @@
 using configuration = std::map<std::string, std::string>;
 
 static const std::string version = "1.0.1";
-static const std::string program_name = "qcs";
+static const std::string program_name = "QCS";
 
 void print_program_info() {
     std::cout << program_name << " v" << version << std::endl;
@@ -26,50 +26,58 @@ void print_program_help() {
     print_program_info();
 
     std::cout << "Generic options:" << std::endl;
-    std::cout << "  --version       print version" << std::endl;
-    std::cout << "  --help          produce help message" << std::endl;
-    std::cout << "  --log arg       minimum level of logging ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')"
+    std::cout << "  -V, --version       print version" << std::endl;
+    std::cout << "  -h, --help          produce help message" << std::endl;
+    std::cout << "  -l, --log ARG       minimum level of logging: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL' "
+                 "(default: 'ERROR')"
               << std::endl;
     std::cout << std::endl;
 
     std::cout << "Operating modes:" << std::endl;
-    std::cout << "  --type arg      type of input ('tt' truth table, 'sub' substitution, 'qc' quantum circuit)"
+    std::cout << "  -t, --type ARG      type of input ('tt' - truth table, 'sub' - substitution, "
+                 "'qc' - quantum circuit)"
               << std::endl;
     std::cout << std::endl;
 
     std::cout << "Synthesis options:" << std::endl;
-    std::cout << "  --algo arg      algorithm to synthesis quantum circuit ('dummy', 'rw')" << std::endl;
+    std::cout << "  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw')" << std::endl;
+    std::cout << "  -r, --reduction     reduce the output circuit (default: false)" << std::endl;
     std::cout << std::endl;
 
     std::cout << "Parameters:" << std::endl;
-    std::cout << "  --input arg     path to input file" << std::endl;
-    std::cout << "  --output arg    path to output file" << std::endl;
+    std::cout << "  -i, --input ARG     path to input file" << std::endl;
+    std::cout << "  -o, --output ARG    path to output file (default: prints into standard output)" << std::endl;
     std::cout << std::endl;
 }
 
 configuration parse_arguments(int argc, char *argv[]) {
     const std::map<std::string, std::string> arguments_map = {
-            {"--version", "--version"},
-            {"--help",    "--help"},
-            {"-l",        "--log"},
-            {"--log",     "--log"},
-            {"-t",        "--type"},
-            {"--type",    "--type"},
-            {"-a",        "--algo"},
-            {"--algo",    "--algo"},
-            {"-i",        "--input"},
-            {"--input",   "--input"},
-            {"-o",        "--output"},
-            {"--output",  "--output"},
+            {"-V",          "--version"},
+            {"--version",   "--version"},
+            {"-h",          "--help"},
+            {"--help",      "--help"},
+            {"-l",          "--log"},
+            {"--log",       "--log"},
+            {"-t",          "--type"},
+            {"--type",      "--type"},
+            {"-a",          "--algo"},
+            {"--algo",      "--algo"},
+            {"-r",          "--reduction"},
+            {"--reduction", "--reduction"},
+            {"-i",          "--input"},
+            {"--input",     "--input"},
+            {"-o",          "--output"},
+            {"--output",    "--output"},
     };
     std::map<std::string, bool> arguments_accounting = {
-            {"--version", false},
-            {"--help",    false},
-            {"--log",     false},
-            {"--type",    false},
-            {"--algo",    false},
-            {"--input",   false},
-            {"--output",  false},
+            {"--version",   false},
+            {"--help",      false},
+            {"--log",       false},
+            {"--type",      false},
+            {"--algo",      false},
+            {"--reduction", false},
+            {"--input",     false},
+            {"--output",    false},
     };
 
     configuration config;
@@ -88,7 +96,7 @@ configuration parse_arguments(int argc, char *argv[]) {
         }
         arguments_accounting[full_arg_name] = true;
         if (i + 1 >= argc || argv[i + 1][0] == '-') {
-            if (full_arg_name == "--version" || full_arg_name == "--help") {
+            if (full_arg_name == "--version" || full_arg_name == "--help" || full_arg_name == "--reduction") {
                 config[full_arg_name] = "";
                 i++;
             } else {
@@ -153,6 +161,8 @@ int main(int argc, char *argv[]) {
         to_lower(algo);
     }
 
+    bool simp = config.count("--simp");
+
     it = config.find("--output");
     std::string output;
     if (it != config.end()) {
@@ -186,7 +196,7 @@ int main(int argc, char *argv[]) {
 
     LOG_INFO("Starting", "");
     try {
-        process_config(type, algo, input, output);
+        process_config(type, algo, simp, input, output);
     } catch (const std::exception &e) {
         LOG_ERROR("Finishing", std::string("Error: ") + e.what());
     }

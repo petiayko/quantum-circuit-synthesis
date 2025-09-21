@@ -1,22 +1,37 @@
 #include "synthesis.hpp"
 
-
-Circuit synthesize(const BinaryMapping &bm, const std::string &algo) {
-    if (algo == "dummy") {
-        return dummy_algorithm(bm);
-    } else if (algo == "rw") {
-        return RW_algorithm(bm);
-    }
-    throw SynthException("Unknown synthesis algorithm: " + algo);
+Circuit simplification(const Circuit &c) {
+    return c;
 }
 
-Circuit synthesize(const Substitution &sub, const std::string &algo) {
+Circuit synthesize(const BinaryMapping &bm, const std::string &algo, bool simplify) {
+    Circuit c;
     if (algo == "dummy") {
-        return dummy_algorithm(sub);
+        c = dummy_algorithm(bm);
     } else if (algo == "rw") {
-        return RW_algorithm(sub);
+        c = RW_algorithm(bm);
+    } else {
+        throw SynthException("Unknown synthesis algorithm: " + algo);
     }
-    throw SynthException("Unknown synthesis algorithm: " + algo);
+    if (simplify) {
+        return simplification(c);
+    }
+    return c;
+}
+
+Circuit synthesize(const Substitution &sub, const std::string &algo, bool simplify) {
+    Circuit c;
+    if (algo == "dummy") {
+        c = dummy_algorithm(sub);
+    } else if (algo == "rw") {
+        c = RW_algorithm(sub);
+    } else {
+        throw SynthException("Unknown synthesis algorithm: " + algo);
+    }
+    if (simplify) {
+        return simplification(c);
+    }
+    return c;
 }
 
 Circuit dummy_algorithm(const BinaryMapping &bm) {

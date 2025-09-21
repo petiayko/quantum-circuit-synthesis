@@ -40,7 +40,7 @@ void write_result(const std::string &output_path, const T &result) {
     file.close();
 }
 
-void process_config(const std::string &type, const std::string &algo, const std::string &input_path,
+void process_config(const std::string &type, const std::string &algo, bool simplify, const std::string &input_path,
                     const std::string &output_path) {
     if (input_path.empty()) {
         throw ArgumentException("Path to input file was not provided");
@@ -56,6 +56,9 @@ void process_config(const std::string &type, const std::string &algo, const std:
     if (type == "qc") {
         if (!algo.empty()) {
             throw ArgumentException("Algo was provided for reverse mode");
+        }
+        if (simplify) {
+            throw ArgumentException("Impossible use simplification for reverse mode");
         }
         LOG_INFO("Starting reverse of quantum circuit", "");
         Circuit c(file_content);
@@ -91,7 +94,7 @@ void process_config(const std::string &type, const std::string &algo, const std:
     LOG_INFO("Starting quantum circuit synthesis", "");
     if (type == "tt") {
         BinaryMapping bm(file_content);
-        Circuit c = synthesize(bm, algo);
+        Circuit c = synthesize(bm, algo, simplify);
         if (c.memory() && algo == "rw") {
             LOG_INFO("Performing quantum circuit synthesis", "Provided binary mapping is not reversible");
             LOG_WARNING("Performing quantum circuit synthesis",
@@ -100,7 +103,7 @@ void process_config(const std::string &type, const std::string &algo, const std:
         write_result<Circuit>(output_path, c);
     } else if (type == "sub") {
         Substitution sub(file_content);
-        Circuit c = synthesize(sub, algo);
+        Circuit c = synthesize(sub, algo, simplify);
         write_result<Circuit>(output_path, c);
     } else {
         throw ArgumentException("Unknown type of input: " + type);
