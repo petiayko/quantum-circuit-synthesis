@@ -107,6 +107,11 @@ size_t Gate::dim() const noexcept {
     return dim_;
 }
 
+GateType Gate::type() const noexcept {
+    // TODO test it
+    return type_;
+}
+
 void Gate::act(binary_vector &vec) const {
     if (vec.size() != dim_) {
         throw GateException("Input vector must have length equals to the Gate dimension");
@@ -419,8 +424,17 @@ BinaryMapping Circuit::produce_mapping() const noexcept {
     return BinaryMapping(vec_bf);
 }
 
-bool Circuit::simplify() noexcept {
-    return false;
+Circuit Circuit::reduce() const noexcept {
+    // TODO можно было бы ввести пустой вентиль
+    //      замену сделать с помощью оператора присваивания =
+    std::vector<Gate> reduced_gates;
+    for (const auto &g: gates_) {
+        if (g.type() == GateType::NOT) {
+
+        }
+        reduced_gates.push_back(g);
+    }
+    return Circuit(reduced_gates);
 }
 
 bool Circuit::operator==(const Circuit &c) const {

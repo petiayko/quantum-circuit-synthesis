@@ -27,6 +27,8 @@ public:
 
     size_t dim() const noexcept;
 
+    GateType type() const noexcept;
+
     void act(binary_vector &) const;
 
     void act(cf_set &) const;
@@ -71,7 +73,7 @@ public:
 
     void insert(const Gate &, size_t = 0);
 
-    bool simplify() noexcept;
+    Circuit reduce() const noexcept;
 
     BinaryMapping produce_mapping() const noexcept;
 

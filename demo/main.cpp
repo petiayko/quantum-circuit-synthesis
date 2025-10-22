@@ -8,14 +8,14 @@
 
 using configuration = std::map<std::string, std::string>;
 
-static const std::string version = "1.0.1";
+static const std::string version = "1.1.0";
 static const std::string program_name = "QCS";
 
 void print_program_info() {
     std::cout << program_name << " v" << version << std::endl;
     std::cout << "(c) Peter Makretskiy, IU8 BMSTU, 2025." << std::endl;
-    std::cout << "program for synthesizing quantum circuits from input "
-                 "mapping" << std::endl << std::endl;
+    std::cout << "Program for synthesizing quantum circuits from mapping"
+              << std::endl << std::endl;
 }
 
 void print_program_version() {
@@ -149,19 +149,39 @@ int main(int argc, char *argv[]) {
         LOG_ERROR("Processing parameters", "Type of input was not provided");
         return 1;
     }
-    auto type = it->second;
-    trim(type);
-    to_lower(type);
+    auto type_s = it->second;
+    InputType type = InputType::EMPTY;
+    trim(type_s);
+    to_lower(type_s);
 
-    it = config.find("--algo");
-    std::string algo;
-    if (it != config.end()) {
-        algo = it->second;
-        trim(algo);
-        to_lower(algo);
+    if (type_s == "tt") {
+        type = InputType::TABLE;
+    } else if (type_s == "sub") {
+        type = InputType::SUBSTITUTION;
+    } else if (type_s == "qc") {
+        type = InputType::CIRCUIT;
+    } else if (!type_s.empty()) {
+        type = InputType::UNKNOWN;
     }
 
-    bool simp = config.count("--simp");
+    it = config.find("--algo");
+    std::string algo_s;
+    Algo algo = Algo::EMPTY;
+    if (it != config.end()) {
+        algo_s = it->second;
+        trim(algo_s);
+        to_lower(algo_s);
+    }
+
+    if (algo_s == "dummy") {
+        algo = Algo::DUMMY;
+    } else if (algo_s == "rw") {
+        algo = Algo::RW;
+    } else if (!algo_s.empty()) {
+        algo = Algo::UNKNOWN;
+    }
+
+    bool reduction = config.count("--reduction");
 
     it = config.find("--output");
     std::string output;
@@ -196,7 +216,7 @@ int main(int argc, char *argv[]) {
 
     LOG_INFO("Starting", "");
     try {
-        process_config(type, algo, simp, input, output);
+        process_config(type, algo, reduction, input, output);
     } catch (const std::exception &e) {
         LOG_ERROR("Finishing", std::string("Error: ") + e.what());
     }

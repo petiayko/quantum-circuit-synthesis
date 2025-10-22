@@ -1,35 +1,32 @@
 #include "synthesis.hpp"
 
-Circuit simplification(const Circuit &c) {
-    return c;
-}
 
-Circuit synthesize(const BinaryMapping &bm, const std::string &algo, bool simplify) {
+Circuit synthesize(const BinaryMapping &bm, Algo algo, bool simplify) {
     Circuit c;
-    if (algo == "dummy") {
+    if (algo == Algo::DUMMY) {
         c = dummy_algorithm(bm);
-    } else if (algo == "rw") {
+    } else if (algo == Algo::RW) {
         c = RW_algorithm(bm);
     } else {
-        throw SynthException("Unknown synthesis algorithm: " + algo);
+        throw SynthException("Unknown synthesis algorithm");
     }
     if (simplify) {
-        return simplification(c);
+        return c.reduce();
     }
     return c;
 }
 
-Circuit synthesize(const Substitution &sub, const std::string &algo, bool simplify) {
+Circuit synthesize(const Substitution &sub, Algo algo, bool simplify) {
     Circuit c;
-    if (algo == "dummy") {
+    if (algo == Algo::DUMMY) {
         c = dummy_algorithm(sub);
-    } else if (algo == "rw") {
+    } else if (algo == Algo::RW) {
         c = RW_algorithm(sub);
     } else {
-        throw SynthException("Unknown synthesis algorithm: " + algo);
+        throw SynthException("Unknown synthesis algorithm");
     }
     if (simplify) {
-        return simplification(c);
+        return c.reduce();
     }
     return c;
 }
@@ -115,7 +112,6 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
     for (int i = outputs - 1;; i--) {
         if (c.produce_mapping() == bm_extend) {
             c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
-            c.simplify();
             return c;
         }
 
@@ -219,7 +215,6 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
     }
 
     c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
-    c.simplify();
     return c;
 }
 

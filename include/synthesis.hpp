@@ -4,11 +4,17 @@
 #include "exseptions.hpp"
 #include "gates.hpp"
 
-Circuit simplification(const Circuit &);
+enum class Algo {
+    DUMMY,
+    RW,
+    UNKNOWN = 1024,
+    EMPTY = 2048,
+};
 
-Circuit synthesize(const BinaryMapping &, const std::string & = "rw", bool simplify = false);
+Circuit
+synthesize(const BinaryMapping &, Algo = Algo::RW, bool simplify = false);
 
-Circuit synthesize(const Substitution &, const std::string & = "rw", bool simplify = false);
+Circuit synthesize(const Substitution &, Algo = Algo::RW, bool simplify = false);
 
 Circuit dummy_algorithm(const BinaryMapping &);
 

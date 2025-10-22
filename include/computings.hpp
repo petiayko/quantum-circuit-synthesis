@@ -7,6 +7,14 @@
 #include "logger.hpp"
 #include "synthesis.hpp"
 
+enum class InputType {
+    TABLE,
+    SUBSTITUTION,
+    CIRCUIT,
+    UNKNOWN = 1024,
+    EMPTY = 2048,
+};
+
 
 bool overwrite_confirmation() {
     std::cout << "Output file is already exists. Do you want to overwrite it [y/n]? ";
@@ -40,8 +48,8 @@ void write_result(const std::string &output_path, const T &result) {
     file.close();
 }
 
-void process_config(const std::string &type, const std::string &algo, bool simplify, const std::string &input_path,
-                    const std::string &output_path) {
+void process_config(InputType type, Algo algo, bool simplify,
+                    const std::string &input_path, const std::string &output_path) {
     if (input_path.empty()) {
         throw ArgumentException("Path to input file was not provided");
     }
@@ -53,12 +61,12 @@ void process_config(const std::string &type, const std::string &algo, bool simpl
     file_content << file.rdbuf();
     file.close();
 
-    if (type == "qc") {
-        if (!algo.empty()) {
+    if (type == InputType::CIRCUIT) {
+        if (algo != Algo::EMPTY) {
             throw ArgumentException("Algo was provided for reverse mode");
         }
         if (simplify) {
-            throw ArgumentException("Impossible use simplification for reverse mode");
+            throw ArgumentException("Impossible to use simplification for reverse mode");
         }
         LOG_INFO("Starting reverse of quantum circuit", "");
         Circuit c(file_content);
@@ -78,35 +86,35 @@ void process_config(const std::string &type, const std::string &algo, bool simpl
         return;
     }
 
-    if (algo.empty()) {
+    if (algo == Algo::EMPTY) {
         throw ArgumentException("Synthesis algorithm was not provided");
     }
-    if (algo == "dummy") {
+    if (algo == Algo::DUMMY) {
         LOG_WARNING("Application parameters", "Selected synthesis algorithm is 'dummy', it always builds a quantum "
                                               "circuit with additional memory");
         LOG_WARNING("Application parameters", "Selected synthesis algorithm is 'dummy', number of additional memory "
                                               "lines in the resulting quantum circuit will be equal to the number of "
                                               "coordinate functions");
-    } else if (algo != "rw") {
-        throw ArgumentException("Unknown synthesis algorithm: " + algo);
+    } else if (algo == Algo::UNKNOWN) {
+        throw ArgumentException("Unknown synthesis algorithm");
     }
 
     LOG_INFO("Starting quantum circuit synthesis", "");
-    if (type == "tt") {
+    if (type == InputType::TABLE) {
         BinaryMapping bm(file_content);
         Circuit c = synthesize(bm, algo, simplify);
-        if (c.memory() && algo == "rw") {
-            LOG_INFO("Performing quantum circuit synthesis", "Provided binary mapping is not reversible");
+        if (c.memory() && algo == Algo::RW) {
+            LOG_WARNING("Performing quantum circuit synthesis", "Provided binary mapping is not reversible");
             LOG_WARNING("Performing quantum circuit synthesis",
                         "Resulting quantum circuit will have additional memory");
         }
         write_result<Circuit>(output_path, c);
-    } else if (type == "sub") {
+    } else if (type == InputType::SUBSTITUTION) {
         Substitution sub(file_content);
         Circuit c = synthesize(sub, algo, simplify);
         write_result<Circuit>(output_path, c);
     } else {
-        throw ArgumentException("Unknown type of input: " + type);
+        throw ArgumentException("Unknown type of input");
     }
     LOG_INFO("Finishing quantum circuit synthesis", "");
 }
