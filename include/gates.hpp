@@ -35,7 +35,7 @@ private:
     GateType type_{};
     size_t dim_{};
     std::vector<size_t> nests_;
-    std::vector<size_t> controls_;
+    std::vector<size_t> direct_controls_;
 
     void init_(GateType, const std::vector<size_t> &, const std::vector<size_t> &, size_t);
 };

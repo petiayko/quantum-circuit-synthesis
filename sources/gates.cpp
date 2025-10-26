@@ -88,17 +88,17 @@ void Gate::act(binary_vector &vec) const {
     if (type_ == GateType::NOT) {
         vec[nests_.front()] = !vec[nests_.front()];
     } else if (type_ == GateType::CNOT) {
-        vec[nests_.front()] = vec[nests_.front()] != vec[controls_.front()];
+        vec[nests_.front()] = vec[nests_.front()] != vec[direct_controls_.front()];
     } else if (type_ == GateType::kCNOT) {
         bool control_signal = true;
-        for (auto num: controls_) {
+        for (auto num: direct_controls_) {
             control_signal = control_signal && vec[num];
         }
         vec[nests_.front()] = vec[nests_.front()] != control_signal;
     } else if (type_ == GateType::SWAP) {
         swap(vec[nests_.front()], vec[nests_.back()]);
     } else if (type_ == GateType::CSWAP) {
-        if (vec[controls_.front()]) {
+        if (vec[direct_controls_.front()]) {
             swap(vec[nests_.front()], vec[nests_.back()]);
         }
     }
@@ -118,10 +118,10 @@ void Gate::act(cf_set &vec) const {
     if (type_ == GateType::NOT) {
         vec[nests_.front()] = ~vec[nests_.front()];
     } else if (type_ == GateType::CNOT) {
-        vec[nests_.front()] += vec[controls_.front()];
+        vec[nests_.front()] += vec[direct_controls_.front()];
     } else if (type_ == GateType::kCNOT) {
         BooleanFunction control_signal(true, dim_);
-        for (auto num: controls_) {
+        for (auto num: direct_controls_) {
             control_signal *= vec[num];
         }
         vec[nests_.front()] += control_signal;
@@ -130,17 +130,17 @@ void Gate::act(cf_set &vec) const {
         vec[nests_.front()] = vec[nests_.back()];
         vec[nests_.back()] = temp;
     } else if (type_ == GateType::CSWAP) {
-        BooleanFunction front_bf = (vec[controls_.front()] + BooleanFunction(true, dim_)) * vec[nests_.front()] |
-                                   vec[controls_.front()] * vec[nests_.back()];
-        BooleanFunction back_bf = vec[controls_.front()] * vec[nests_.front()] |
-                                  (vec[controls_.front()] + BooleanFunction(true, dim_)) * vec[nests_.back()];
+        BooleanFunction front_bf = (vec[direct_controls_.front()] + BooleanFunction(true, dim_)) * vec[nests_.front()] |
+                                   vec[direct_controls_.front()] * vec[nests_.back()];
+        BooleanFunction back_bf = vec[direct_controls_.front()] * vec[nests_.front()] |
+                                  (vec[direct_controls_.front()] + BooleanFunction(true, dim_)) * vec[nests_.back()];
         vec[nests_.front()] = front_bf;
         vec[nests_.back()] = back_bf;
     }
 }
 
 bool Gate::operator==(const Gate &g) const {
-    return (type_ == g.type_ && dim_ && g.dim_ && nests_ == g.nests_ && controls_ == g.controls_);
+    return (type_ == g.type_ && dim_ && g.dim_ && nests_ == g.nests_ && direct_controls_ == g.direct_controls_);
 }
 
 void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
@@ -223,7 +223,7 @@ void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vec
     type_ = type;
     dim_ = dim;
     nests_ = nests;
-    controls_ = controls;
+    direct_controls_ = controls;
 }
 
 std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
@@ -250,9 +250,9 @@ std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
         gate_params += std::to_string(p) + ", ";
     }
     gate_params = gate_params.substr(0, gate_params.size() - 2);
-    if (!g.controls_.empty()) {
+    if (!g.direct_controls_.empty()) {
         gate_params += "; ";
-        for (auto p: g.controls_) {
+        for (auto p: g.direct_controls_) {
             gate_params += std::to_string(p) + ", ";
         }
         gate_params = gate_params.substr(0, gate_params.size() - 2);
