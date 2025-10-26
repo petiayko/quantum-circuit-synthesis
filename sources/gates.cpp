@@ -112,6 +112,28 @@ GateType Gate::type() const noexcept {
     return type_;
 }
 
+std::vector<size_t> Gate::nests() const noexcept {
+    // TODO test it
+    return nests_;
+}
+
+std::vector<size_t> Gate::controls() const noexcept {
+    // TODO test it
+    return controls_;
+}
+
+bool Gate::is_commutes(const Gate &gate) const noexcept {
+    // TODO implement the second condition
+    if (gate.type() == GateType::SWAP || gate.type() == GateType::CSWAP) {
+        return false;
+    }
+    if (type_ == GateType::SWAP || type_ == GateType::CSWAP) {
+        return false;
+    }
+    return (std::find(controls_.begin(), controls_.end(), gate.nests_.front()) != controls_.end() &&
+            std::find(gate.controls().begin(), gate.controls().end(), nests_.front()) != gate.controls().end());
+}
+
 void Gate::act(binary_vector &vec) const {
     if (vec.size() != dim_) {
         throw GateException("Input vector must have length equals to the Gate dimension");
@@ -425,16 +447,7 @@ BinaryMapping Circuit::produce_mapping() const noexcept {
 }
 
 Circuit Circuit::reduce() const noexcept {
-    // TODO можно было бы ввести пустой вентиль
-    //      замену сделать с помощью оператора присваивания =
-    std::vector<Gate> reduced_gates;
-    for (const auto &g: gates_) {
-        if (g.type() == GateType::NOT) {
-
-        }
-        reduced_gates.push_back(g);
-    }
-    return Circuit(reduced_gates);
+    return *this;
 }
 
 bool Circuit::operator==(const Circuit &c) const {

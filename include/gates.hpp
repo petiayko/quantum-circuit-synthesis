@@ -29,6 +29,12 @@ public:
 
     GateType type() const noexcept;
 
+    std::vector<size_t> nests() const noexcept;
+
+    std::vector<size_t> controls() const noexcept;
+
+    bool is_commutes(const Gate&) const noexcept;
+
     void act(binary_vector &) const;
 
     void act(cf_set &) const;
