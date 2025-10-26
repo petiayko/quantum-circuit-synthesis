@@ -1,7 +1,7 @@
 #include "gates.hpp"
 
 
-Gate::Gate(GateType type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
+Gate::Gate(GateType type, const std::vector<size_t> &nests, const std::vector<control> &controls, size_t dim) {
     init_(type, nests, controls, dim);
 }
 
@@ -74,7 +74,33 @@ Gate::Gate(const std::string &s, size_t dim) {
         throw GateException("Unknown gate type: " + gate_name);
     }
 
-    init_(type, string_to_num_vector(nests_line, ','), string_to_num_vector(controls_line, ','), dim);
+    // TODO make it separate function
+    std::stringstream ss;
+    ss << controls_line;
+
+    std::vector<control> controls;
+    std::string num_s;
+    size_t num;
+    bool is_direct = false;
+
+    while (getline(ss, num_s, ',')) {
+        trim(num_s);
+        if (num_s.empty()) {
+            continue;
+        }
+        if (num_s.front() == '!') {
+            is_direct = false;
+            num_s.erase(0, 1);
+        } else {
+            is_direct = true;
+        }
+        if (!try_string_to_decimal<size_t>(num_s, num)) {
+            throw StringException("Invalid num: " + num_s);
+        }
+        controls.emplace_back(num, is_direct);
+    }
+
+    init_(type, string_to_num_vector(nests_line, ','), controls, dim);
 }
 
 size_t Gate::dim() const noexcept {
@@ -88,17 +114,18 @@ void Gate::act(binary_vector &vec) const {
     if (type_ == GateType::NOT) {
         vec[nests_.front()] = !vec[nests_.front()];
     } else if (type_ == GateType::CNOT) {
-        vec[nests_.front()] = vec[nests_.front()] != vec[direct_controls_.front()];
+        vec[nests_.front()] = vec[nests_.front()] ^ vec[controls_.front().first] ^ !controls_.front().second;
     } else if (type_ == GateType::kCNOT) {
         bool control_signal = true;
-        for (auto num: direct_controls_) {
-            control_signal = control_signal && vec[num];
+        for (const auto &[num, is_direct]: controls_) {
+            control_signal = control_signal && (vec[num] ^ !is_direct);
         }
-        vec[nests_.front()] = vec[nests_.front()] != control_signal;
+        vec[nests_.front()] = vec[nests_.front()] ^ control_signal;
     } else if (type_ == GateType::SWAP) {
         swap(vec[nests_.front()], vec[nests_.back()]);
     } else if (type_ == GateType::CSWAP) {
-        if (vec[direct_controls_.front()]) {
+        if ((vec[controls_.front().first] && controls_.front().second) ||
+            (!vec[controls_.front().first] && !controls_.front().second)) {
             swap(vec[nests_.front()], vec[nests_.back()]);
         }
     }
@@ -116,34 +143,40 @@ void Gate::act(cf_set &vec) const {
     }
 
     if (type_ == GateType::NOT) {
-        vec[nests_.front()] = ~vec[nests_.front()];
+        ~vec[nests_.front()];
     } else if (type_ == GateType::CNOT) {
-        vec[nests_.front()] += vec[direct_controls_.front()];
+        vec[nests_.front()] += vec[controls_.front().first] + BooleanFunction(!controls_.front().second, dim_);
     } else if (type_ == GateType::kCNOT) {
         BooleanFunction control_signal(true, dim_);
-        for (auto num: direct_controls_) {
-            control_signal *= vec[num];
+        for (const auto &[num, is_direct]: controls_) {
+            if (!is_direct) {
+                control_signal *= (vec[num] + BooleanFunction(true, dim_));
+            } else {
+                control_signal *= vec[num];
+            }
         }
         vec[nests_.front()] += control_signal;
     } else if (type_ == GateType::SWAP) {
-        BooleanFunction temp = vec[nests_.front()];
-        vec[nests_.front()] = vec[nests_.back()];
-        vec[nests_.back()] = temp;
+        vec[nests_.front()] += vec[nests_.back()];
+        vec[nests_.back()] += vec[nests_.front()];
+        vec[nests_.front()] += vec[nests_.back()];
     } else if (type_ == GateType::CSWAP) {
-        BooleanFunction front_bf = (vec[direct_controls_.front()] + BooleanFunction(true, dim_)) * vec[nests_.front()] |
-                                   vec[direct_controls_.front()] * vec[nests_.back()];
-        BooleanFunction back_bf = vec[direct_controls_.front()] * vec[nests_.front()] |
-                                  (vec[direct_controls_.front()] + BooleanFunction(true, dim_)) * vec[nests_.back()];
-        vec[nests_.front()] = front_bf;
-        vec[nests_.back()] = back_bf;
+        BooleanFunction term = vec[controls_.front().first] * (vec[nests_.front()] + vec[nests_.back()]);
+        if (!controls_.front().second) {
+            vec[nests_.front()] += vec[nests_.back()];
+            vec[nests_.back()] += vec[nests_.front()];
+            vec[nests_.front()] += vec[nests_.back()];
+        }
+        vec[nests_.front()] += term;
+        vec[nests_.back()] += term;
     }
 }
 
 bool Gate::operator==(const Gate &g) const {
-    return (type_ == g.type_ && dim_ && g.dim_ && nests_ == g.nests_ && direct_controls_ == g.direct_controls_);
+    return (type_ == g.type_ && dim_ && g.dim_ && nests_ == g.nests_ && controls_ == g.controls_);
 }
 
-void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vector<size_t> &controls, size_t dim) {
+void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vector<control> &controls, size_t dim) {
     for (auto num: nests) {
         if (num > dim - 1) {
             throw GateException("Invalid nest line: " + std::to_string(num));
@@ -152,15 +185,15 @@ void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vec
             throw GateException("Nest line selected more that once: " + std::to_string(num));
         }
     }
-    for (auto num: controls) {
+    for (const auto &[num, is_direct]: controls) {
         if (num > dim - 1) {
             throw GateException("Invalid control line: " + std::to_string(num));
         }
-        if (std::count(controls.begin(), controls.end(), num) != 1) {
-            throw GateException("Nest line selected more that once: " + std::to_string(num));
-        }
         if (std::find(nests.begin(), nests.end(), num) != nests.end()) {
             throw GateException("Line selected as nest and control: " + std::to_string(num));
+        }
+        if (std::count_if(controls.begin(), controls.end(), [num](const auto p) { return p.first == num; }) != 1) {
+            throw GateException("Nest line selected more that once: " + std::to_string(num));
         }
     }
     switch (type) {
@@ -223,7 +256,10 @@ void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vec
     type_ = type;
     dim_ = dim;
     nests_ = nests;
-    direct_controls_ = controls;
+    controls_ = controls;
+
+    std::sort(nests_.begin(), nests_.end());
+    std::sort(controls_.begin(), controls_.end());
 }
 
 std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
@@ -249,13 +285,16 @@ std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
     for (auto p: g.nests_) {
         gate_params += std::to_string(p) + ", ";
     }
-    gate_params = gate_params.substr(0, gate_params.size() - 2);
-    if (!g.direct_controls_.empty()) {
+    gate_params.erase(gate_params.size() - 2);  // remove ", " from the end
+    if (!g.controls_.empty()) {
         gate_params += "; ";
-        for (auto p: g.direct_controls_) {
-            gate_params += std::to_string(p) + ", ";
+        for (const auto &[num, is_direct]: g.controls_) {
+            if (!is_direct) {
+                gate_params += '!';
+            }
+            gate_params += std::to_string(num) + ", ";
         }
-        gate_params = gate_params.substr(0, gate_params.size() - 2);
+        gate_params.erase(gate_params.size() - 2);  // remove ", " from the end
     }
     return out << gate_name << '(' << gate_params << ')';
 }

@@ -3,7 +3,7 @@
 
 #include "primitives.hpp"
 #include "strings.hpp"
-
+#include <ranges>
 
 #define GateType(type) static_cast<GateType>(type)
 
@@ -15,9 +15,14 @@ enum class GateType {
     CSWAP = 4,
 };
 
+// true - direct; false - inverted
+using control = std::pair<size_t, bool>;
+
 class Gate {
 public:
-    explicit Gate(GateType, const std::vector<size_t> &, const std::vector<size_t> &, size_t);
+    Gate() = default;
+
+    explicit Gate(GateType, const std::vector<size_t> &, const std::vector<control> &, size_t);
 
     explicit Gate(const std::string &, size_t);
 
@@ -35,9 +40,9 @@ private:
     GateType type_{};
     size_t dim_{};
     std::vector<size_t> nests_;
-    std::vector<size_t> direct_controls_;
+    std::vector<control> controls_;
 
-    void init_(GateType, const std::vector<size_t> &, const std::vector<size_t> &, size_t);
+    void init_(GateType, const std::vector<size_t> &, const std::vector<control> &, size_t);
 };
 
 

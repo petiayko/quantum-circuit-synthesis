@@ -11,6 +11,6 @@
 NOT(1              )
 # text
         CsWAp       (       3  , 1        ; 0)
-   Kcnot(0;       1   ,2 ,  3)
+   Kcnot(0;  !3   ,  1   ,!2 )
 
 

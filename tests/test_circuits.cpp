@@ -47,15 +47,15 @@ TEST(Circuits, Constructor) {
 TEST(Circuits, Insert) {
     Circuit c("Lines: 3");
     c.add(Gate(GateType::SWAP, {0, 2}, {}, 3));
-    c.add(Gate(GateType::CNOT, {1}, {0}, 3));
+    c.add(Gate(GateType::CNOT, {1}, {{0, true}}, 3));
 
     EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 4), 0), CircuitException);
     EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 2), 0), CircuitException);
     EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 3), 3), CircuitException);
 
     c.insert(Gate(GateType::NOT, {0}, {}, 3));
-    c.insert(Gate(GateType::kCNOT, {1}, {0, 2}, 3), 1);
-    c.insert(Gate(GateType::CSWAP, {0, 2}, {1}, 3), 4);
+    c.insert(Gate(GateType::kCNOT, {1}, {{0, true}, {2, true}}, 3), 1);
+    c.insert(Gate(GateType::CSWAP, {0, 2}, {{1, true}}, 3), 4);
 
     EXPECT_EQ(c, Circuit("Lines: 3\nNOT(0)\nkCNOT(1; 0, 2)\nSWAP(0, 2)\nCNOT(1; 0)\nCSWAP(0, 2; 1)"));
 }
@@ -72,11 +72,11 @@ TEST(Circuits, Act) {
     EXPECT_EQ(vec1, (std::vector<bool>{0, 1, 1, 1}));
 
     c.add(Gate("NOT(2)", 4));
-    c.add(Gate("CSWAP(1,2;3)", 4));
+    c.add(Gate("CSWAP(1,2;!3)", 4));
     c.add(Gate("SWAP(0,1)", 4));
     c.add(Gate("SWAP(1,2)", 4));
     c.act(vec1);
-    EXPECT_EQ(vec1, (std::vector<bool>{0, 1, 0, 1}));
+    EXPECT_EQ(vec1, (std::vector<bool>{1, 0, 0, 1}));
 
     Circuit c1("Lines: 2");
     std::vector<BooleanFunction> vec_bf{BooleanFunction("0110")};
@@ -92,9 +92,9 @@ TEST(Circuits, Act) {
 
     c1.add(Gate("NOT(0)", 2));
     c1.add(Gate("SWAP(0,1)", 2));
-    c1.add(Gate("kCNOT(1;0)", 2));
+    c1.add(Gate("kCNOT(1;!0)", 2));
     c1.act(vec_bf3);
-    EXPECT_EQ(vec_bf3, (std::vector<BooleanFunction>{BooleanFunction("0100"), BooleanFunction("1101")}));
+    EXPECT_EQ(vec_bf3, (std::vector<BooleanFunction>{BooleanFunction("0100"), BooleanFunction("0010")}));
 }
 
 TEST(Circuits, Memory) {
@@ -195,13 +195,13 @@ TEST(Circuits, Stream) {
         c.add(Gate("NOT(3)", 4));
     }
     for (size_t _ = 0; _ < 6; _++) {
-        c.add(Gate("CNOT(2;1)", 4));
+        c.add(Gate("CNOT(2;!1)", 4));
     }
     for (size_t _ = 0; _ < 3; _++) {
         c.add(Gate("CSWAP(3,0;1)", 4));
     }
     for (size_t _ = 0; _ < 4; _++) {
-        c.add(Gate("kCNOT(2;0,1,3)", 4));
+        c.add(Gate("kCNOT(2;!0,!1,3)", 4));
     }
     out_stream << c;
     EXPECT_EQ(out_stream.str(), "Lines: 4\n"
@@ -215,23 +215,23 @@ TEST(Circuits, Stream) {
                                 "NOT(3)\n"
                                 "NOT(3)\n"
                                 "NOT(3)\n"
-                                "CNOT(2; 1)\n"
-                                "CNOT(2; 1)\n"
-                                "CNOT(2; 1)\n"
-                                "CNOT(2; 1)\n"
-                                "CNOT(2; 1)\n"
-                                "CNOT(2; 1)\n"
-                                "CSWAP(3, 0; 1)\n"
-                                "CSWAP(3, 0; 1)\n"
-                                "CSWAP(3, 0; 1)\n"
-                                "kCNOT(2; 0, 1, 3)\n"
-                                "kCNOT(2; 0, 1, 3)\n"
-                                "kCNOT(2; 0, 1, 3)\n"
-                                "kCNOT(2; 0, 1, 3)\n");
+                                "CNOT(2; !1)\n"
+                                "CNOT(2; !1)\n"
+                                "CNOT(2; !1)\n"
+                                "CNOT(2; !1)\n"
+                                "CNOT(2; !1)\n"
+                                "CNOT(2; !1)\n"
+                                "CSWAP(0, 3; 1)\n"
+                                "CSWAP(0, 3; 1)\n"
+                                "CSWAP(0, 3; 1)\n"
+                                "kCNOT(2; !0, !1, 3)\n"
+                                "kCNOT(2; !0, !1, 3)\n"
+                                "kCNOT(2; !0, !1, 3)\n"
+                                "kCNOT(2; !0, !1, 3)\n");
 
     std::ifstream file("../tests/assets/qc.txt", std::ios::in);
     Circuit c1(file);
-    EXPECT_EQ(c1, Circuit(std::vector<Gate>{Gate("NOT(1)", 4), Gate("CSWAP(3,1;0)", 4), Gate("kCNOT(0;1,2,3)", 4)}));
+    EXPECT_EQ(c1, Circuit(std::vector<Gate>{Gate("NOT(1)", 4), Gate("CSWAP(3,1;0)", 4), Gate("kCNOT(0;1,!2,!3)", 4)}));
 
     std::ifstream file1("../tests/assets/map.txt", std::ios::in);
     EXPECT_THROW((Circuit(file1)), CircuitException);
