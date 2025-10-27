@@ -3,7 +3,6 @@
 
 #include "primitives.hpp"
 #include "strings.hpp"
-#include <ranges>
 
 #define GateType(type) static_cast<GateType>(type)
 

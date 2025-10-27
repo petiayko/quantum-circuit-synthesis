@@ -101,9 +101,11 @@ TEST(BinaryMappings, Methods) {
     EXPECT_EQ(BinaryMapping(table{{0, 1}}).extend(), BinaryMapping(table{{0, 1}}));
     EXPECT_TRUE(BinaryMapping(table{{0, 1}}).extend().is_substitution());
 
-    EXPECT_EQ(BinaryMapping(table{{0, 0, 1, 1}, {0, 1, 0, 1}}).extend(), BinaryMapping(table{{0, 0, 1, 1},
-                                                                                             {0, 1, 0, 1}}));
-    EXPECT_TRUE(BinaryMapping(table{{0, 0, 1, 1}, {0, 1, 0, 1}}).extend().is_substitution());
+    EXPECT_EQ(BinaryMapping(table{{0, 0, 1, 1},
+                                  {0, 1, 0, 1}}).extend(), BinaryMapping(table{{0, 0, 1, 1},
+                                                                               {0, 1, 0, 1}}));
+    EXPECT_TRUE(BinaryMapping(table{{0, 0, 1, 1},
+                                    {0, 1, 0, 1}}).extend().is_substitution());
 
     EXPECT_EQ(BinaryMapping(table{{0, 0, 0, 1}}).extend(), BinaryMapping(table{{0, 0, 0, 0, 1, 1, 1, 1},
                                                                                {0, 0, 1, 1, 0, 0, 1, 1},

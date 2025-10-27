@@ -76,7 +76,7 @@ std::vector<std::vector<size_t>> generate_controls(size_t len, size_t max, size_
 }
 
 std::vector<Gate> generate_gates(GateType type, size_t nest, const std::vector<size_t> &controls,
-                                    size_t dim) {
+                                 size_t dim) {
     std::vector<Gate> result;
     for (int i = 0; i < 1 << controls.size(); i++) {
         std::vector<control> marked_controls;
