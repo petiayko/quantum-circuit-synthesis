@@ -36,7 +36,11 @@ Circuit dummy_algorithm(const BinaryMapping &bm) {
         }
         for (size_t c_set = 1; c_set < bm_anf[i].size(); c_set++) {
             if (bm_anf[i][c_set]) {
-                c.add(Gate(GateType::kCNOT, {bm.inputs_number() + i}, bits_mask(c_set, bm.inputs_number()), c_dim));
+                std::vector<control> controls;
+                auto numbers = bits_mask(c_set, bm.inputs_number());
+                std::transform(numbers.begin(), numbers.end(), std::back_inserter(controls),
+                               [](auto num) { return std::make_pair(num, true); });
+                c.add(Gate(GateType::kCNOT, {bm.inputs_number() + i}, controls, c_dim));
             }
         }
     }
@@ -71,27 +75,16 @@ std::vector<std::vector<size_t>> generate_controls(size_t len, size_t max, size_
     return result;
 }
 
-std::vector<std::vector<Gate>> generate_gate_set(GateType type, size_t nest, const std::vector<size_t> &controls,
-                                                 size_t dim) {
-    std::vector<std::vector<Gate>> result;
-    auto g_main = Gate(type, {nest}, controls, dim);
+std::vector<Gate> generate_gates(GateType type, size_t nest, const std::vector<size_t> &controls,
+                                 size_t dim) {
+    std::vector<Gate> result;
     for (int i = 0; i < 1 << controls.size(); i++) {
-        std::vector<Gate> g_set;
+        std::vector<control> marked_controls;
         auto mask = decimal_to_binary_v<int>(i, controls.size());
         for (size_t j = 0; j < mask.size(); j++) {
-            if (mask[j]) {
-                g_set.push_back(Gate(GateType::NOT, {controls[j]}, {}, dim));
-            }
+            marked_controls.emplace_back(controls[j], !mask[j]);
         }
-        g_set.push_back(g_main);
-        for (size_t j = 0; j < mask.size(); j++) {
-            if (mask[j]) {
-                g_set.push_back(Gate(GateType::NOT, {controls[j]}, {}, dim));
-            }
-        }
-        result.push_back(g_set);
-        g_set.insert(g_set.begin(), Gate(GateType::NOT, {nest}, {}, dim));
-        result.push_back(g_set);
+        result.emplace_back(type, std::vector<size_t>{nest}, marked_controls, dim);
     }
 
     return result;
@@ -127,83 +120,59 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
 
         auto complexity = bm_cf[nest].complexity();
         auto max_complexity_diff = 0;
-        std::vector<Gate> best_gates;
+        Gate best_gate;
 
         // CNOT
         for (const auto &controls: generate_controls(1, outputs, i)) {
-            for (const auto &g_set: generate_gate_set(GateType::CNOT, nest, controls, outputs)) {
-                std::for_each(g_set.cbegin(), g_set.cend(), [&bm_cf](const auto &g) {
-                    g.act(bm_cf);
-                });
+            for (const auto &gate: generate_gates(GateType::CNOT, nest, controls, outputs)) {
+                gate.act(bm_cf);
                 auto complexity_new = bm_cf[nest].complexity();
                 if (complexity_new - complexity > max_complexity_diff) {
                     max_complexity_diff = complexity_new - complexity;
-                    best_gates = g_set;
+                    best_gate = gate;
                 }
-                std::for_each(g_set.cbegin(), g_set.cend(), [&bm_cf](const auto &g) {
-                    g.act(bm_cf);
-                });
+                gate.act(bm_cf);
             }
         }
         if (max_complexity_diff) {
-            std::for_each(best_gates.cbegin(), best_gates.cend(), [&c](const auto &g) {
-                c.insert(g, 0);
-            });
-            std::for_each(best_gates.cbegin(), best_gates.cend(), [&bm_cf](const auto &g) {
-                g.act(bm_cf);
-            });
+            c.insert(best_gate, 0);
+            best_gate.act(bm_cf);
             continue;
         }
 
         // kCNOT 2
         for (const auto &controls: generate_controls(2, outputs, i)) {
-            for (const auto &g_set: generate_gate_set(GateType::kCNOT, nest, controls, outputs)) {
-                std::for_each(g_set.cbegin(), g_set.cend(), [&bm_cf](const auto &g) {
-                    g.act(bm_cf);
-                });
+            for (const auto &gate: generate_gates(GateType::kCNOT, nest, controls, outputs)) {
+                gate.act(bm_cf);
                 auto complexity_new = bm_cf[nest].complexity();
                 if (complexity_new - complexity > max_complexity_diff) {
                     max_complexity_diff = complexity_new - complexity;
-                    best_gates = g_set;
+                    best_gate = gate;
                 }
-                std::for_each(g_set.cbegin(), g_set.cend(), [&bm_cf](const auto &g) {
-                    g.act(bm_cf);
-                });
+                gate.act(bm_cf);
             }
         }
         if (max_complexity_diff) {
-            std::for_each(best_gates.cbegin(), best_gates.cend(), [&c](const auto &g) {
-                c.insert(g, 0);
-            });
-            std::for_each(best_gates.cbegin(), best_gates.cend(), [&bm_cf](const auto &g) {
-                g.act(bm_cf);
-            });
+            c.insert(best_gate, 0);
+            best_gate.act(bm_cf);
             continue;
         }
 
         // kCNOT 3
         for (const auto &controls: generate_controls(3, outputs, i)) {
-            for (const auto &g_set: generate_gate_set(GateType::kCNOT, nest, controls, outputs)) {
-                std::for_each(g_set.cbegin(), g_set.cend(), [&bm_cf](const auto &g) {
-                    g.act(bm_cf);
-                });
+            for (const auto &gate: generate_gates(GateType::kCNOT, nest, controls, outputs)) {
+                gate.act(bm_cf);
                 auto complexity_new = bm_cf[nest].complexity();
                 if (complexity_new - complexity > max_complexity_diff) {
                     max_complexity_diff = complexity_new - complexity;
-                    best_gates = g_set;
+                    best_gate = gate;
                 }
-                std::for_each(g_set.cbegin(), g_set.cend(), [&bm_cf](const auto &g) {
-                    g.act(bm_cf);
-                });
+                gate.act(bm_cf);
             }
         }
         if (max_complexity_diff) {
-            std::for_each(best_gates.cbegin(), best_gates.cend(), [&c](const auto &g) {
-                c.insert(g, 0);
-            });
-            std::for_each(best_gates.cbegin(), best_gates.cend(), [&bm_cf](const auto &g) {
-                g.act(bm_cf);
-            });
+            c.insert(best_gate, 0);
+            best_gate.act(bm_cf);
             continue;
         }
 

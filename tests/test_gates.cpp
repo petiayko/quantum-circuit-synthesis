@@ -11,40 +11,45 @@ TEST(Gates, Constructor) {
 
     // NOT
     EXPECT_THROW(Gate(GateType::NOT, {}, {}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::NOT, {}, {1}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::NOT, {0}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::NOT, {}, {{1, true}}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::NOT, {0}, {{1, true}}, 5), GateException);
     EXPECT_THROW(Gate(GateType::NOT, {0, 2}, {}, 5), GateException);
 
     //CNOT
-    EXPECT_THROW(Gate(GateType::CNOT, {}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CNOT, {}, {{1, true}}, 5), GateException);
     EXPECT_THROW(Gate(GateType::CNOT, {1}, {}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::CNOT, {1}, {1}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::CNOT, {0, 1}, {1}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::CNOT, {0}, {1, 2}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CNOT, {1}, {{1, true}}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CNOT, {0, 1}, {{1, true}}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CNOT, {0}, {{1, true},
+                                            {2, true}}, 5), GateException);
 
     //kCNOT
-    EXPECT_THROW(Gate(GateType::kCNOT, {}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {}, {{1, false}}, 5), GateException);
     EXPECT_THROW(Gate(GateType::kCNOT, {1}, {}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::kCNOT, {1}, {1}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::kCNOT, {1}, {1, 4}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::kCNOT, {0, 1}, {1}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::kCNOT, {0}, {1, 1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {1}, {{1, true}}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {1}, {{1, false},
+                                             {4, true}}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {0, 1}, {{1, false}}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {0}, {{1, true},
+                                             {1, true}}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::kCNOT, {0}, {{1, true},
+                                             {1, false}}, 5), GateException);
 
     // SWAP
-    EXPECT_THROW(Gate(GateType::SWAP, {}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::SWAP, {}, {{1, true}}, 5), GateException);
     EXPECT_THROW(Gate(GateType::SWAP, {1}, {}, 5), GateException);
     EXPECT_THROW(Gate(GateType::SWAP, {1}, {}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::SWAP, {0, 1}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::SWAP, {0, 1}, {{1, false}}, 5), GateException);
     EXPECT_THROW(Gate(GateType::SWAP, {1, 1}, {}, 5), GateException);
 
     // CSWAP
-    EXPECT_THROW(Gate(GateType::CSWAP, {}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CSWAP, {}, {{1, true}}, 5), GateException);
     EXPECT_THROW(Gate(GateType::CSWAP, {1}, {}, 5), GateException);
     EXPECT_THROW(Gate(GateType::CSWAP, {1}, {}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::CSWAP, {0, 1}, {1}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CSWAP, {0, 1}, {{1, true}}, 5), GateException);
     EXPECT_THROW(Gate(GateType::CSWAP, {1, 1}, {}, 5), GateException);
     EXPECT_THROW(Gate(GateType::CSWAP, {1, 2}, {}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::CSWAP, {1, 2}, {2}, 5), GateException);
+    EXPECT_THROW(Gate(GateType::CSWAP, {1, 2}, {{2, true}}, 5), GateException);
 }
 
 TEST(Gates, ConstructorString) {
@@ -60,32 +65,55 @@ TEST(Gates, ConstructorString) {
     EXPECT_THROW(Gate("NOT(2", 5), GateException);
     EXPECT_THROW(Gate("NOT(2;4)", 5), GateException);
     EXPECT_THROW(Gate("NOT(2,4)", 5), GateException);
-    EXPECT_NO_THROW(Gate("NOT(2)", 5));
-    EXPECT_NO_THROW(Gate("  \t   NOT(2)", 5));
-    EXPECT_NO_THROW(Gate("  \t   NOT  ( 2         )             ", 5));
-    EXPECT_NO_THROW(Gate("  \t   NOT  ( 0x2         )             ", 5));
+    EXPECT_THROW(Gate("NOT(!2)", 5), StringException);
+    EXPECT_TRUE(Gate("NOT(2)", 5) == Gate(GateType::NOT, {2}, {}, 5));
+    EXPECT_TRUE(Gate("  \t   NOT(2)", 5) == Gate(GateType::NOT, {2}, {}, 5));
+    EXPECT_TRUE(Gate("  \t   NOT  ( 2         )             ", 5) == Gate(GateType::NOT, {2}, {}, 5));
+    EXPECT_TRUE(Gate("  \t   NOT  ( 0x2         )             ", 5) == Gate(GateType::NOT, {2}, {}, 5));
 
     // CNOT
     EXPECT_THROW(Gate("CNOT()", 5), GateException);
     EXPECT_THROW(Gate("CNOT(2,4)", 5), GateException);
-    EXPECT_TRUE(Gate("cNoT(2;4)", 5) == Gate(GateType::CNOT, {2}, {4}, 5));
-    EXPECT_TRUE(Gate("  \t   cnot(2;1)", 5) == Gate(GateType::CNOT, {2}, {1}, 5));
-    EXPECT_TRUE(Gate("  \t   cnOT  ( 2    ;\t3     )             ", 5) == Gate(GateType::CNOT, {2}, {3}, 5));
-    EXPECT_TRUE(Gate("  \t   cnOT  ( 2    ;\t0x3     )             ", 5) == Gate(GateType::CNOT, {2}, {3}, 5));
+    EXPECT_THROW(Gate("CNOT(2;!!4)", 5), StringException);
+    EXPECT_THROW(Gate("CNOT(!2;!4)", 5), StringException);
+    EXPECT_TRUE(Gate("cNoT(2;4)", 5) == Gate(GateType::CNOT, {2}, {{4, true}}, 5));
+    EXPECT_TRUE(Gate("  \t   cnot(2;1)", 5) == Gate(GateType::CNOT, {2}, {{1, true}}, 5));
+    EXPECT_TRUE(Gate("  \t   cnOT  ( 2    ;\t3     )             ", 5) == Gate(GateType::CNOT, {2}, {{3, true}}, 5));
+    EXPECT_TRUE(Gate("  \t   cnOT  ( 2    ;\t!3     )             ", 5) == Gate(GateType::CNOT, {2}, {{3, false}}, 5));
+    EXPECT_TRUE(Gate("  \t   cnOT  ( 2    ;\t0x3     )             ", 5) == Gate(GateType::CNOT, {2}, {{3, true}}, 5));
+    EXPECT_TRUE(
+            Gate("  \t   cnOT  ( 2    ;\t!0x3     )             ", 5) == Gate(GateType::CNOT, {2}, {{3, false}}, 5));
 
     // kCNOT
     EXPECT_THROW(Gate("kCNOT()", 5), GateException);
     EXPECT_THROW(Gate("kCNOT(2,4,3)", 5), GateException);
     EXPECT_THROW(Gate("kCNOT(2,4;3)", 5), GateException);
-    EXPECT_TRUE(Gate("kcnot(2;4, 1)", 5) == Gate(GateType::kCNOT, {2}, {4, 1}, 5));
-    EXPECT_TRUE(Gate("  \t   Kcnot(2;1,0)", 5) == Gate(GateType::kCNOT, {2}, {1, 0}, 5));
-    EXPECT_TRUE(Gate("  \t   kCnOt  ( 2    ;\t3   ,  4  )             ", 5) == Gate(GateType::kCNOT, {2}, {3, 4}, 5));
-    EXPECT_TRUE(Gate("  \t   kCnOt  ( 2    ;\t3   ,  0x4  )             ", 5) == Gate(GateType::kCNOT, {2}, {3, 4}, 5));
+    EXPECT_THROW(Gate("kCNOT(2;4,!!3)", 5), StringException);
+    EXPECT_THROW(Gate("kCNOT(!2;4,!3)", 5), StringException);
+    EXPECT_TRUE(Gate("kcnot(2;4, 1)", 5) == Gate(GateType::kCNOT, {2}, {{4, true},
+                                                                        {1, true}}, 5));
+    EXPECT_TRUE(Gate("kcnot(2;!4, !1)", 5) == Gate(GateType::kCNOT, {2}, {{4, false},
+                                                                          {1, false}}, 5));
+    EXPECT_TRUE(Gate("  \t   Kcnot(2;1,0)", 5) == Gate(GateType::kCNOT, {2}, {{1, true},
+                                                                              {0, true}}, 5));
+    EXPECT_TRUE(Gate("  \t   Kcnot(2;1,!0)", 5) == Gate(GateType::kCNOT, {2}, {{1, true},
+                                                                               {0, false}}, 5));
+    EXPECT_TRUE(Gate("  \t   kCnOt  ( 2    ;\t3   ,  4  )             ", 5) ==
+                Gate(GateType::kCNOT, {2}, {{3, true},
+                                            {4, true}}, 5));
+    EXPECT_TRUE(Gate("  \t   kCnOt  ( 2    ;\t3   ,  0x4  )             ", 5) ==
+                Gate(GateType::kCNOT, {2}, {{3, true},
+                                            {4, true}}, 5));
+    EXPECT_TRUE(Gate("  \t   kCnOt  ( 2    ;\t!3   ,  !0x4  )             ", 5) ==
+                Gate(GateType::kCNOT, {2}, {{3, false},
+                                            {4, false}}, 5));
 
     // SWAP
     EXPECT_THROW(Gate("SWAP()", 5), GateException);
     EXPECT_THROW(Gate("SWAP(2,4;)", 5), GateException);
     EXPECT_THROW(Gate("SWAP(2;4)", 5), GateException);
+    EXPECT_THROW(Gate("SWAP(2,!4)", 5), StringException);
+    EXPECT_THROW(Gate("SWAP(!2,4)", 5), StringException);
     EXPECT_TRUE(Gate("swap(2,1)", 5) == Gate(GateType::SWAP, {2, 1}, {}, 5));
     EXPECT_TRUE(Gate("  \t   SWap(2,4)", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
     EXPECT_TRUE(Gate("  \t   SwAp  ( 2    \t   ,  4  )             ", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
@@ -95,11 +123,17 @@ TEST(Gates, ConstructorString) {
     EXPECT_THROW(Gate("CSWAP()", 5), GateException);
     EXPECT_THROW(Gate("CSWAP(2,4;)", 5), GateException);
     EXPECT_THROW(Gate("CSWAP(2,0;4,1)", 5), GateException);
-    EXPECT_TRUE(Gate("cswap(2,1;0)", 5) == Gate(GateType::CSWAP, {2, 1}, {0}, 5));
-    EXPECT_TRUE(Gate("  \t   cSWAP(0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {2}, 5));
-    EXPECT_TRUE(Gate("  \t   cSWAP(0x0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {2}, 5));
-    EXPECT_TRUE(
-            Gate("  \t   CswaP  ( 2   ,3 \t   ;\t\t  4  )             ", 5) == Gate(GateType::CSWAP, {2, 3}, {4}, 5));
+    EXPECT_THROW(Gate("CSWAP(2,0;!!4)", 5), StringException);
+    EXPECT_THROW(Gate("CSWAP(2,!0;!4)", 5), StringException);
+    EXPECT_THROW(Gate("CSWAP(!2,0;!4)", 5), StringException);
+    EXPECT_TRUE(Gate("cswap(2,1;0)", 5) == Gate(GateType::CSWAP, {2, 1}, {{0, true}}, 5));
+    EXPECT_TRUE(Gate("  \t   cSWAP(0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {{2, true}}, 5));
+    EXPECT_TRUE(Gate("  \t   cSWAP(0,1;!2)", 5) == Gate(GateType::CSWAP, {0, 1}, {{2, false}}, 5));
+    EXPECT_TRUE(Gate("  \t   cSWAP(0x0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {{2, true}}, 5));
+    EXPECT_TRUE(Gate("  \t   CswaP  ( 2   ,3 \t   ;\t\t  4  )             ", 5) ==
+                Gate(GateType::CSWAP, {2, 3}, {{4, true}}, 5));
+    EXPECT_TRUE(Gate("  \t   CswaP  ( 2   ,3 \t   ;\t\t  !4  )             ", 5) ==
+                Gate(GateType::CSWAP, {2, 3}, {{4, false}}, 5));
 }
 
 TEST(Gates, ActNOT) {
@@ -154,9 +188,9 @@ TEST(Gates, ActNOT) {
 TEST(Gates, ActCNOT) {
     auto g1 = Gate("CNOT(2;1)", 5);
     auto g2 = Gate("CNOT(0;4)", 5);
-    auto g3 = Gate("CNOT(3;2)", 5);
+    auto g3 = Gate("CNOT(3;!2)", 5);
     auto g4 = Gate("CNOT(4;0)", 5);
-    auto g5 = Gate("CNOT(1;3)", 5);
+    auto g5 = Gate("CNOT(1;!3)", 5);
 
     std::vector<bool> vector1({1, 0, 0});
     EXPECT_THROW(g1.act(vector1), GateException);
@@ -170,11 +204,11 @@ TEST(Gates, ActCNOT) {
     g3.act(vector2);
     g4.act(vector2);
     g5.act(vector2);
-    EXPECT_EQ(vector2, (std::vector<bool>{0, 1, 0, 1, 1}));
+    EXPECT_EQ(vector2, (std::vector<bool>{0, 1, 0, 0, 1}));
 
     // Act for BF
-    auto g6 = Gate("CNOT(1; 2)", 3);
-    auto g7 = Gate("CNOT(2; 1)", 3);
+    auto g6 = Gate("CNOT(1; !2)", 3);
+    auto g7 = Gate("CNOT(2; !1)", 3);
     auto g8 = Gate("CNOT(0; 1)", 3);
 
     std::vector<BooleanFunction> bf_vector1(
@@ -188,14 +222,14 @@ TEST(Gates, ActCNOT) {
     std::vector<BooleanFunction> bf_vector3(
             {BooleanFunction("00000000"), BooleanFunction("11010101"), BooleanFunction("11111110")});
     g6.act(bf_vector3);
-    EXPECT_EQ(bf_vector3, (std::vector<BooleanFunction>{BooleanFunction("00000000"), BooleanFunction("00101011"),
+    EXPECT_EQ(bf_vector3, (std::vector<BooleanFunction>{BooleanFunction("00000000"), BooleanFunction("11010100"),
                                                         BooleanFunction("11111110")}));
 
     g6.act(bf_vector3);
     g7.act(bf_vector3);
     g8.act(bf_vector3);
     EXPECT_EQ(bf_vector3, (std::vector<BooleanFunction>{BooleanFunction("11010101"), BooleanFunction("11010101"),
-                                                        BooleanFunction("00101011")}));
+                                                        BooleanFunction("11010100")}));
 }
 
 TEST(Gates, ActkCNOT) {
@@ -294,29 +328,29 @@ TEST(Gates, ActSWAP) {
 
 TEST(Gates, ActCSWAP) {
     auto g1 = Gate("CSWAP(2,0;4)", 5);
-    auto g2 = Gate("CSWAP(0,4;1)", 5);
+    auto g2 = Gate("CSWAP(0,4;!1)", 5);
     auto g3 = Gate("CSWAP(3,2;4)", 5);
     auto g4 = Gate("CSWAP(4,0;2)", 5);
-    auto g5 = Gate("CSWAP(1,2;0)", 5);
+    auto g5 = Gate("CSWAP(1,2;!0)", 5);
 
     std::vector<bool> vector1({1, 0, 0});
     EXPECT_THROW(g1.act(vector1), GateException);
 
-    std::vector<bool> vector2({1, 0, 0, 1, 1});
+    std::vector<bool> vector2({0, 0, 0, 1, 1});
     g1.act(vector2);
-    EXPECT_EQ(vector2, (std::vector<bool>{0, 0, 1, 1, 1}));
+    EXPECT_EQ(vector2, (std::vector<bool>{0, 0, 0, 1, 1}));
 
     g1.act(vector2);
     g2.act(vector2);
     g3.act(vector2);
     g4.act(vector2);
     g5.act(vector2);
-    EXPECT_EQ(vector2, (std::vector<bool>{1, 1, 0, 0, 1}));
+    EXPECT_EQ(vector2, (std::vector<bool>{1, 0, 0, 1, 0}));
 
     // Act for BF
-    auto g6 = Gate("CSWAP(1,2;0)", 3);
+    auto g6 = Gate("CSWAP(1,2;!0)", 3);
     auto g7 = Gate("CSWAP(0,1;2)", 3);
-    auto g8 = Gate("CSWAP(0,2;1)", 3);
+    auto g8 = Gate("CSWAP(0,2;!1)", 3);
 
     std::vector<BooleanFunction> bf_vector1(
             {BooleanFunction("00000000"), BooleanFunction("11010101")});
@@ -329,14 +363,14 @@ TEST(Gates, ActCSWAP) {
     std::vector<BooleanFunction> bf_vector3(
             {BooleanFunction("00101010"), BooleanFunction("11010101"), BooleanFunction("11111110")});
     g6.act(bf_vector3);
-    EXPECT_EQ(bf_vector3, (std::vector<BooleanFunction>{BooleanFunction("00101010"), BooleanFunction("11111111"),
-                                                        BooleanFunction("11010100")}));
+    EXPECT_EQ(bf_vector3, (std::vector<BooleanFunction>{BooleanFunction("00101010"), BooleanFunction("11010100"),
+                                                        BooleanFunction("11111111")}));
 
     g6.act(bf_vector3);
     g7.act(bf_vector3);
     g8.act(bf_vector3);
-    EXPECT_EQ(bf_vector3, (std::vector<BooleanFunction>{BooleanFunction("11111110"), BooleanFunction("00101011"),
-                                                        BooleanFunction("11010100")}));
+    EXPECT_EQ(bf_vector3, (std::vector<BooleanFunction>{BooleanFunction("11010100"), BooleanFunction("00101011"),
+                                                        BooleanFunction("11111110")}));
 }
 
 TEST(Gates, Stream) {
@@ -346,11 +380,14 @@ TEST(Gates, Stream) {
     EXPECT_EQ(out_stream.str(), "NOT(29415)");
     out_stream.str("");
 
-    out_stream << Gate(GateType::kCNOT, {29415}, {325, 532, 1, 5}, 100000);
-    EXPECT_EQ(out_stream.str(), "kCNOT(29415; 325, 532, 1, 5)");
+    out_stream << Gate(GateType::kCNOT, {29415}, {{325, true},
+                                                  {532, false},
+                                                  {1,   false},
+                                                  {5,   true}}, 100000);
+    EXPECT_EQ(out_stream.str(), "kCNOT(29415; !1, 5, 325, !532)");
     out_stream.str("");
 
-    out_stream << Gate(GateType::CSWAP, {29415, 0}, {99999}, 100000);
-    EXPECT_EQ(out_stream.str(), "CSWAP(29415, 0; 99999)");
+    out_stream << Gate(GateType::CSWAP, {29415, 0}, {{99999, false}}, 100000);
+    EXPECT_EQ(out_stream.str(), "CSWAP(0, 29415; !99999)");
     out_stream.str("");
 }
