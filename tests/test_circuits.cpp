@@ -54,10 +54,10 @@ TEST(Circuits, Insert) {
     EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 3), 3), CircuitException);
 
     c.insert(Gate(GateType::NOT, {0}, {}, 3));
-    c.insert(Gate(GateType::kCNOT, {1}, {{0, true}, {2, true}}, 3), 1);
-    c.insert(Gate(GateType::CSWAP, {0, 2}, {{1, true}}, 3), 4);
+    c.insert(Gate(GateType::kCNOT, {1}, {{0, false}, {2, true}}, 3), 1);
+    c.insert(Gate(GateType::CSWAP, {0, 2}, {{1, false}}, 3), 4);
 
-    EXPECT_EQ(c, Circuit("Lines: 3\nNOT(0)\nkCNOT(1; 0, 2)\nSWAP(0, 2)\nCNOT(1; 0)\nCSWAP(0, 2; 1)"));
+    EXPECT_EQ(c, Circuit("Lines: 3\nNOT(0)\nkCNOT(1; !0, 2)\nSWAP(0, 2)\nCNOT(1; 0)\nCSWAP(0, 2; !1)"));
 }
 
 TEST(Circuits, Act) {
@@ -158,28 +158,28 @@ TEST(Circuits, Production) {
         EXPECT_EQ(c.produce_mapping(), Substitution("0 1 2 3 4 5 6 7 8 9 A B C D E F"));
     }
     {
-        Circuit c("Lines: 3\nNOT(2)\nCNOT(2; 1)\nCNOT(2; 0)\nkCNOT(2; 0, 1)");
-        EXPECT_EQ(c.produce_mapping(), Substitution("1 0 2 3 4 5 6 7"));
+        Circuit c("Lines: 3\nNOT(2)\nCNOT(2; !1)\nCNOT(2; 0)\nkCNOT(2; !0, !1)");
+        EXPECT_EQ(c.produce_mapping(), Substitution("1 0 3 2 5 4 6 7"));
     }
     {
         Circuit c("Lines: 3\n"
-                  "NOT(2)\nCNOT(2; 1)\nCNOT(2; 0)\nkCNOT(2; 0, 1)\n"
-                  "kCNOT(2; 0, 1)\nCNOT(2; 0)\nCNOT(2; 1)\nNOT(2)");
+                  "NOT(2)\nCNOT(2; !1)\nCNOT(2; 0)\nkCNOT(2; 0, !1)\n"
+                  "kCNOT(2; 0, !1)\nCNOT(2; 0)\nCNOT(2; !1)\nNOT(2)");
         EXPECT_EQ(c.produce_mapping(), Substitution("0 1 2 3 4 5 6 7"));
     }
     {
-        Circuit c("Lines: 3; 1\nNOT(2)\nCNOT(2; 1)\nCNOT(2; 0)\nkCNOT(2; 0, 1)");
+        Circuit c("Lines: 3; 1\nNOT(2)\nCNOT(2; !1)\nCNOT(2; 0)\nkCNOT(2; !0, 1)");
         EXPECT_EQ(c.produce_mapping(), BinaryMapping(table{{0, 0, 1, 1},
                                                            {0, 1, 0, 1},
-                                                           {1, 0, 0, 0}}));
+                                                           {0, 0, 1, 0}}));
     }
     {
-        Circuit c("Lines: 3\nNOT(2)\nCNOT(1; 2)\nkCNOT(0; 1, 2)\n");
-        EXPECT_EQ(c.produce_mapping(), Substitution("7 0 1 2 3 4 5 6"));
+        Circuit c("Lines: 3\nNOT(2)\nCNOT(1; !2)\nkCNOT(0; 1, 2)\n");
+        EXPECT_EQ(c.produce_mapping(), Substitution("1 2 7 0 5 6 3 4"));
     }
     {
-        Circuit c("Lines: 3\nNOT(2)\nCNOT(1; 2)\nCNOT(1; 2)\n");
-        EXPECT_EQ(c.produce_mapping(), Substitution("1 0 3 2 5 4 7 6"));
+        Circuit c("Lines: 3\nNOT(2)\nCNOT(1; !2)\nCNOT(1; 2)\n");
+        EXPECT_EQ(c.produce_mapping(), Substitution("3 2 1 0 7 6 5 4"));
     }
 }
 
