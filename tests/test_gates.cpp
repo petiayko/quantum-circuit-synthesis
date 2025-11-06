@@ -136,6 +136,42 @@ TEST(Gates, ConstructorString) {
                 Gate(GateType::CSWAP, {2, 3}, {{4, false}}, 5));
 }
 
+TEST(Gates, Methods) {
+    EXPECT_EQ(Gate("NOT(1)", 4).type(), GateType::NOT);
+    EXPECT_EQ(Gate("CNOT(3; 2)", 4).type(), GateType::CNOT);
+    EXPECT_EQ(Gate("kCNOT(1; !0, 2, !3)", 4).type(), GateType::kCNOT);
+    EXPECT_EQ(Gate("SWAP(2, 1)", 4).type(), GateType::SWAP);
+    EXPECT_EQ(Gate("CSWAP(3, 2; 0)", 4).type(), GateType::CSWAP);
+
+    EXPECT_EQ(Gate("NOT(1)", 4).nests(), std::vector<size_t>({1}));
+    EXPECT_EQ(Gate("CNOT(3; 2)", 4).nests(), std::vector<size_t>({3}));
+    EXPECT_EQ(Gate("kCNOT(1; !0, 2, !3)", 4).nests(), std::vector<size_t>({1}));
+    EXPECT_EQ(Gate("SWAP(2, 1)", 4).nests(), std::vector<size_t>({1, 2}));
+    EXPECT_EQ(Gate("CSWAP(3, 2; 0)", 4).nests(), std::vector<size_t>({2, 3}));
+
+    EXPECT_EQ(Gate("NOT(1)", 4).controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CNOT(3; 2)", 4).controls(), std::vector<size_t>({2}));
+    EXPECT_EQ(Gate("kCNOT(1; !0, 2, !3)", 4).controls(), std::vector<size_t>({0, 2, 3}));
+    EXPECT_EQ(Gate("SWAP(2, 1)", 4).controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CSWAP(3, 2; 0)", 4).controls(), std::vector<size_t>({0}));
+
+    EXPECT_EQ(Gate("NOT(1)", 4).direct_controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CNOT(3; 2)", 4).direct_controls(), std::vector<size_t>({2}));
+    EXPECT_EQ(Gate("kCNOT(1; !0, 2, !3)", 4).direct_controls(), std::vector<size_t>({2}));
+    EXPECT_EQ(Gate("SWAP(2, 1)", 4).direct_controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CSWAP(3, 2; 0)", 4).direct_controls(), std::vector<size_t>({0}));
+
+    EXPECT_EQ(Gate("NOT(1)", 4).inverted_controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CNOT(3; 2)", 4).inverted_controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("kCNOT(1; !0, 2, !3)", 4).inverted_controls(), std::vector<size_t>({0, 3}));
+    EXPECT_EQ(Gate("SWAP(2, 1)", 4).inverted_controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CSWAP(3, 2; 0)", 4).inverted_controls(), std::vector<size_t>());
+}
+
+//TEST(Gates, Commuties) {
+//    EXPECT_TRUE(Gate("", 4).is_commutes(Gate("", 2)));
+//}
+
 TEST(Gates, ActNOT) {
     auto g1 = Gate("NOT(3)", 5);
     auto g2 = Gate("NOT(0)", 5);

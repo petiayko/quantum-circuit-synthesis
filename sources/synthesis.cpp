@@ -1,34 +1,24 @@
 #include "synthesis.hpp"
 
 
-Circuit synthesize(const BinaryMapping &bm, Algo algo, bool simplify) {
-    Circuit c;
+Circuit synthesize(const BinaryMapping &bm, Algo algo) {
     if (algo == Algo::DUMMY) {
-        c = dummy_algorithm(bm);
-    } else if (algo == Algo::RW) {
-        c = RW_algorithm(bm);
-    } else {
-        throw SynthException("Unknown synthesis algorithm");
+        return dummy_algorithm(bm);
     }
-    if (simplify) {
-        return c.reduce();
+    if (algo == Algo::RW) {
+        return RW_algorithm(bm);
     }
-    return c;
+    throw SynthException("Unknown synthesis algorithm");
 }
 
-Circuit synthesize(const Substitution &sub, Algo algo, bool simplify) {
-    Circuit c;
+Circuit synthesize(const Substitution &sub, Algo algo) {
     if (algo == Algo::DUMMY) {
-        c = dummy_algorithm(sub);
-    } else if (algo == Algo::RW) {
-        c = RW_algorithm(sub);
-    } else {
-        throw SynthException("Unknown synthesis algorithm");
+        return dummy_algorithm(sub);
     }
-    if (simplify) {
-        return c.reduce();
+    if (algo == Algo::RW) {
+        return RW_algorithm(sub);
     }
-    return c;
+    throw SynthException("Unknown synthesis algorithm");
 }
 
 Circuit dummy_algorithm(const BinaryMapping &bm) {

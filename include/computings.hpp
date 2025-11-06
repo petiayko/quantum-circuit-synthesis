@@ -102,7 +102,7 @@ void process_config(InputType type, Algo algo, bool simplify,
     LOG_INFO("Starting quantum circuit synthesis", "");
     if (type == InputType::TABLE) {
         BinaryMapping bm(file_content);
-        Circuit c = synthesize(bm, algo, simplify);
+        Circuit c = synthesize(bm, algo);
         if (c.memory() && algo == Algo::RW) {
             LOG_WARNING("Performing quantum circuit synthesis", "Provided binary mapping is not reversible");
             LOG_WARNING("Performing quantum circuit synthesis",
@@ -111,7 +111,7 @@ void process_config(InputType type, Algo algo, bool simplify,
         write_result<Circuit>(output_path, c);
     } else if (type == InputType::SUBSTITUTION) {
         Substitution sub(file_content);
-        Circuit c = synthesize(sub, algo, simplify);
+        Circuit c = synthesize(sub, algo);
         write_result<Circuit>(output_path, c);
     } else {
         throw ArgumentException("Unknown type of input");

@@ -12,9 +12,9 @@ enum class Algo {
 };
 
 Circuit
-synthesize(const BinaryMapping &, Algo = Algo::RW, bool simplify = false);
+synthesize(const BinaryMapping &, Algo = Algo::RW);
 
-Circuit synthesize(const Substitution &, Algo = Algo::RW, bool simplify = false);
+Circuit synthesize(const Substitution &, Algo = Algo::RW);
 
 Circuit dummy_algorithm(const BinaryMapping &);
 

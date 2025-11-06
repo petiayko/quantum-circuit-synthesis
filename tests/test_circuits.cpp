@@ -31,8 +31,7 @@ TEST(Circuits, Constructor) {
 
     EXPECT_THROW(Circuit(2, 10), CircuitException);
 
-    EXPECT_EQ(Circuit(0, 0), Circuit());
-    EXPECT_EQ(Circuit(0, 0), Circuit(0));
+    EXPECT_THROW(Circuit(0, 0), CircuitException);
 
     EXPECT_THROW(Circuit("Lines: A\n# text\n#comment\nNOT(B)\n#CNOT(3;0xc)\n\n\nSWAP(8,9)"), GateException);
     EXPECT_THROW(Circuit("Lines: A;2\n# text\n#comment\nNOT(B)\n#CNOT(3;0xc)\n\n\nSWAP(8,9)"), GateException);
@@ -181,6 +180,61 @@ TEST(Circuits, Production) {
     {
         Circuit c("Lines: 3\nNOT(2)\nCNOT(1; !2)\nCNOT(1; 2)\n");
         EXPECT_EQ(c.produce_mapping(), Substitution("3 2 1 0 7 6 5 4"));
+    }
+}
+
+TEST(Circuit, Redution) {
+    {
+        Circuit c("Lines: 3");
+        Circuit c1(c);
+        c.move_swap_left();
+        EXPECT_TRUE(c.schematically_equal(c1));
+    }
+    {
+        Circuit c("Lines: 3\nNOT(2)\nCNOT(2; 1)\nCSWAP(2, 0; 1)");
+        Circuit c1(c);
+        c.move_swap_left();
+        EXPECT_TRUE(c.schematically_equal(c1));
+    }
+    {
+        Circuit c("Lines: 3\nSWAP(0, 1)\nSWAP(2, 1)\nkCNOT(2; 0, 1)");
+        Circuit c1(c);
+        c.move_swap_left();
+        EXPECT_TRUE(c.schematically_equal(c1));
+    }
+    {
+        Circuit c("Lines: 3\nSWAP(0, 1)\nSWAP(2, 1)\nSWAP(0, 2)");
+        Circuit c1(c);
+        c.move_swap_left();
+        EXPECT_TRUE(c.schematically_equal(c1));
+    }
+    {
+        Circuit c("Lines: 3\nSWAP(0, 1)\nCNOT(2; 1)\nSWAP(0, 2)");
+        Circuit c1(c);
+        c.move_swap_left();  // here!
+        EXPECT_FALSE(c.schematically_equal(c1));
+        EXPECT_EQ(c, c1);
+    }
+    {
+        Circuit c("Lines: 3\nNOT(2)\nSWAP(0, 2)\nSWAP(0, 1)\nSWAP(1, 2)\nSWAP(0, 2)\nSWAP(0, 1)\nSWAP(1, 2)\nNOT(0)");
+        Circuit c1(c);
+        c.move_swap_left();
+        EXPECT_FALSE(c.schematically_equal(c1));
+        EXPECT_EQ(c, c1);
+    }
+    {
+        Circuit c("Lines: 4\nSWAP(3, 1)\nCNOT(0; 1)\nCSWAP(3, 1; 2)\nkCNOT(2; 0, 1, 3)\nSWAP(1, 2)");
+        Circuit c1(c);
+        c.move_swap_left();
+        EXPECT_FALSE(c.schematically_equal(c1));
+        EXPECT_EQ(c, c1);
+    }
+    {
+        Circuit c("Lines: 4\nNOT(2)\nNOT(0)\nSWAP(3, 1)\nCNOT(0; !1)\nCSWAP(3, 1; 0)\nkCNOT(2; 0, !1, 3)\nSWAP(1, 0)");
+        Circuit c1(c);
+        c.move_swap_left();
+        EXPECT_FALSE(c.schematically_equal(c1));
+        EXPECT_EQ(c, c1);
     }
 }
 

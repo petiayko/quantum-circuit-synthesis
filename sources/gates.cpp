@@ -108,30 +108,80 @@ size_t Gate::dim() const noexcept {
 }
 
 GateType Gate::type() const noexcept {
-    // TODO test it
     return type_;
 }
 
 std::vector<size_t> Gate::nests() const noexcept {
-    // TODO test it
     return nests_;
 }
 
 std::vector<size_t> Gate::controls() const noexcept {
-    // TODO test it
-    return controls_;
+    std::vector<size_t> controls;
+    for (const auto &[num, is_direct]: controls_) {
+        controls.push_back(num);
+    }
+    return controls;
+}
+
+std::vector<size_t> Gate::direct_controls() const noexcept {
+    std::vector<size_t> controls;
+    for (const auto &[num, is_direct]: controls_) {
+        if (!is_direct) {
+            continue;
+        }
+        controls.push_back(num);
+    }
+    return controls;
+}
+
+std::vector<size_t> Gate::inverted_controls() const noexcept {
+    std::vector<size_t> controls;
+    for (const auto &[num, is_direct]: controls_) {
+        if (is_direct) {
+            continue;
+        }
+        controls.push_back(num);
+    }
+    return controls;
 }
 
 bool Gate::is_commutes(const Gate &gate) const noexcept {
-    // TODO implement the second condition
     if (gate.type() == GateType::SWAP || gate.type() == GateType::CSWAP) {
         return false;
     }
     if (type_ == GateType::SWAP || type_ == GateType::CSWAP) {
         return false;
     }
-    return (std::find(controls_.begin(), controls_.end(), gate.nests_.front()) != controls_.end() &&
-            std::find(gate.controls().begin(), gate.controls().end(), nests_.front()) != gate.controls().end());
+
+    if (gate.nests_ == nests_) {
+        return true;
+    }
+
+    auto gate_controls = gate.controls();
+    auto this_controls = this->controls();
+    if (std::find(gate_controls.begin(), gate_controls.end(), nests_.front()) == gate_controls.end() &&
+        std::find(this_controls.begin(), this_controls.end(), gate.nests_.front()) == this_controls.end()) {
+        return true;
+    }
+
+    std::vector<size_t> controls_intersection;
+    auto gate_direct_controls = gate.direct_controls();
+    auto this_inverted_controls = this->inverted_controls();
+    std::set_intersection(gate_direct_controls.begin(), gate_direct_controls.end(), this_inverted_controls.begin(),
+                          this_inverted_controls.end(), std::back_inserter(controls_intersection));
+    if (!controls_intersection.empty()) {
+        return true;
+    }
+
+    controls_intersection.clear();
+    auto gate_inverted_controls = gate.inverted_controls();
+    auto this_direct_controls = this->direct_controls();
+    std::set_intersection(gate_inverted_controls.begin(), gate_inverted_controls.end(), this_direct_controls.begin(),
+                          this_direct_controls.end(), std::back_inserter(controls_intersection));
+    if (!controls_intersection.empty()) {
+        return true;
+    }
+    return false;
 }
 
 void Gate::act(binary_vector &vec) const {
@@ -203,88 +253,120 @@ bool Gate::operator==(const Gate &g) const {
     return (type_ == g.type_ && dim_ && g.dim_ && nests_ == g.nests_ && controls_ == g.controls_);
 }
 
-void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vector<control> &controls, size_t dim) {
-    for (auto num: nests) {
-        if (num > dim - 1) {
+void Gate::validate_() const {
+    for (auto num: nests_) {
+        if (num > dim_ - 1) {
             throw GateException("Invalid nest line: " + std::to_string(num));
         }
-        if (std::count(nests.begin(), nests.end(), num) != 1) {
+        if (std::count(nests_.begin(), nests_.end(), num) != 1) {
             throw GateException("Nest line selected more that once: " + std::to_string(num));
         }
     }
-    for (const auto &[num, is_direct]: controls) {
-        if (num > dim - 1) {
+    for (const auto &[num, is_direct]: controls_) {
+        if (num > dim_ - 1) {
             throw GateException("Invalid control line: " + std::to_string(num));
         }
-        if (std::find(nests.begin(), nests.end(), num) != nests.end()) {
+        if (std::find(nests_.begin(), nests_.end(), num) != nests_.end()) {
             throw GateException("Line selected as nest and control: " + std::to_string(num));
         }
-        if (std::count_if(controls.begin(), controls.end(), [num](const auto p) { return p.first == num; }) != 1) {
+        if (std::count_if(controls_.begin(), controls_.end(), [num](const auto p) { return p.first == num; }) != 1) {
             throw GateException("Nest line selected more that once: " + std::to_string(num));
         }
     }
-    switch (type) {
+    switch (type_) {
         case GateType::NOT:
-            if (nests.size() != 1) {
+            if (nests_.size() != 1) {
                 throw GateException("Gate NOT should have an only nest line");
             }
-            if (!controls.empty()) {
+            if (!controls_.empty()) {
                 throw GateException("Gate NOT should not have control lines");
             }
             break;
         case GateType::CNOT:
-            if (dim < 2) {
+            if (dim_ < 2) {
                 throw GateException("Gate CNOT should have dimension equals at least 2");
             }
-            if (nests.size() != 1) {
+            if (nests_.size() != 1) {
                 throw GateException("Gate CNOT should have an only nest line");
             }
-            if (controls.size() != 1) {
+            if (controls_.size() != 1) {
                 throw GateException("Gate CNOT should have an only control line");
             }
             break;
         case GateType::kCNOT:
-            if (dim < 2) {
+            if (dim_ < 2) {
                 throw GateException("Gate kCNOT should have dimension equals at least 2");
             }
-            if (nests.size() != 1) {
+            if (nests_.size() != 1) {
                 throw GateException("Gate kCNOT should have an only nest line");
             }
-            if (controls.empty()) {
+            if (controls_.empty()) {
                 throw GateException("Gate kCNOT should have at least one control line");
             }
             break;
         case GateType::SWAP:
-            if (dim < 2) {
+            if (dim_ < 2) {
                 throw GateException("Gate SWAP should have dimension equals at least 2");
             }
-            if (nests.size() != 2) {
+            if (nests_.size() != 2) {
                 throw GateException("Gate SWAP should have two nest lines");
             }
-            if (!controls.empty()) {
+            if (!controls_.empty()) {
                 throw GateException("Gate SWAP should not have control lines");
             }
             break;
         case GateType::CSWAP:
-            if (dim < 3) {
+            if (dim_ < 3) {
                 throw GateException("Gate CSWAP should have dimension equals at least 3");
             }
-            if (nests.size() != 2) {
+            if (nests_.size() != 2) {
                 throw GateException("Gate CSWAP should have two nest lines");
             }
-            if (controls.size() != 1) {
+            if (controls_.size() != 1) {
                 throw GateException("Gate CSWAP should have an only control line");
             }
             break;
         default:
-            throw GateException("Unknown gate type: " + std::to_string(static_cast<int>(type)));
+            throw GateException("Unknown gate type: " + std::to_string(static_cast<int>(type_)));
     }
+}
 
+void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vector<control> &controls, size_t dim) {
     type_ = type;
     dim_ = dim;
     nests_ = nests;
     controls_ = controls;
 
+    this->validate_();
+
+    std::sort(nests_.begin(), nests_.end());
+    std::sort(controls_.begin(), controls_.end());
+}
+
+void Gate::swap_lines_(const Gate &g) {
+    if (g.type_ != GateType::SWAP) {
+        throw GateException("Impossible to swap gate lines with not-SWAP gate");
+    }
+    auto t1 = g.nests_.front();
+    auto t2 = g.nests_.back();
+
+    for (auto &n: nests_) {
+        if (n == t1) {
+            n = t2;
+        } else if (n == t2) {
+            n = t1;
+        }
+    }
+
+    for (auto &[c, is_inverted]: controls_) {
+        if (c == t1) {
+            c = t2;
+        } else if (c == t2) {
+            c = t1;
+        }
+    }
+
+    this->validate_();
     std::sort(nests_.begin(), nests_.end());
     std::sort(controls_.begin(), controls_.end());
 }
@@ -329,7 +411,10 @@ std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
 // Circuit
 
 Circuit::Circuit(size_t lines_num, size_t memory_lines_num) {
-    if (memory_lines_num && memory_lines_num >= lines_num) {
+    if (!lines_num) {
+        throw CircuitException("Circuit must have at least one line");
+    }
+    if (memory_lines_num >= lines_num) {
         throw CircuitException("Circuit must have a number of memory lines not less than the number of lines");
     }
     dim_ = lines_num;
@@ -451,7 +536,57 @@ Circuit Circuit::reduce() const noexcept {
 }
 
 bool Circuit::operator==(const Circuit &c) const {
-    return (dim_ == c.dim_ && memory_ == c.memory_ && gates_ == c.gates_);
+    return this->produce_mapping() == c.produce_mapping();
+}
+
+bool Circuit::schematically_equal(const Circuit &c) const noexcept {
+    return dim_ == c.dim_ && memory_ == c.memory_ && gates_ == c.gates_;
+}
+
+void Circuit::move_swap_left() {
+    bool is_any_swaps = false;
+    bool is_only_swaps = true;
+    bool is_swap_in_left = true;
+
+    for (const auto &gate: gates_) {
+        if (gate.type() == GateType::SWAP) {
+            is_any_swaps = true;
+            if (!is_only_swaps) {
+                is_swap_in_left = false;
+            }
+        } else {
+            is_only_swaps = false;
+        }
+    }
+
+    if (!is_any_swaps || is_only_swaps || is_swap_in_left) {
+        return;
+    }
+
+    std::vector<Gate> non_swap_gates;
+    std::vector<Gate> swap_gates;
+    non_swap_gates.reserve(gates_.size());
+
+    size_t i = gates_.size();
+    do {
+        i--;
+        if (gates_[i].type() == GateType::SWAP) {
+            if (i) {
+                size_t j = i;
+                do {
+                    j--;
+                    gates_[j].swap_lines_(gates_[i]);
+                } while (j);
+            }
+            swap_gates.push_back(gates_[i]);
+            continue;
+        }
+        non_swap_gates.insert(non_swap_gates.begin(), gates_[i]);
+    } while (i);
+
+    gates_.clear();
+    gates_ = swap_gates;
+    gates_.insert(gates_.end(), non_swap_gates.begin(), non_swap_gates.end());
 }
 
 std::ostream &operator<<(std::ostream &out, const Circuit &c) noexcept {

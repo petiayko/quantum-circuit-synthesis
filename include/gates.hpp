@@ -17,6 +17,8 @@ enum class GateType {
 // true - direct; false - inverted
 using control = std::pair<size_t, bool>;
 
+class Circuit;
+
 class Gate {
 public:
     Gate() = default;
@@ -33,7 +35,11 @@ public:
 
     std::vector<size_t> controls() const noexcept;
 
-    bool is_commutes(const Gate&) const noexcept;
+    std::vector<size_t> direct_controls() const noexcept;
+
+    std::vector<size_t> inverted_controls() const noexcept;
+
+    bool is_commutes(const Gate &) const noexcept;
 
     void act(binary_vector &) const;
 
@@ -49,14 +55,18 @@ private:
     std::vector<size_t> nests_;
     std::vector<control> controls_;
 
+    friend class Circuit;
+
+    void validate_() const;
+
     void init_(GateType, const std::vector<size_t> &, const std::vector<control> &, size_t);
+
+    void swap_lines_(const Gate &);
 };
 
 
 class Circuit {
 public:
-    Circuit() = default;
-
     explicit Circuit(size_t, size_t = 0);
 
     explicit Circuit(const std::vector<Gate> &, size_t = 0);
@@ -84,6 +94,10 @@ public:
     BinaryMapping produce_mapping() const noexcept;
 
     bool operator==(const Circuit &) const;
+
+    bool schematically_equal(const Circuit &) const noexcept;
+
+    void move_swap_left();
 
     friend std::ostream &operator<<(std::ostream &, const Circuit &) noexcept;
 
