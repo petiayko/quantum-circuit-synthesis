@@ -145,43 +145,241 @@ std::vector<size_t> Gate::inverted_controls() const noexcept {
     return controls;
 }
 
-bool Gate::is_commutes(const Gate &gate) const noexcept {
-    if (gate.type() == GateType::SWAP || gate.type() == GateType::CSWAP) {
+bool Gate::is_commutes(const Gate &gate) const {
+    // TODO make it private??
+
+    if (dim_ != gate.dim_) {
+        throw GateException("Impossible to determine the commutability for gates of different dimensions");
+    }
+
+    if (gate.nests_ == nests_ || this->operator==(gate)) {
+        return true;
+    }
+
+    // this - G1, gate - G2
+
+    if (type_ != GateType::SWAP && gate.type_ != GateType::SWAP && type_ != GateType::CSWAP &&
+        gate.type_ != GateType::CSWAP) {
+        // first criteria
+        auto t1 = nests_.front();
+        auto t2 = gate.nests_.front();
+        if (std::find_if(controls_.begin(), controls_.end(),
+                         [t2](const auto &p) { return p.first == t2; }) == controls_.end() &&
+            std::find_if(gate.controls_.begin(), gate.controls_.end(),
+                         [t1](const auto &p) { return p.first == t1; }) == gate.controls_.end()) {
+            return true;
+        }
+
+        // second criteria
+        for (auto [num, is_inverted]: controls_) {
+            for (auto [num2, is_inverted2]: gate.controls_) {
+                if (num == num2 && is_inverted && !is_inverted2) {
+                    return true;
+                }
+                if (num == num2 && !is_inverted && is_inverted2) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
-    if (type_ == GateType::SWAP || type_ == GateType::CSWAP) {
+
+    if ((type_ == GateType::SWAP || type_ == GateType::CSWAP) &&
+        (gate.type_ == GateType::SWAP || gate.type_ == GateType::CSWAP)) {
+        auto t11 = nests_.front();
+        auto t12 = nests_.back();
+        auto t21 = gate.nests_.front();
+        auto t22 = gate.nests_.back();
+
+        if (t11 == t21 || t11 == t22 || t12 == t21 || t12 == t22) {
+            return false;
+        }
+        if (std::find_if(gate.controls_.begin(), gate.controls_.end(),
+                         [t11, t12](const auto p) { return p.first == t11 || p.first == t12; }) !=
+            gate.controls_.end()) {
+            return false;
+        }
+        if (std::find_if(controls_.begin(), controls_.end(),
+                         [t21, t22](const auto p) { return p.first == t21 || p.first == t22; }) != controls_.end()) {
+            return false;
+        }
+    }
+
+    auto g_swap = (type_ == GateType::SWAP || type_ == GateType::CSWAP) ? *this : gate;
+    auto g_non_swap = (type_ != GateType::SWAP && type_ != GateType::CSWAP) ? *this : gate;
+
+    if (g_swap.type_ == GateType::CSWAP) {
+        // third criteria
+        // (C∩I≠∅)⋁(C∩J≠∅)
+        for (const auto &[num, is_inverted]: g_non_swap.controls_) {
+            if (num == g_swap.controls_.front().first) {
+                return true;
+            }
+        }
+        // t∉C
+        if (g_swap.controls_.front().first == g_non_swap.nests_.front()) {
+            return false;
+        }
+    }
+    // t∉T
+    if (std::find(g_swap.nests_.begin(), g_swap.nests_.end(), g_non_swap.nests_.front()) != g_swap.nests_.end()) {
         return false;
     }
 
-    if (gate.nests_ == nests_) {
+    // T∩(I∪J)=∅
+    auto swap_t1 = g_swap.nests_.front();
+    auto swap_t2 = g_swap.nests_.back();
+    if (std::find_if(g_non_swap.controls_.begin(), g_non_swap.controls_.end(),
+                     [swap_t1, swap_t2](const auto p) { return p.first == swap_t1 || p.first == swap_t2; }) !=
+        g_non_swap.controls_.end()) {
+        return true;
+    }
+    // (T⊆I)⋁(T⊆J)
+    if (std::count_if(g_non_swap.controls_.begin(), g_non_swap.controls_.end(),
+                      [swap_t1, swap_t2](const auto p) { return p.first == swap_t1 || p.first == swap_t2; }) == 2) {
         return true;
     }
 
-    auto gate_controls = gate.controls();
-    auto this_controls = this->controls();
-    if (std::find(gate_controls.begin(), gate_controls.end(), nests_.front()) == gate_controls.end() &&
-        std::find(this_controls.begin(), this_controls.end(), gate.nests_.front()) == this_controls.end()) {
-        return true;
-    }
-
-    std::vector<size_t> controls_intersection;
-    auto gate_direct_controls = gate.direct_controls();
-    auto this_inverted_controls = this->inverted_controls();
-    std::set_intersection(gate_direct_controls.begin(), gate_direct_controls.end(), this_inverted_controls.begin(),
-                          this_inverted_controls.end(), std::back_inserter(controls_intersection));
-    if (!controls_intersection.empty()) {
-        return true;
-    }
-
-    controls_intersection.clear();
-    auto gate_inverted_controls = gate.inverted_controls();
-    auto this_direct_controls = this->direct_controls();
-    std::set_intersection(gate_inverted_controls.begin(), gate_inverted_controls.end(), this_direct_controls.begin(),
-                          this_direct_controls.end(), std::back_inserter(controls_intersection));
-    if (!controls_intersection.empty()) {
-        return true;
-    }
     return false;
+
+//    if (dim_ != gate.dim_) {
+//        throw GateException("Impossible to determine the commutability for gates of different dimensions");
+//    }
+//
+//    if (this->operator==(gate) || gate.nests_ == nests_) {
+//        return true;
+//    }
+//
+//    // this - G1, gate - G2
+//
+//    if (type_ != GateType::SWAP && gate.type_ != GateType::SWAP && type_ != GateType::CSWAP &&
+//        gate.type_ != GateType::CSWAP) {
+//        // first criteria
+//        auto t1 = nests_.front();
+//        auto t2 = gate.nests_.front();
+//        if (std::find_if(controls_.begin(), controls_.end(),
+//                         [t2](const auto &p) { return p.first == t2; }) == controls_.end() &&
+//            std::find_if(gate.controls_.begin(), gate.controls_.end(),
+//                         [t1](const auto &p) { return p.first == t1; }) == gate.controls_.end()) {
+//            return true;
+//        }
+//
+//        // second criteria
+//        for (auto [num, is_inverted]: controls_) {
+//            for (auto [num2, is_inverted2]: gate.controls_) {
+//                if (num == num2 && is_inverted && !is_inverted2) {
+//                    return true;
+//                }
+//                if (num == num2 && !is_inverted && is_inverted2) {
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
+//
+//    // SWAP SWAP
+//    // SWAP CSWAP
+//    // SWAP other
+//    if (type_ == GateType::SWAP) {
+//        // SWAP(t11, t12)
+//        auto t11 = nests_.front();
+//        auto t12 = nests_.back();
+//        if (gate.type_ == GateType::SWAP) {
+//            // SWAP(t21, t22)
+//            auto t21 = gate.nests_.front();
+//            auto t22 = gate.nests_.back();
+//            if (t11 == t21 || t11 == t22 || t12 == t21 || t12 == t22) {
+//                return false;
+//            }
+//            return true;
+//        }
+//        if (gate.type_ == GateType::CSWAP) {
+//            // CSWAP(t21, t22; control)
+//            auto control = gate.controls_.front().first;
+//            if (t11 == control || t12 == control) {
+//                return false;
+//            }
+//            return true;
+//        }
+//        // gate(t, controls_)
+//        auto t = gate.nests_.front();
+//        if (t11 == t || t12 == t) {
+//            return false;
+//        }
+//        if (std::find_if(gate.controls_.begin(), gate.controls_.end(), [t11, t12](const auto p) {
+//            return p.first == t11 || p.first == t12;
+//        }) != gate.controls_.end()) {
+//            return false;
+//        }
+//        return true;
+//    }
+//
+//    // CSWAP SWAP
+//    // CSWAP CSWAP
+//    // CSWAP other
+//    if (type_ == GateType::CSWAP) {
+//        // CSWAP(t11, t12; control)
+//        auto t11 = nests_.front();
+//        auto t12 = nests_.back();
+//        auto control = controls_.front();
+//        if (gate.type_ == GateType::SWAP) {
+//            // SWAP(t21, t22)
+//            auto t21 = gate.nests_.front();
+//            auto t22 = gate.nests_.back();
+//            if (t11 == t21 || t11 == t22 || t12 == t21 || t12 == t22 || control.first == t21 || control.first == t22) {
+//                return false;
+//            }
+//            return true;
+//        }
+//        if (gate.type_ == GateType::CSWAP) {
+//            // CSWAP(t21, t22; control)
+////            auto control = gate.controls_.front().first;
+////            if (t11 == control || t12 == control) {
+////                return false;
+////            }
+////            return true;
+//        }
+//        // gate(t, controls_)
+//        auto t = gate.nests_.front();
+//        if (t11 == t || t12 == t) {
+//            return false;
+//        }
+//        if (std::find_if(gate.controls_.begin(), gate.controls_.end(), [t11, t12](const auto p) {
+//            return p.first == t11 || p.first == t12;
+//        }) != gate.controls_.end()) {
+//            return false;
+//        }
+//        return true;
+//    }
+//
+//    // other SWAP
+//    if (gate.type_ == GateType::SWAP) {
+//        // SWAP(t21, t22)
+//        auto t21 = gate.nests_.front();
+//        auto t22 = gate.nests_.back();
+//        if (type_ == GateType::CSWAP) {
+//            // CSWAP(t11, t12; control)
+//            auto control = controls_.front().first;
+//            if (t21 == control || t22 == control) {
+//                return false;
+//            }
+//            return true;
+//        }
+//        // gate(t, controls_)
+//        auto t = nests_.front();
+//        if (t21 == t || t22 == t) {
+//            return false;
+//        }
+//        if (std::find_if(controls_.begin(), controls_.end(), [t21, t22](const auto p) {
+//            return p.first == t21 || p.first == t22;
+//        }) != controls_.end()) {
+//            return false;
+//        }
+//        return true;
+//    }
+//
+//    return false;
 }
 
 void Gate::act(binary_vector &vec) const {
@@ -531,9 +729,8 @@ BinaryMapping Circuit::produce_mapping() const noexcept {
     return BinaryMapping(vec_bf);
 }
 
-Circuit Circuit::reduce() const noexcept {
-    return *this;
-}
+//void Circuit::reduce() noexcept {
+//}
 
 bool Circuit::operator==(const Circuit &c) const {
     return this->produce_mapping() == c.produce_mapping();
@@ -543,13 +740,15 @@ bool Circuit::schematically_equal(const Circuit &c) const noexcept {
     return dim_ == c.dim_ && memory_ == c.memory_ && gates_ == c.gates_;
 }
 
-void Circuit::move_swap_left() {
+size_t Circuit::move_swap_left() {
     bool is_any_swaps = false;
     bool is_only_swaps = true;
     bool is_swap_in_left = true;
+    size_t swap_count = 0;
 
     for (const auto &gate: gates_) {
         if (gate.type() == GateType::SWAP) {
+            swap_count++;
             is_any_swaps = true;
             if (!is_only_swaps) {
                 is_swap_in_left = false;
@@ -560,7 +759,7 @@ void Circuit::move_swap_left() {
     }
 
     if (!is_any_swaps || is_only_swaps || is_swap_in_left) {
-        return;
+        return swap_count;
     }
 
     std::vector<Gate> non_swap_gates;
@@ -587,6 +786,7 @@ void Circuit::move_swap_left() {
     gates_.clear();
     gates_ = swap_gates;
     gates_.insert(gates_.end(), non_swap_gates.begin(), non_swap_gates.end());
+    return swap_count;
 }
 
 std::ostream &operator<<(std::ostream &out, const Circuit &c) noexcept {

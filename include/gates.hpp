@@ -39,7 +39,7 @@ public:
 
     std::vector<size_t> inverted_controls() const noexcept;
 
-    bool is_commutes(const Gate &) const noexcept;
+    bool is_commutes(const Gate &) const;
 
     void act(binary_vector &) const;
 
@@ -89,7 +89,7 @@ public:
 
     void insert(const Gate &, size_t = 0);
 
-    Circuit reduce() const noexcept;
+//    void reduce() noexcept;
 
     BinaryMapping produce_mapping() const noexcept;
 
@@ -97,7 +97,7 @@ public:
 
     bool schematically_equal(const Circuit &) const noexcept;
 
-    void move_swap_left();
+    size_t move_swap_left();
 
     friend std::ostream &operator<<(std::ostream &, const Circuit &) noexcept;
 
@@ -105,6 +105,8 @@ private:
     size_t dim_{};
     size_t memory_{};
     std::vector<Gate> gates_;
+
+//    void split_circuit_() const;
 
     void by_string_(const std::string &);
 };
