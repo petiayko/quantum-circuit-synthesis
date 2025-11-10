@@ -346,22 +346,22 @@ TEST(Gates, CommutiesNOT) {
     {
         auto g1 = Gate("NOT(1)", 4);
         auto g2 = Gate("CSWAP(0, 2; 1)", 4);
-        EXPECT_TRUE(g1.is_commutes(g2));
-        EXPECT_TRUE(g2.is_commutes(g1));
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
 
         auto c1 = Circuit({g1, g2});
         auto c2 = Circuit({g2, g1});
-        EXPECT_EQ(c1, c2);
+        EXPECT_NE(c1, c2);
     }
     {
         auto g1 = Gate("NOT(1)", 4);
         auto g2 = Gate("CSWAP(0, 2; !1)", 4);
-        EXPECT_TRUE(g1.is_commutes(g2));
-        EXPECT_TRUE(g2.is_commutes(g1));
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
 
         auto c1 = Circuit({g1, g2});
         auto c2 = Circuit({g2, g1});
-        EXPECT_EQ(c1, c2);
+        EXPECT_NE(c1, c2);
     }
     {
         auto g1 = Gate("NOT(1)", 4);
@@ -534,7 +534,7 @@ TEST(Gates, CommutiesCNOT) {
     // CNOT and CSWAP
     {
         auto g1 = Gate("CNOT(0; 1)", 5);
-        auto g2 = Gate("SWAP(2, 3; 4)", 5);
+        auto g2 = Gate("CSWAP(2, 3; 4)", 5);
         EXPECT_TRUE(g1.is_commutes(g2));
         EXPECT_TRUE(g2.is_commutes(g1));
 
@@ -544,7 +544,7 @@ TEST(Gates, CommutiesCNOT) {
     }
     {
         auto g1 = Gate("CNOT(0; 3)", 5);
-        auto g2 = Gate("SWAP(1, 4; 2)", 5);
+        auto g2 = Gate("CSWAP(1, 4; 2)", 5);
         EXPECT_TRUE(g1.is_commutes(g2));
         EXPECT_TRUE(g2.is_commutes(g1));
 
@@ -554,7 +554,7 @@ TEST(Gates, CommutiesCNOT) {
     }
     {
         auto g1 = Gate("CNOT(0; 3)", 5);
-        auto g2 = Gate("SWAP(1, 4; 3)", 5);
+        auto g2 = Gate("CSWAP(1, 4; 3)", 5);
         EXPECT_TRUE(g1.is_commutes(g2));
         EXPECT_TRUE(g2.is_commutes(g1));
 
@@ -564,7 +564,7 @@ TEST(Gates, CommutiesCNOT) {
     }
     {
         auto g1 = Gate("CNOT(0; 1)", 5);
-        auto g2 = Gate("SWAP(0, 3; !1)", 5);
+        auto g2 = Gate("CSWAP(0, 3; !1)", 5);
         EXPECT_TRUE(g1.is_commutes(g2));
         EXPECT_TRUE(g2.is_commutes(g1));
 
@@ -574,7 +574,7 @@ TEST(Gates, CommutiesCNOT) {
     }
     {
         auto g1 = Gate("CNOT(0; !1)", 5);
-        auto g2 = Gate("SWAP(0, 3; 1)", 5);
+        auto g2 = Gate("CSWAP(0, 3; 1)", 5);
         EXPECT_TRUE(g1.is_commutes(g2));
         EXPECT_TRUE(g2.is_commutes(g1));
 
@@ -584,7 +584,7 @@ TEST(Gates, CommutiesCNOT) {
     }
     {
         auto g1 = Gate("CNOT(0; 1)", 5);
-        auto g2 = Gate("SWAP(2, 3; 0)", 5);
+        auto g2 = Gate("CSWAP(2, 3; 0)", 5);
         EXPECT_FALSE(g1.is_commutes(g2));
         EXPECT_FALSE(g2.is_commutes(g1));
 
@@ -594,7 +594,7 @@ TEST(Gates, CommutiesCNOT) {
     }
     {
         auto g1 = Gate("CNOT(0; 1)", 5);
-        auto g2 = Gate("SWAP(0, 3; 2)", 5);
+        auto g2 = Gate("CSWAP(0, 3; 2)", 5);
         EXPECT_FALSE(g1.is_commutes(g2));
         EXPECT_FALSE(g2.is_commutes(g1));
 
@@ -604,7 +604,7 @@ TEST(Gates, CommutiesCNOT) {
     }
     {
         auto g1 = Gate("CNOT(0; 1)", 5);
-        auto g2 = Gate("SWAP(1, 3; 4)", 5);
+        auto g2 = Gate("CSWAP(1, 3; 4)", 5);
         EXPECT_FALSE(g1.is_commutes(g2));
         EXPECT_FALSE(g2.is_commutes(g1));
 
@@ -657,8 +657,188 @@ TEST(Gates, CommutieskCNOT) {
     }
 
     // kCNOT and SWAP
+    {
+        auto g1 = Gate("kCNOT(0; 1, 2, 3)", 8);
+        auto g2 = Gate("SWAP(4, 5)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(3; 0, 6, !7)", 8);
+        auto g2 = Gate("SWAP(2, 5)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(0; 1, 2, !3)", 8);
+        auto g2 = Gate("SWAP(1, 2)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(0; !1, !2, 3)", 8);
+        auto g2 = Gate("SWAP(1, 2)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(0; 1, 2, !3)", 8);
+        auto g2 = Gate("SWAP(2, 3)", 8);
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_NE(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(0; 1, 2, !3)", 8);
+        auto g2 = Gate("SWAP(0, 5)", 8);
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_NE(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(0; 1, 2, !3)", 8);
+        auto g2 = Gate("SWAP(1, 5)", 8);
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_NE(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(0; 1, 2, !3)", 8);
+        auto g2 = Gate("SWAP(3, 5)", 8);
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_NE(c1, c2);
+    }
 
     // kCNOT and CSWAP
+    {
+        auto g1 = Gate("kCNOT(0; 1, 2, 3)", 8);
+        auto g2 = Gate("CSWAP(4, 5; 6)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(5; 0, 4, 7)", 8);
+        auto g2 = Gate("CSWAP(1, 6; 2)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(5; 0, 4, 7)", 8);
+        auto g2 = Gate("CSWAP(1, 6; 4)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(5; 0, 4, 7)", 8);
+        auto g2 = Gate("CSWAP(0, 4; 6)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(5; !0, !4, !7)", 8);
+        auto g2 = Gate("CSWAP(0, 4; 6)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(5; !0, !4, !6)", 8);
+        auto g2 = Gate("CSWAP(0, 5; 6)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(5; !0, !4, 6)", 8);
+        auto g2 = Gate("CSWAP(0, 5; !6)", 8);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(5; 0, !4, 7)", 8);
+        auto g2 = Gate("CSWAP(0, 4; 6)", 8);
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_NE(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(6; 0, !4, 7)", 8);
+        auto g2 = Gate("CSWAP(0, 3; 6)", 8);
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_NE(c1, c2);
+    }
+    {
+        auto g1 = Gate("kCNOT(3; 0, !4, 7)", 8);
+        auto g2 = Gate("CSWAP(0, 3; 6)", 8);
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_NE(c1, c2);
+    }
 }
 
 TEST(Gates, CommutiesSWAP) {
@@ -704,6 +884,66 @@ TEST(Gates, CommutiesSWAP) {
     }
 
     // SWAP and CSWAP
+    {
+        auto g1 = Gate("SWAP(0, 1)", 6);
+        auto g2 = Gate("CSWAP(2, 3; 4)", 6);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("SWAP(3, 5)", 6);
+        auto g2 = Gate("CSWAP(0, 4; 2)", 6);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("SWAP(4, 5)", 6);
+        auto g2 = Gate("CSWAP(4, 5; 2)", 6);
+        EXPECT_TRUE(g1.is_commutes(g2));
+        EXPECT_TRUE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_EQ(c1, c2);
+    }
+    {
+        auto g1 = Gate("SWAP(0, 1)", 6);
+        auto g2 = Gate("CSWAP(2, 3; 1)", 6);
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_NE(c1, c2);
+    }
+    {
+        auto g1 = Gate("SWAP(0, 1)", 6);
+        auto g2 = Gate("CSWAP(0, 3; 5)", 6);
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_NE(c1, c2);
+    }
+    {
+        auto g1 = Gate("SWAP(1, 3)", 6);
+        auto g2 = Gate("CSWAP(2, 3; 1)", 6);
+        EXPECT_FALSE(g1.is_commutes(g2));
+        EXPECT_FALSE(g2.is_commutes(g1));
+
+        auto c1 = Circuit({g1, g2});
+        auto c2 = Circuit({g2, g1});
+        EXPECT_NE(c1, c2);
+    }
 }
 
 TEST(Gates, CommutiesCSWAP) {

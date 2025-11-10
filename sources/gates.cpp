@@ -191,6 +191,21 @@ bool Gate::is_commutes(const Gate &gate) const {
         auto t21 = gate.nests_.front();
         auto t22 = gate.nests_.back();
 
+        // first criteria is already checked
+
+        // second criteria
+        if (!(t11 == t21 || t11 == t22 || t12 == t21 || t12 == t22) &&
+            std::find_if(gate.controls_.begin(), gate.controls_.end(),
+                         [t11, t12](const auto p) {
+                             return p.first == t11 || p.first == t12;
+                         }) == gate.controls_.end() &&
+            std::find_if(controls_.begin(), controls_.end(),
+                         [t21, t22](const auto p) {
+                             return p.first == t21 || p.first == t22;
+                         }) == controls_.end()) {
+            return true;
+        }
+
         if (type_ == GateType::CSWAP && gate.type_ == GateType::CSWAP) {
             auto control1 = controls_.front();
             auto control2 = gate.controls_.front();
@@ -199,55 +214,55 @@ bool Gate::is_commutes(const Gate &gate) const {
             }
         }
 
-        if (t11 == t21 || t11 == t22 || t12 == t21 || t12 == t22) {
-            return false;
-        }
-        if (std::find_if(gate.controls_.begin(), gate.controls_.end(),
-                         [t11, t12](const auto p) { return p.first == t11 || p.first == t12; }) !=
-            gate.controls_.end()) {
-            return false;
-        }
-        if (std::find_if(controls_.begin(), controls_.end(),
-                         [t21, t22](const auto p) { return p.first == t21 || p.first == t22; }) != controls_.end()) {
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
     auto g_swap = (type_ == GateType::SWAP || type_ == GateType::CSWAP) ? *this : gate;
     auto g_non_swap = (type_ != GateType::SWAP && type_ != GateType::CSWAP) ? *this : gate;
 
+    auto t = g_non_swap.nests_.front();
+    auto t1 = g_swap.nests_.front();
+    auto t2 = g_swap.nests_.back();
+
+    // first criteria
+    // (t∉C∪T)⋀(T∩(I∪J)=∅)
+    if ((t != t1 && t != t2) &&
+        std::find_if(g_non_swap.controls_.begin(), g_non_swap.controls_.end(),
+                     [t1, t2](const auto p) {
+                         return p.first == t1 || p.first == t2;
+                     }) == g_non_swap.controls_.end()) {
+        if (g_swap.type_ == GateType::CSWAP) {
+            return t != g_swap.controls_.front().first;
+        }
+        return true;
+    }
+
+    // second criteria
+    // (t∉C)⋀((T⊆I)⋁(T⊆J))
+    if (std::count_if(g_non_swap.controls_.begin(), g_non_swap.controls_.end(),
+                      [t1, t2](const auto p) {
+                          return p.second && (p.first == t1 || p.first == t2);
+                      }) == 2 ||
+        std::count_if(g_non_swap.controls_.begin(), g_non_swap.controls_.end(),
+                      [t1, t2](const auto p) {
+                          return !p.second && (p.first == t1 || p.first == t2);
+                      }) == 2) {
+        if (g_swap.type_ == GateType::CSWAP) {
+            return t != g_swap.controls_.front().first;
+        }
+        return true;
+    }
+
     if (g_swap.type_ == GateType::CSWAP) {
         // third criteria
         // (C∩I≠∅)⋁(C∩J≠∅)
-        for (const auto &[num, is_inverted]: g_non_swap.controls_) {
-            if (num == g_swap.controls_.front().first) {
-                return true;
-            }
+        if (std::find_if(g_non_swap.controls_.begin(), g_non_swap.controls_.end(),
+                         [&g_swap](const auto p) {
+                             return p.first == g_swap.controls_.front().first &&
+                                    p.second != g_swap.controls_.front().second;
+                         }) != g_non_swap.controls_.end()) {
+            return true;
         }
-        // t∉C
-        if (g_swap.controls_.front().first == g_non_swap.nests_.front()) {
-            return false;
-        }
-    }
-    // t∉T
-    if (std::find(g_swap.nests_.begin(), g_swap.nests_.end(), g_non_swap.nests_.front()) != g_swap.nests_.end()) {
-        return false;
-    }
-
-    // T∩(I∪J)=∅
-    auto swap_t1 = g_swap.nests_.front();
-    auto swap_t2 = g_swap.nests_.back();
-    if (std::find_if(g_non_swap.controls_.begin(), g_non_swap.controls_.end(),
-                     [swap_t1, swap_t2](const auto p) { return p.first == swap_t1 || p.first == swap_t2; }) !=
-        g_non_swap.controls_.end()) {
-        return true;
-    }
-    // (T⊆I)⋁(T⊆J)
-    if (std::count_if(g_non_swap.controls_.begin(), g_non_swap.controls_.end(),
-                      [swap_t1, swap_t2](const auto p) { return p.first == swap_t1 || p.first == swap_t2; }) == 2) {
-        return true;
     }
 
     return false;
