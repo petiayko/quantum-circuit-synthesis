@@ -51,6 +51,7 @@ if (BUILD_TESTS)
             tests/test_gates.cpp
             tests/test_circuits.cpp
             tests/test_synthesis.cpp
+            tests/test_reduction.cpp
 
             tests/test_math.cpp
             tests/test_strings.cpp

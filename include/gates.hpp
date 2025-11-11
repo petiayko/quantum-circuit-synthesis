@@ -1,6 +1,7 @@
 #ifndef QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 #define QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 
+#include <unordered_map>
 #include "primitives.hpp"
 #include "strings.hpp"
 
@@ -12,6 +13,7 @@ enum class GateType {
     kCNOT = 2,
     SWAP = 3,
     CSWAP = 4,
+    EMPTY = 1024,
 };
 
 // true - direct; false - inverted
@@ -39,7 +41,11 @@ public:
 
     std::vector<size_t> inverted_controls() const noexcept;
 
+    bool empty() const noexcept;
+
     bool is_commutes(const Gate &) const;
+
+    void clear() noexcept;
 
     void act(binary_vector &) const;
 
@@ -62,6 +68,18 @@ private:
     void init_(GateType, const std::vector<size_t> &, const std::vector<control> &, size_t);
 
     void swap_lines_(const Gate &);
+
+    bool rR1_(Gate &) noexcept;
+
+    bool rR2_(Gate &, Gate &) noexcept;
+
+    bool rR3_(Gate &) noexcept;
+
+    bool rR4_(Gate &) noexcept;
+
+    bool rR5_(Gate &) noexcept;
+
+    bool rR6_(Gate &, Gate &) noexcept;
 };
 
 
@@ -79,6 +97,8 @@ public:
 
     size_t memory() const noexcept;
 
+    size_t complexity() const noexcept;
+
     void set_memory(size_t);
 
     void act(binary_vector &) const;
@@ -89,7 +109,7 @@ public:
 
     void insert(const Gate &, size_t = 0);
 
-//    void reduce() noexcept;
+    void reduce() noexcept;
 
     BinaryMapping produce_mapping() const noexcept;
 
@@ -106,7 +126,7 @@ private:
     size_t memory_{};
     std::vector<Gate> gates_;
 
-//    void split_circuit_() const;
+    std::vector<std::pair<size_t, size_t>> split_circuit_(size_t &) noexcept;
 
     void by_string_(const std::string &);
 };

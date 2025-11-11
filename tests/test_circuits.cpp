@@ -45,17 +45,23 @@ TEST(Circuits, Constructor) {
 
 TEST(Circuits, Insert) {
     Circuit c("Lines: 3");
+    EXPECT_EQ(c.complexity(), 0);
     c.add(Gate(GateType::SWAP, {0, 2}, {}, 3));
+    EXPECT_EQ(c.complexity(), 1);
     c.add(Gate(GateType::CNOT, {1}, {{0, true}}, 3));
+    EXPECT_EQ(c.complexity(), 2);
 
     EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 4), 0), CircuitException);
     EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 2), 0), CircuitException);
     EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 3), 3), CircuitException);
 
     c.insert(Gate(GateType::NOT, {0}, {}, 3));
+    EXPECT_EQ(c.complexity(), 3);
     c.insert(Gate(GateType::kCNOT, {1}, {{0, false},
                                          {2, true}}, 3), 1);
+    EXPECT_EQ(c.complexity(), 4);
     c.insert(Gate(GateType::CSWAP, {0, 2}, {{1, false}}, 3), 4);
+    EXPECT_EQ(c.complexity(), 5);
 
     EXPECT_EQ(c, Circuit("Lines: 3\nNOT(0)\nkCNOT(1; !0, 2)\nSWAP(0, 2)\nCNOT(1; 0)\nCSWAP(0, 2; !1)"));
 }
