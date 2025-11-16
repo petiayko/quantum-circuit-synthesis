@@ -132,9 +132,9 @@ TEST(Circuits, Memory) {
     EXPECT_EQ(vec, (std::vector<bool>{0, 1, 1, 0}));
 
     c1.set_memory(3);
-    vec = {0, 1, 1, 1};
-    c1.act(vec);
-    EXPECT_EQ(vec, (std::vector<bool>{0, 0, 0, 0}));
+    std::vector<bool> vec1{0, 1, 1, 1};
+    c1.act(vec1);
+    EXPECT_EQ(vec1, (std::vector<bool>{0, 0, 0, 0}));
 
     Circuit c2("Lines: 3; 1");
     std::vector<BooleanFunction> vec_bf{BooleanFunction("01101000"), BooleanFunction("11110111"),

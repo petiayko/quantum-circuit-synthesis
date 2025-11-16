@@ -54,6 +54,8 @@ public:
 
     bool operator==(const Gate &) const;
 
+    explicit operator std::string() const;
+
     friend std::ostream &operator<<(std::ostream &, const Gate &) noexcept;
 
 private:
@@ -116,11 +118,13 @@ public:
 
     BinaryMapping produce_mapping() const noexcept;
 
-    bool operator==(const Circuit &) const;
-
     bool schematically_equal(const Circuit &) const noexcept;
 
     size_t move_swap_left();
+
+    bool operator==(const Circuit &) const;
+
+    explicit operator std::string() const;
 
     friend std::ostream &operator<<(std::ostream &, const Circuit &) noexcept;
 

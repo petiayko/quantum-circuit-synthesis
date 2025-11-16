@@ -682,9 +682,9 @@ bool Gate::rR6_reversed_(Gate &gate2, Gate &gate3) noexcept {
     return true;
 }
 
-std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
+Gate::operator std::string() const {
     std::string gate_name;
-    switch (g.type_) {
+    switch (type_) {
         case GateType::NOT:
             gate_name = "NOT";
             break;
@@ -704,13 +704,13 @@ std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
             break;
     }
     std::string gate_params;
-    for (auto p: g.nests_) {
+    for (auto p: nests_) {
         gate_params += std::to_string(p) + ", ";
     }
     gate_params.erase(gate_params.size() - 2);  // remove ", " from the end
-    if (!g.controls_.empty()) {
+    if (!controls_.empty()) {
         gate_params += "; ";
-        for (const auto &[num, is_direct]: g.controls_) {
+        for (const auto &[num, is_direct]: controls_) {
             if (!is_direct) {
                 gate_params += '!';
             }
@@ -718,7 +718,11 @@ std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
         }
         gate_params.erase(gate_params.size() - 2);  // remove ", " from the end
     }
-    return out << gate_name << '(' << gate_params << ')';
+    return gate_name + '(' + gate_params + ')';
+}
+
+std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
+    return out << static_cast<std::string>(g);
 }
 
 // Circuit
@@ -937,10 +941,6 @@ void Circuit::reduce() noexcept {
     }), gates_.end());
 }
 
-bool Circuit::operator==(const Circuit &c) const {
-    return this->produce_mapping() == c.produce_mapping();
-}
-
 bool Circuit::schematically_equal(const Circuit &c) const noexcept {
     return dim_ == c.dim_ && memory_ == c.memory_ && gates_ == c.gates_;
 }
@@ -994,16 +994,24 @@ size_t Circuit::move_swap_left() {
     return swap_count;
 }
 
-std::ostream &operator<<(std::ostream &out, const Circuit &c) noexcept {
-    out << "Lines: " << c.dim_;
-    if (c.memory_) {
-        out << "; " << c.memory_;
+bool Circuit::operator==(const Circuit &c) const {
+    return this->produce_mapping() == c.produce_mapping();
+}
+
+Circuit::operator std::string() const {
+    std::string out = "Lines: " + std::to_string(dim_);
+    if (memory_) {
+        out += "; " + std::to_string(memory_);
     }
-    out << '\n';
-    for (const auto &g: c.gates_) {
-        out << g << '\n';
+    out += '\n';
+    for (const auto &g: gates_) {
+        out += static_cast<std::string>(g) + '\n';
     }
     return out;
+}
+
+std::ostream &operator<<(std::ostream &out, const Circuit &c) noexcept {
+    return out << static_cast<std::string>(c);
 }
 
 std::vector<std::pair<size_t, size_t>> Circuit::split_circuit_(size_t &swap_number) noexcept {

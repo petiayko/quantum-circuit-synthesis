@@ -3,6 +3,7 @@
 
 #include "exseptions.hpp"
 #include "gates.hpp"
+#include "logger.hpp"
 
 enum class Algo {
     DUMMY,
@@ -11,17 +12,16 @@ enum class Algo {
     EMPTY = 2048,
 };
 
-Circuit
-synthesize(const BinaryMapping &, Algo = Algo::RW);
+Circuit synthesize(const BinaryMapping &, Algo = Algo::RW, bool = false);
 
-Circuit synthesize(const Substitution &, Algo = Algo::RW);
+Circuit synthesize(const Substitution &, Algo = Algo::RW, bool = false);
 
-Circuit dummy_algorithm(const BinaryMapping &);
+Circuit dummy_algorithm(const BinaryMapping &, bool = false);
 
-Circuit dummy_algorithm(const Substitution &);
+Circuit dummy_algorithm(const Substitution &, bool = false);
 
-Circuit RW_algorithm(const BinaryMapping &);
+Circuit RW_algorithm(const BinaryMapping &, bool = false);
 
-Circuit RW_algorithm(const Substitution &);
+Circuit RW_algorithm(const Substitution &, bool = false);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_SYNTHESIS_HPP

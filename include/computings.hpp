@@ -48,7 +48,7 @@ void write_result(const std::string &output_path, const T &result) {
     file.close();
 }
 
-void process_config(InputType type, Algo algo, bool simplify,
+void process_config(InputType type, Algo algo, bool reduction,
                     const std::string &input_path, const std::string &output_path) {
     if (input_path.empty()) {
         throw ArgumentException("Path to input file was not provided");
@@ -65,8 +65,8 @@ void process_config(InputType type, Algo algo, bool simplify,
         if (algo != Algo::EMPTY) {
             throw ArgumentException("Algo was provided for reverse mode");
         }
-        if (simplify) {
-            throw ArgumentException("Impossible to use simplification for reverse mode");
+        if (reduction) {
+            throw ArgumentException("Impossible to use circuit reduction for reverse mode");
         }
         LOG_INFO("Starting reverse of quantum circuit", "");
         Circuit c(file_content);
@@ -100,9 +100,12 @@ void process_config(InputType type, Algo algo, bool simplify,
     }
 
     LOG_INFO("Starting quantum circuit synthesis", "");
+    if (reduction) {
+        LOG_WARNING("After synthesis, the circuit will be reduced. This is an experimental option", "");
+    }
     if (type == InputType::TABLE) {
         BinaryMapping bm(file_content);
-        Circuit c = synthesize(bm, algo);
+        Circuit c = synthesize(bm, algo, reduction);
         if (c.memory() && algo == Algo::RW) {
             LOG_WARNING("Performing quantum circuit synthesis", "Provided binary mapping is not reversible");
             LOG_WARNING("Performing quantum circuit synthesis",
@@ -111,7 +114,7 @@ void process_config(InputType type, Algo algo, bool simplify,
         write_result<Circuit>(output_path, c);
     } else if (type == InputType::SUBSTITUTION) {
         Substitution sub(file_content);
-        Circuit c = synthesize(sub, algo);
+        Circuit c = synthesize(sub, algo, reduction);
         write_result<Circuit>(output_path, c);
     } else {
         throw ArgumentException("Unknown type of input");
