@@ -20,7 +20,7 @@ inline std::string decimal_to_binary_s(T v, size_t l = 0) {
         result = "0";
     } else {
         while (v) {
-            result += (v % 2 ? '1' : '0');
+            result += (v & 1 ? '1' : '0');
             v /= 2;
         }
     }
@@ -35,10 +35,10 @@ template<class T = size_t>
 inline std::vector<bool> decimal_to_binary_v(T v, size_t l = 0) {
     std::vector<bool> result;
     if (!v) {
-        result = {false};
+        result.push_back(false);
     } else {
         while (v) {
-            result.insert(result.begin(), v % 2);
+            result.insert(result.begin(), v & 1);
             v /= 2;
         }
     }

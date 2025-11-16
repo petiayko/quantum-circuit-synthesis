@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.28)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXE_LINKER_FLAGS "-static")
+set(VERSION "1.1.0")
 
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_COVERAGE "Build code coverage" ON)
@@ -15,7 +16,7 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-project(quantum_circuit_synthesis VERSION 1.0)
+project(quantum_circuit_synthesis VERSION ${VERSION})
 string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
@@ -50,6 +51,7 @@ if (BUILD_TESTS)
             tests/test_gates.cpp
             tests/test_circuits.cpp
             tests/test_synthesis.cpp
+            tests/test_reduction.cpp
 
             tests/test_math.cpp
             tests/test_strings.cpp

@@ -30,10 +30,6 @@ TEST(Gates, Constructor) {
     EXPECT_THROW(Gate(GateType::kCNOT, {1}, {{1, false},
                                              {4, true}}, 5), GateException);
     EXPECT_THROW(Gate(GateType::kCNOT, {0, 1}, {{1, false}}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::kCNOT, {0}, {{1, true},
-                                             {1, true}}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::kCNOT, {0}, {{1, true},
-                                             {1, false}}, 5), GateException);
 
     // SWAP
     EXPECT_THROW(Gate(GateType::SWAP, {}, {{1, true}}, 5), GateException);
@@ -57,6 +53,9 @@ TEST(Gates, ConstructorString) {
     EXPECT_THROW(Gate("gate", 5), GateException);
     EXPECT_THROW(Gate("CCNOT(3; 2, 1)", 5), GateException);
     EXPECT_THROW(Gate("NOT(30)", 5), GateException);
+    EXPECT_THROW(Gate("NOT(3)", 0), GateException);
+    EXPECT_THROW(Gate("NOT(0)", 0), GateException);
+    EXPECT_THROW(Gate("EMPTY(2)", 5), GateException);
 
     // NOT
     EXPECT_THROW(Gate("NOT)", 5), GateException);
@@ -92,11 +91,15 @@ TEST(Gates, ConstructorString) {
     EXPECT_THROW(Gate("kCNOT(!2;4,!3)", 5), StringException);
     EXPECT_TRUE(Gate("kcnot(2;4, 1)", 5) == Gate(GateType::kCNOT, {2}, {{4, true},
                                                                         {1, true}}, 5));
+    EXPECT_TRUE(Gate("kcnot(2;1, 4)", 5) == Gate(GateType::kCNOT, {2}, {{4, true},
+                                                                        {1, true}}, 5));
     EXPECT_TRUE(Gate("kcnot(2;!4, !1)", 5) == Gate(GateType::kCNOT, {2}, {{4, false},
                                                                           {1, false}}, 5));
     EXPECT_TRUE(Gate("  \t   Kcnot(2;1,0)", 5) == Gate(GateType::kCNOT, {2}, {{1, true},
                                                                               {0, true}}, 5));
     EXPECT_TRUE(Gate("  \t   Kcnot(2;1,!0)", 5) == Gate(GateType::kCNOT, {2}, {{1, true},
+                                                                               {0, false}}, 5));
+    EXPECT_TRUE(Gate("  \t   Kcnot(2;!0,1)", 5) == Gate(GateType::kCNOT, {2}, {{1, true},
                                                                                {0, false}}, 5));
     EXPECT_TRUE(Gate("  \t   kCnOt  ( 2    ;\t3   ,  4  )             ", 5) ==
                 Gate(GateType::kCNOT, {2}, {{3, true},
@@ -115,6 +118,7 @@ TEST(Gates, ConstructorString) {
     EXPECT_THROW(Gate("SWAP(2,!4)", 5), StringException);
     EXPECT_THROW(Gate("SWAP(!2,4)", 5), StringException);
     EXPECT_TRUE(Gate("swap(2,1)", 5) == Gate(GateType::SWAP, {2, 1}, {}, 5));
+    EXPECT_TRUE(Gate("swap(1,2)", 5) == Gate(GateType::SWAP, {2, 1}, {}, 5));
     EXPECT_TRUE(Gate("  \t   SWap(2,4)", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
     EXPECT_TRUE(Gate("  \t   SwAp  ( 2    \t   ,  4  )             ", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
     EXPECT_TRUE(Gate("  \t   SwAp  ( 0x2    \t   ,  4  )             ", 5) == Gate(GateType::SWAP, {2, 4}, {}, 5));
@@ -127,6 +131,7 @@ TEST(Gates, ConstructorString) {
     EXPECT_THROW(Gate("CSWAP(2,!0;!4)", 5), StringException);
     EXPECT_THROW(Gate("CSWAP(!2,0;!4)", 5), StringException);
     EXPECT_TRUE(Gate("cswap(2,1;0)", 5) == Gate(GateType::CSWAP, {2, 1}, {{0, true}}, 5));
+    EXPECT_TRUE(Gate("cswap(1,2;0)", 5) == Gate(GateType::CSWAP, {2, 1}, {{0, true}}, 5));
     EXPECT_TRUE(Gate("  \t   cSWAP(0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {{2, true}}, 5));
     EXPECT_TRUE(Gate("  \t   cSWAP(0,1;!2)", 5) == Gate(GateType::CSWAP, {0, 1}, {{2, false}}, 5));
     EXPECT_TRUE(Gate("  \t   cSWAP(0x0,1;2)", 5) == Gate(GateType::CSWAP, {0, 1}, {{2, true}}, 5));
@@ -134,6 +139,65 @@ TEST(Gates, ConstructorString) {
                 Gate(GateType::CSWAP, {2, 3}, {{4, true}}, 5));
     EXPECT_TRUE(Gate("  \t   CswaP  ( 2   ,3 \t   ;\t\t  !4  )             ", 5) ==
                 Gate(GateType::CSWAP, {2, 3}, {{4, false}}, 5));
+    EXPECT_TRUE(Gate("  \t   CswaP  ( 3   ,2 \t   ;\t\t  !4  )             ", 5) ==
+                Gate(GateType::CSWAP, {2, 3}, {{4, false}}, 5));
+}
+
+TEST(Gates, Methods) {
+    EXPECT_EQ(Gate("NOT(1)", 4).type(), GateType::NOT);
+    EXPECT_EQ(Gate("CNOT(3; 2)", 4).type(), GateType::CNOT);
+    EXPECT_EQ(Gate("kCNOT(1; !0, 2, !3)", 4).type(), GateType::kCNOT);
+    EXPECT_EQ(Gate("SWAP(2, 1)", 4).type(), GateType::SWAP);
+    EXPECT_EQ(Gate("CSWAP(3, 2; 0)", 4).type(), GateType::CSWAP);
+
+    EXPECT_EQ(Gate("NOT(1)", 4).nests(), std::vector<size_t>({1}));
+    EXPECT_EQ(Gate("CNOT(3; 2)", 4).nests(), std::vector<size_t>({3}));
+    EXPECT_EQ(Gate("kCNOT(1; !0, 2, !3)", 4).nests(), std::vector<size_t>({1}));
+    EXPECT_EQ(Gate("SWAP(2, 1)", 4).nests(), std::vector<size_t>({1, 2}));
+    EXPECT_EQ(Gate("CSWAP(3, 2; 0)", 4).nests(), std::vector<size_t>({2, 3}));
+
+    EXPECT_EQ(Gate("NOT(1)", 4).controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CNOT(3; 2)", 4).controls(), std::vector<size_t>({2}));
+    EXPECT_EQ(Gate("kCNOT(1; !0, 2, !3)", 4).controls(), std::vector<size_t>({0, 2, 3}));
+    EXPECT_EQ(Gate("SWAP(2, 1)", 4).controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CSWAP(3, 2; 0)", 4).controls(), std::vector<size_t>({0}));
+
+    EXPECT_EQ(Gate("NOT(1)", 4).direct_controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CNOT(3; 2)", 4).direct_controls(), std::vector<size_t>({2}));
+    EXPECT_EQ(Gate("kCNOT(1; !0, 2, !3)", 4).direct_controls(), std::vector<size_t>({2}));
+    EXPECT_EQ(Gate("SWAP(2, 1)", 4).direct_controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CSWAP(3, 2; 0)", 4).direct_controls(), std::vector<size_t>({0}));
+
+    EXPECT_EQ(Gate("NOT(1)", 4).inverted_controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CNOT(3; 2)", 4).inverted_controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("kCNOT(1; !0, 2, !3)", 4).inverted_controls(), std::vector<size_t>({0, 3}));
+    EXPECT_EQ(Gate("SWAP(2, 1)", 4).inverted_controls(), std::vector<size_t>());
+    EXPECT_EQ(Gate("CSWAP(3, 2; 0)", 4).inverted_controls(), std::vector<size_t>());
+
+    Gate g1("NOT(2)", 3);
+    EXPECT_FALSE(g1.empty());
+    g1.clear();
+    EXPECT_TRUE(g1.empty());
+
+    Gate g2("CNOT(1; 0)", 3);
+    EXPECT_FALSE(g2.empty());
+    g2.clear();
+    EXPECT_TRUE(g2.empty());
+
+    Gate g3("kCNOT(2; 1, 0)", 3);
+    EXPECT_FALSE(g3.empty());
+    g3.clear();
+    EXPECT_TRUE(g3.empty());
+
+    Gate g4("SWAP(2, 0)", 3);
+    EXPECT_FALSE(g4.empty());
+    g4.clear();
+    EXPECT_TRUE(g4.empty());
+
+    Gate g5("CSWAP(2, 1; 0)", 3);
+    EXPECT_FALSE(g5.empty());
+    g5.clear();
+    EXPECT_TRUE(g5.empty());
 }
 
 TEST(Gates, ActNOT) {

@@ -1,6 +1,7 @@
 #ifndef QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 #define QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 
+#include <unordered_map>
 #include "primitives.hpp"
 #include "strings.hpp"
 
@@ -12,20 +13,40 @@ enum class GateType {
     kCNOT = 2,
     SWAP = 3,
     CSWAP = 4,
+    EMPTY = 1024,
 };
 
 // true - direct; false - inverted
-using control = std::pair<size_t, bool>;
+using control_type = std::pair<size_t, bool>;
+using controls_type = std::map<size_t, bool>;
+
+class Circuit;
 
 class Gate {
 public:
     Gate() = default;
 
-    explicit Gate(GateType, const std::vector<size_t> &, const std::vector<control> &, size_t);
+    explicit Gate(GateType, const std::vector<size_t> &, const controls_type &, size_t);
 
     explicit Gate(const std::string &, size_t);
 
     size_t dim() const noexcept;
+
+    GateType type() const noexcept;
+
+    std::vector<size_t> nests() const noexcept;
+
+    std::vector<size_t> controls() const noexcept;
+
+    std::vector<size_t> direct_controls() const noexcept;
+
+    std::vector<size_t> inverted_controls() const noexcept;
+
+    bool empty() const noexcept;
+
+    bool is_commutes(const Gate &) const;
+
+    void clear() noexcept;
 
     void act(binary_vector &) const;
 
@@ -33,22 +54,42 @@ public:
 
     bool operator==(const Gate &) const;
 
+    explicit operator std::string() const;
+
     friend std::ostream &operator<<(std::ostream &, const Gate &) noexcept;
 
 private:
     GateType type_{};
     size_t dim_{};
     std::vector<size_t> nests_;
-    std::vector<control> controls_;
+    controls_type controls_;
 
-    void init_(GateType, const std::vector<size_t> &, const std::vector<control> &, size_t);
+    friend class Circuit;
+
+    void validate_() const;
+
+    void init_(GateType, const std::vector<size_t> &, const controls_type &, size_t);
+
+    void swap_lines_(const Gate &);
+
+    bool rR1_(Gate &) noexcept;
+
+    bool rR2_(Gate &, Gate &) noexcept;
+
+    bool rR3_(Gate &) noexcept;
+
+    bool rR4_(Gate &) noexcept;
+
+    bool rR5_(Gate &) noexcept;
+
+    bool rR6_direct_(Gate &, Gate &) noexcept;
+
+    bool rR6_reversed_(Gate &, Gate &) noexcept;
 };
 
 
 class Circuit {
 public:
-    Circuit() = default;
-
     explicit Circuit(size_t, size_t = 0);
 
     explicit Circuit(const std::vector<Gate> &, size_t = 0);
@@ -61,6 +102,8 @@ public:
 
     size_t memory() const noexcept;
 
+    size_t complexity() const noexcept;
+
     void set_memory(size_t);
 
     void act(binary_vector &) const;
@@ -71,11 +114,17 @@ public:
 
     void insert(const Gate &, size_t = 0);
 
-    bool simplify() noexcept;
+    void reduce() noexcept;
 
     BinaryMapping produce_mapping() const noexcept;
 
+    bool schematically_equal(const Circuit &) const noexcept;
+
+    size_t move_swap_left();
+
     bool operator==(const Circuit &) const;
+
+    explicit operator std::string() const;
 
     friend std::ostream &operator<<(std::ostream &, const Circuit &) noexcept;
 
@@ -83,6 +132,8 @@ private:
     size_t dim_{};
     size_t memory_{};
     std::vector<Gate> gates_;
+
+    std::vector<std::pair<size_t, size_t>> split_circuit_(size_t &) noexcept;
 
     void by_string_(const std::string &);
 };

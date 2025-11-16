@@ -31,8 +31,7 @@ TEST(Circuits, Constructor) {
 
     EXPECT_THROW(Circuit(2, 10), CircuitException);
 
-    EXPECT_EQ(Circuit(0, 0), Circuit());
-    EXPECT_EQ(Circuit(0, 0), Circuit(0));
+    EXPECT_THROW(Circuit(0, 0), CircuitException);
 
     EXPECT_THROW(Circuit("Lines: A\n# text\n#comment\nNOT(B)\n#CNOT(3;0xc)\n\n\nSWAP(8,9)"), GateException);
     EXPECT_THROW(Circuit("Lines: A;2\n# text\n#comment\nNOT(B)\n#CNOT(3;0xc)\n\n\nSWAP(8,9)"), GateException);
@@ -46,17 +45,23 @@ TEST(Circuits, Constructor) {
 
 TEST(Circuits, Insert) {
     Circuit c("Lines: 3");
+    EXPECT_EQ(c.complexity(), 0);
     c.add(Gate(GateType::SWAP, {0, 2}, {}, 3));
+    EXPECT_EQ(c.complexity(), 1);
     c.add(Gate(GateType::CNOT, {1}, {{0, true}}, 3));
+    EXPECT_EQ(c.complexity(), 2);
 
     EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 4), 0), CircuitException);
     EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 2), 0), CircuitException);
     EXPECT_THROW(c.insert(Gate(GateType::NOT, {0}, {}, 3), 3), CircuitException);
 
     c.insert(Gate(GateType::NOT, {0}, {}, 3));
+    EXPECT_EQ(c.complexity(), 3);
     c.insert(Gate(GateType::kCNOT, {1}, {{0, false},
                                          {2, true}}, 3), 1);
+    EXPECT_EQ(c.complexity(), 4);
     c.insert(Gate(GateType::CSWAP, {0, 2}, {{1, false}}, 3), 4);
+    EXPECT_EQ(c.complexity(), 5);
 
     EXPECT_EQ(c, Circuit("Lines: 3\nNOT(0)\nkCNOT(1; !0, 2)\nSWAP(0, 2)\nCNOT(1; 0)\nCSWAP(0, 2; !1)"));
 }
@@ -127,9 +132,9 @@ TEST(Circuits, Memory) {
     EXPECT_EQ(vec, (std::vector<bool>{0, 1, 1, 0}));
 
     c1.set_memory(3);
-    vec = {0, 1, 1, 1};
-    c1.act(vec);
-    EXPECT_EQ(vec, (std::vector<bool>{0, 0, 0, 0}));
+    std::vector<bool> vec1{0, 1, 1, 1};
+    c1.act(vec1);
+    EXPECT_EQ(vec1, (std::vector<bool>{0, 0, 0, 0}));
 
     Circuit c2("Lines: 3; 1");
     std::vector<BooleanFunction> vec_bf{BooleanFunction("01101000"), BooleanFunction("11110111"),

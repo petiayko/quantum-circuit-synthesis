@@ -1,25 +1,27 @@
 #include "synthesis.hpp"
 
 
-Circuit synthesize(const BinaryMapping &bm, const std::string &algo) {
-    if (algo == "dummy") {
-        return dummy_algorithm(bm);
-    } else if (algo == "rw") {
-        return RW_algorithm(bm);
+Circuit synthesize(const BinaryMapping &bm, Algo algo, bool reduction) {
+    if (algo == Algo::DUMMY) {
+        return dummy_algorithm(bm, reduction);
     }
-    throw SynthException("Unknown synthesis algorithm: " + algo);
+    if (algo == Algo::RW) {
+        return RW_algorithm(bm, reduction);
+    }
+    throw SynthException("Unknown synthesis algorithm");
 }
 
-Circuit synthesize(const Substitution &sub, const std::string &algo) {
-    if (algo == "dummy") {
-        return dummy_algorithm(sub);
-    } else if (algo == "rw") {
-        return RW_algorithm(sub);
+Circuit synthesize(const Substitution &sub, Algo algo, bool reduction) {
+    if (algo == Algo::DUMMY) {
+        return dummy_algorithm(sub, reduction);
     }
-    throw SynthException("Unknown synthesis algorithm: " + algo);
+    if (algo == Algo::RW) {
+        return RW_algorithm(sub, reduction);
+    }
+    throw SynthException("Unknown synthesis algorithm");
 }
 
-Circuit dummy_algorithm(const BinaryMapping &bm) {
+Circuit dummy_algorithm(const BinaryMapping &bm, bool reduction) {
     const auto bm_bf = bm.coordinate_functions();
     std::vector<std::vector<bool>> bm_anf;
     bm_anf.resize(bm_bf.size());
@@ -36,14 +38,19 @@ Circuit dummy_algorithm(const BinaryMapping &bm) {
         }
         for (size_t c_set = 1; c_set < bm_anf[i].size(); c_set++) {
             if (bm_anf[i][c_set]) {
-                std::vector<control> controls;
-                auto numbers = bits_mask(c_set, bm.inputs_number());
-                std::transform(numbers.begin(), numbers.end(), std::back_inserter(controls),
-                               [](auto num) { return std::make_pair(num, true); });
+                controls_type controls;
+                for (const auto num: bits_mask(c_set, bm.inputs_number())) {
+                    controls[num] = true;
+                }
                 c.add(Gate(GateType::kCNOT, {bm.inputs_number() + i}, controls, c_dim));
             }
         }
     }
+
+    if (reduction) {
+        c.reduce();
+    }
+
     return c;
 }
 
@@ -79,10 +86,10 @@ std::vector<Gate> generate_gates(GateType type, size_t nest, const std::vector<s
                                  size_t dim) {
     std::vector<Gate> result;
     for (int i = 0; i < 1 << controls.size(); i++) {
-        std::vector<control> marked_controls;
+        controls_type marked_controls;
         auto mask = decimal_to_binary_v<int>(i, controls.size());
         for (size_t j = 0; j < mask.size(); j++) {
-            marked_controls.emplace_back(controls[j], !mask[j]);
+            marked_controls[controls[j]] = !mask[j];
         }
         result.emplace_back(type, std::vector<size_t>{nest}, marked_controls, dim);
     }
@@ -90,7 +97,7 @@ std::vector<Gate> generate_gates(GateType type, size_t nest, const std::vector<s
     return result;
 }
 
-Circuit RW_algorithm(const BinaryMapping &bm) {
+Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
     auto bm_extend = bm.extend();
     auto bm_cf = bm_extend.coordinate_functions();
     const auto outputs = bm_extend.outputs_number();
@@ -100,7 +107,6 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
     for (int i = outputs - 1;; i--) {
         if (c.produce_mapping() == bm_extend) {
             c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
-            c.simplify();
             return c;
         }
 
@@ -199,24 +205,28 @@ Circuit RW_algorithm(const BinaryMapping &bm) {
         throw SynthException("Unable to synthesize Circuit");
     }
 
+    if (reduction) {
+        c.reduce();
+    }
+
     if (c.produce_mapping() != bm_extend) {
+        LOG_DEBUG("The synthesized circuit produces an incorrect mapping", static_cast<std::string>(c));
         throw SynthException("Unable to synthesize Circuit");
     }
 
     c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
-    c.simplify();
     return c;
 }
 
-Circuit dummy_algorithm(const Substitution &sub) {
+Circuit dummy_algorithm(const Substitution &sub, bool reduction) {
     if (!is_power_of_2(sub.power())) {
         throw SynthException("Substitution size must be power of 2");
     }
     BinaryMapping bm(sub);
-    return dummy_algorithm(bm);
+    return dummy_algorithm(bm, reduction);
 }
 
-Circuit RW_algorithm(const Substitution &sub) {
+Circuit RW_algorithm(const Substitution &sub, bool reduction) {
     if (!is_power_of_2(sub.power())) {
         throw SynthException("Substitution size should be power of 2");
     }
@@ -224,5 +234,5 @@ Circuit RW_algorithm(const Substitution &sub) {
         return Circuit(std::log2(sub.power()));
     }
     BinaryMapping bm(sub);
-    return RW_algorithm(bm);
+    return RW_algorithm(bm, reduction);
 }

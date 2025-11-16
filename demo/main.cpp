@@ -8,14 +8,14 @@
 
 using configuration = std::map<std::string, std::string>;
 
-static const std::string version = "1.0";
-static const std::string program_name = "qcs";
+static const std::string version = "1.1.0";
+static const std::string program_name = "QCS";
 
 void print_program_info() {
     std::cout << program_name << " v" << version << std::endl;
     std::cout << "(c) Peter Makretskiy, IU8 BMSTU, 2025." << std::endl;
-    std::cout << "program for synthesizing quantum circuits from input "
-                 "mapping" << std::endl << std::endl;
+    std::cout << "Program for synthesizing quantum circuits from mapping"
+              << std::endl << std::endl;
 }
 
 void print_program_version() {
@@ -26,50 +26,58 @@ void print_program_help() {
     print_program_info();
 
     std::cout << "Generic options:" << std::endl;
-    std::cout << "  --version       print version" << std::endl;
-    std::cout << "  --help          produce help message" << std::endl;
-    std::cout << "  --log arg       minimum level of logging ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')"
+    std::cout << "  -V, --version       print version" << std::endl;
+    std::cout << "  -h, --help          produce help message" << std::endl;
+    std::cout << "  -l, --log ARG       minimum level of logging: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL' "
+                 "(default: 'ERROR')"
               << std::endl;
     std::cout << std::endl;
 
     std::cout << "Operating modes:" << std::endl;
-    std::cout << "  --type arg      type of input ('tt' truth table, 'sub' substitution, 'qc' quantum circuit)"
+    std::cout << "  -t, --type ARG      type of input ('tt' - truth table, 'sub' - substitution, "
+                 "'qc' - quantum circuit)"
               << std::endl;
     std::cout << std::endl;
 
     std::cout << "Synthesis options:" << std::endl;
-    std::cout << "  --algo arg      algorithm to synthesis quantum circuit ('dummy', 'rw')" << std::endl;
+    std::cout << "  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw')" << std::endl;
+    std::cout << "  -r, --reduction     reduce the output circuit (default: false)" << std::endl;
     std::cout << std::endl;
 
     std::cout << "Parameters:" << std::endl;
-    std::cout << "  --input arg     path to input file" << std::endl;
-    std::cout << "  --output arg    path to output file" << std::endl;
+    std::cout << "  -i, --input ARG     path to input file" << std::endl;
+    std::cout << "  -o, --output ARG    path to output file (default: prints into standard output)" << std::endl;
     std::cout << std::endl;
 }
 
 configuration parse_arguments(int argc, char *argv[]) {
     const std::map<std::string, std::string> arguments_map = {
-            {"--version", "--version"},
-            {"--help",    "--help"},
-            {"-l",        "--log"},
-            {"--log",     "--log"},
-            {"-t",        "--type"},
-            {"--type",    "--type"},
-            {"-a",        "--algo"},
-            {"--algo",    "--algo"},
-            {"-i",        "--input"},
-            {"--input",   "--input"},
-            {"-o",        "--output"},
-            {"--output",  "--output"},
+            {"-V",          "--version"},
+            {"--version",   "--version"},
+            {"-h",          "--help"},
+            {"--help",      "--help"},
+            {"-l",          "--log"},
+            {"--log",       "--log"},
+            {"-t",          "--type"},
+            {"--type",      "--type"},
+            {"-a",          "--algo"},
+            {"--algo",      "--algo"},
+            {"-r",          "--reduction"},
+            {"--reduction", "--reduction"},
+            {"-i",          "--input"},
+            {"--input",     "--input"},
+            {"-o",          "--output"},
+            {"--output",    "--output"},
     };
     std::map<std::string, bool> arguments_accounting = {
-            {"--version", false},
-            {"--help",    false},
-            {"--log",     false},
-            {"--type",    false},
-            {"--algo",    false},
-            {"--input",   false},
-            {"--output",  false},
+            {"--version",   false},
+            {"--help",      false},
+            {"--log",       false},
+            {"--type",      false},
+            {"--algo",      false},
+            {"--reduction", false},
+            {"--input",     false},
+            {"--output",    false},
     };
 
     configuration config;
@@ -88,7 +96,7 @@ configuration parse_arguments(int argc, char *argv[]) {
         }
         arguments_accounting[full_arg_name] = true;
         if (i + 1 >= argc || argv[i + 1][0] == '-') {
-            if (full_arg_name == "--version" || full_arg_name == "--help") {
+            if (full_arg_name == "--version" || full_arg_name == "--help" || full_arg_name == "--reduction") {
                 config[full_arg_name] = "";
                 i++;
             } else {
@@ -141,17 +149,39 @@ int main(int argc, char *argv[]) {
         LOG_ERROR("Processing parameters", "Type of input was not provided");
         return 1;
     }
-    auto type = it->second;
-    trim(type);
-    to_lower(type);
+    auto type_s = it->second;
+    InputType type = InputType::EMPTY;
+    trim(type_s);
+    to_lower(type_s);
+
+    if (type_s == "tt") {
+        type = InputType::TABLE;
+    } else if (type_s == "sub") {
+        type = InputType::SUBSTITUTION;
+    } else if (type_s == "qc") {
+        type = InputType::CIRCUIT;
+    } else if (!type_s.empty()) {
+        type = InputType::UNKNOWN;
+    }
 
     it = config.find("--algo");
-    std::string algo;
+    std::string algo_s;
+    Algo algo = Algo::EMPTY;
     if (it != config.end()) {
-        algo = it->second;
-        trim(algo);
-        to_lower(algo);
+        algo_s = it->second;
+        trim(algo_s);
+        to_lower(algo_s);
     }
+
+    if (algo_s == "dummy") {
+        algo = Algo::DUMMY;
+    } else if (algo_s == "rw") {
+        algo = Algo::RW;
+    } else if (!algo_s.empty()) {
+        algo = Algo::UNKNOWN;
+    }
+
+    bool reduction = config.count("--reduction");
 
     it = config.find("--output");
     std::string output;
@@ -186,7 +216,7 @@ int main(int argc, char *argv[]) {
 
     LOG_INFO("Starting", "");
     try {
-        process_config(type, algo, input, output);
+        process_config(type, algo, reduction, input, output);
     } catch (const std::exception &e) {
         LOG_ERROR("Finishing", std::string("Error: ") + e.what());
     }
