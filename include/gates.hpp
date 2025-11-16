@@ -17,7 +17,8 @@ enum class GateType {
 };
 
 // true - direct; false - inverted
-using control = std::pair<size_t, bool>;
+using control_type = std::pair<size_t, bool>;
+using controls_type = std::map<size_t, bool>;
 
 class Circuit;
 
@@ -25,7 +26,7 @@ class Gate {
 public:
     Gate() = default;
 
-    explicit Gate(GateType, const std::vector<size_t> &, const std::vector<control> &, size_t);
+    explicit Gate(GateType, const std::vector<size_t> &, const controls_type &, size_t);
 
     explicit Gate(const std::string &, size_t);
 
@@ -59,13 +60,13 @@ private:
     GateType type_{};
     size_t dim_{};
     std::vector<size_t> nests_;
-    std::vector<control> controls_;
+    controls_type controls_;
 
     friend class Circuit;
 
     void validate_() const;
 
-    void init_(GateType, const std::vector<size_t> &, const std::vector<control> &, size_t);
+    void init_(GateType, const std::vector<size_t> &, const controls_type &, size_t);
 
     void swap_lines_(const Gate &);
 

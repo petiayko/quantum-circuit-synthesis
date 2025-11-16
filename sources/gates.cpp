@@ -1,7 +1,7 @@
 #include "gates.hpp"
 
 
-Gate::Gate(GateType type, const std::vector<size_t> &nests, const std::vector<control> &controls, size_t dim) {
+Gate::Gate(GateType type, const std::vector<size_t> &nests, const controls_type &controls, size_t dim) {
     init_(type, nests, controls, dim);
 }
 
@@ -81,7 +81,7 @@ Gate::Gate(const std::string &s, size_t dim) {
     std::stringstream ss;
     ss << controls_line;
 
-    std::vector<control> controls;
+    controls_type controls;
     std::string num_s;
     size_t num;
     bool is_direct = false;
@@ -100,7 +100,7 @@ Gate::Gate(const std::string &s, size_t dim) {
         if (!try_string_to_decimal<size_t>(num_s, num)) {
             throw StringException("Invalid num: " + num_s);
         }
-        controls.emplace_back(num, is_direct);
+        controls[num] = is_direct;
     }
 
     init_(type, string_to_num_vector(nests_line, ','), controls, dim);
@@ -120,9 +120,10 @@ std::vector<size_t> Gate::nests() const noexcept {
 
 std::vector<size_t> Gate::controls() const noexcept {
     std::vector<size_t> controls;
-    for (const auto &[num, is_direct]: controls_) {
-        controls.push_back(num);
-    }
+    std::transform(controls_.begin(), controls_.end(), std::back_inserter(controls),
+                   [](const auto p) {
+                       return p.first;
+                   });
     return controls;
 }
 
@@ -170,22 +171,14 @@ bool Gate::is_commutes(const Gate &gate) const {
         // first criteria
         auto t1 = nests_.front();
         auto t2 = gate.nests_.front();
-        if (std::find_if(controls_.begin(), controls_.end(),
-                         [t2](const auto &p) { return p.first == t2; }) == controls_.end() &&
-            std::find_if(gate.controls_.begin(), gate.controls_.end(),
-                         [t1](const auto &p) { return p.first == t1; }) == gate.controls_.end()) {
+        if (!controls_.contains(t2) && !gate.controls_.contains(t1)) {
             return true;
         }
 
         // second criteria
-        for (auto [num, is_inverted]: controls_) {
-            for (auto [num2, is_inverted2]: gate.controls_) {
-                if (num == num2 && is_inverted && !is_inverted2) {
-                    return true;
-                }
-                if (num == num2 && !is_inverted && is_inverted2) {
-                    return true;
-                }
+        for (const auto &[num, is_inverted]: controls_) {
+            if (gate.controls_.contains(num) && (is_inverted != gate.controls_.at(num))) {
+                return true;
             }
         }
         return false;
@@ -202,20 +195,14 @@ bool Gate::is_commutes(const Gate &gate) const {
 
         // second criteria
         if (!(t11 == t21 || t11 == t22 || t12 == t21 || t12 == t22) &&
-            std::find_if(gate.controls_.begin(), gate.controls_.end(),
-                         [t11, t12](const auto p) {
-                             return p.first == t11 || p.first == t12;
-                         }) == gate.controls_.end() &&
-            std::find_if(controls_.begin(), controls_.end(),
-                         [t21, t22](const auto p) {
-                             return p.first == t21 || p.first == t22;
-                         }) == controls_.end()) {
+            !gate.controls_.contains(t11) && !gate.controls_.contains(t12) &&
+            !controls_.contains(t21) && !controls_.contains(t22)) {
             return true;
         }
 
         if (type_ == GateType::CSWAP && gate.type_ == GateType::CSWAP) {
-            auto control1 = controls_.front();
-            auto control2 = gate.controls_.front();
+            auto control1 = *controls_.begin();
+            auto control2 = *gate.controls_.begin();
             if (control1.first == control2.first && control1.second != control2.second) {
                 return true;
             }
@@ -234,12 +221,9 @@ bool Gate::is_commutes(const Gate &gate) const {
     // first criteria
     // (t∉C∪T)⋀(T∩(I∪J)=∅)
     if ((t != t1 && t != t2) &&
-        std::find_if(g_non_swap.controls_.begin(), g_non_swap.controls_.end(),
-                     [t1, t2](const auto p) {
-                         return p.first == t1 || p.first == t2;
-                     }) == g_non_swap.controls_.end()) {
+        !g_non_swap.controls_.contains(t1) && !g_non_swap.controls_.contains(t2)) {
         if (g_swap.type_ == GateType::CSWAP) {
-            return t != g_swap.controls_.front().first;
+            return t != g_swap.controls_.begin()->first;
         }
         return true;
     }
@@ -255,7 +239,7 @@ bool Gate::is_commutes(const Gate &gate) const {
                           return !p.second && (p.first == t1 || p.first == t2);
                       }) == 2) {
         if (g_swap.type_ == GateType::CSWAP) {
-            return t != g_swap.controls_.front().first;
+            return t != g_swap.controls_.begin()->first;
         }
         return true;
     }
@@ -263,11 +247,8 @@ bool Gate::is_commutes(const Gate &gate) const {
     if (g_swap.type_ == GateType::CSWAP) {
         // third criteria
         // (C∩I≠∅)⋁(C∩J≠∅)
-        if (std::find_if(g_non_swap.controls_.begin(), g_non_swap.controls_.end(),
-                         [&g_swap](const auto p) {
-                             return p.first == g_swap.controls_.front().first &&
-                                    p.second != g_swap.controls_.front().second;
-                         }) != g_non_swap.controls_.end()) {
+        if (g_non_swap.controls_.contains(g_swap.controls_.begin()->first) &&
+            g_non_swap.controls_.at(g_swap.controls_.begin()->first) != g_swap.controls_.begin()->second) {
             return true;
         }
     }
@@ -288,7 +269,7 @@ void Gate::act(binary_vector &vec) const {
     if (type_ == GateType::NOT) {
         vec[nests_.front()] = !vec[nests_.front()];
     } else if (type_ == GateType::CNOT) {
-        vec[nests_.front()] = vec[nests_.front()] ^ vec[controls_.front().first] ^ !controls_.front().second;
+        vec[nests_.front()] = vec[nests_.front()] ^ vec[controls_.begin()->first] ^ !controls_.begin()->second;
     } else if (type_ == GateType::kCNOT) {
         bool control_signal = true;
         for (const auto &[num, is_direct]: controls_) {
@@ -298,8 +279,8 @@ void Gate::act(binary_vector &vec) const {
     } else if (type_ == GateType::SWAP) {
         swap(vec[nests_.front()], vec[nests_.back()]);
     } else if (type_ == GateType::CSWAP) {
-        if ((vec[controls_.front().first] && controls_.front().second) ||
-            (!vec[controls_.front().first] && !controls_.front().second)) {
+        if ((vec[controls_.begin()->first] && controls_.begin()->second) ||
+            (!vec[controls_.begin()->first] && !controls_.begin()->second)) {
             swap(vec[nests_.front()], vec[nests_.back()]);
         }
     }
@@ -319,7 +300,7 @@ void Gate::act(cf_set &vec) const {
     if (type_ == GateType::NOT) {
         ~vec[nests_.front()];
     } else if (type_ == GateType::CNOT) {
-        vec[nests_.front()] += vec[controls_.front().first] + BooleanFunction(!controls_.front().second, dim_);
+        vec[nests_.front()] += vec[controls_.begin()->first] + BooleanFunction(!controls_.begin()->second, dim_);
     } else if (type_ == GateType::kCNOT) {
         BooleanFunction control_signal(true, dim_);
         for (const auto &[num, is_direct]: controls_) {
@@ -335,8 +316,8 @@ void Gate::act(cf_set &vec) const {
         vec[nests_.back()] += vec[nests_.front()];
         vec[nests_.front()] += vec[nests_.back()];
     } else if (type_ == GateType::CSWAP) {
-        BooleanFunction term = vec[controls_.front().first] * (vec[nests_.front()] + vec[nests_.back()]);
-        if (!controls_.front().second) {
+        BooleanFunction term = vec[controls_.begin()->first] * (vec[nests_.front()] + vec[nests_.back()]);
+        if (!controls_.begin()->second) {
             vec[nests_.front()] += vec[nests_.back()];
             vec[nests_.back()] += vec[nests_.front()];
             vec[nests_.front()] += vec[nests_.back()];
@@ -365,9 +346,6 @@ void Gate::validate_() const {
         }
         if (std::find(nests_.begin(), nests_.end(), num) != nests_.end()) {
             throw GateException("Line selected as nest and control: " + std::to_string(num));
-        }
-        if (std::count_if(controls_.begin(), controls_.end(), [num](const auto p) { return p.first == num; }) != 1) {
-            throw GateException("Nest line selected more that once: " + std::to_string(num));
         }
     }
     switch (type_) {
@@ -428,7 +406,7 @@ void Gate::validate_() const {
     }
 }
 
-void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vector<control> &controls, size_t dim) {
+void Gate::init_(GateType type, const std::vector<size_t> &nests, const controls_type &controls, size_t dim) {
     type_ = type;
     dim_ = dim;
     nests_ = nests;
@@ -437,7 +415,6 @@ void Gate::init_(GateType type, const std::vector<size_t> &nests, const std::vec
     this->validate_();
 
     std::sort(nests_.begin(), nests_.end());
-    std::sort(controls_.begin(), controls_.end());
 }
 
 void Gate::swap_lines_(const Gate &g) {
@@ -455,17 +432,18 @@ void Gate::swap_lines_(const Gate &g) {
         }
     }
 
-    for (auto &[c, is_inverted]: controls_) {
-        if (c == t1) {
-            c = t2;
-        } else if (c == t2) {
-            c = t1;
-        }
+    if (controls_.contains(t1)) {
+        auto control_line = controls_.extract(t1);
+        control_line.key() = t2;
+        controls_.insert(std::move(control_line));
+    } else if (controls_.contains(t2)) {
+        auto control_line = controls_.extract(t2);
+        control_line.key() = t1;
+        controls_.insert(std::move(control_line));
     }
 
     this->validate_();
     std::sort(nests_.begin(), nests_.end());
-    std::sort(controls_.begin(), controls_.end());
 }
 
 bool Gate::rR1_(Gate &gate) noexcept {
@@ -510,10 +488,11 @@ bool Gate::rR3_(Gate &gate) noexcept {
         return false;
     }
 
-    std::vector<control> difference;
-    std::set_difference(controls_.begin(), controls_.end(), gate.controls_.begin(), gate.controls_.end(), std::back_inserter(difference));
+    std::vector<control_type> difference;
+    std::set_difference(controls_.begin(), controls_.end(), gate.controls_.begin(), gate.controls_.end(),
+                        std::back_inserter(difference));
     if (difference.size() == 1 && difference.front().first) {
-        for (auto& [number, is_inverted] : controls_) {
+        for (auto &[number, is_inverted]: controls_) {
             if (number == difference.front().first) {
                 is_inverted = !is_inverted;
                 break;
@@ -524,9 +503,10 @@ bool Gate::rR3_(Gate &gate) noexcept {
     }
 
     difference.clear();
-    std::set_difference(gate.controls_.begin(), gate.controls_.end(), controls_.begin(), controls_.end(), std::back_inserter(difference));
+    std::set_difference(gate.controls_.begin(), gate.controls_.end(), controls_.begin(), controls_.end(),
+                        std::back_inserter(difference));
     if (difference.size() == 1 && difference.front().first) {
-        for (auto& [number, is_inverted] : gate.controls_) {
+        for (auto &[number, is_inverted]: gate.controls_) {
             if (number == difference.front().first) {
                 is_inverted = !is_inverted;
                 break;
@@ -550,16 +530,16 @@ bool Gate::rR4_(Gate &gate) noexcept {
     if (controls_.size() != gate.controls_.size()) {
         return false;
     }
-    for (size_t i = 0; i < controls_.size(); i++) {
-        if (controls_[i].first != gate.controls_[i].first) {
-            return false;
-        }
-        if (controls_[i].second != gate.controls_[i].second) {
-            gate.clear();
-            controls_.erase(std::next(controls_.begin() + i));
-            return true;
-        }
-    }
+//    for (size_t i = 0; i < controls_.size(); i++) {
+//        if (controls_[i].first != gate.controls_[i].first) {
+//            return false;
+//        }
+//        if (controls_[i].second != gate.controls_[i].second) {
+//            gate.clear();
+//            controls_.erase(std::next(controls_.begin() + i));
+//            return true;
+//        }
+//    }
     return false;
 }
 
@@ -574,29 +554,29 @@ bool Gate::rR5_(Gate &gate) noexcept {
         return false;
     }
 
-    std::vector<size_t> controls_to_delete_this;
-    std::vector<size_t> controls_to_delete_gate;
-
-    for (size_t i = 0; i < controls_.size(); i++) {
-        if (controls_[i].first != gate.controls_[i].first) {
-            return false;
-        }
-        if (controls_[i].second && (controls_[i].second != gate.controls_[i].second)) {
-            controls_to_delete_gate.push_back(i);
-        } else if (!controls_[i].second && (controls_[i].second != gate.controls_[i].second)) {
-            controls_to_delete_this.push_back(i);
-        }
-    }
-
-    if (!(controls_to_delete_this.size() % 2)) {
-        for (const auto num: controls_to_delete_this) {
-            controls_.erase(std::next(controls_.begin() + num));
-        }
-        for (const auto num: controls_to_delete_gate) {
-            gate.controls_.erase(std::next(controls_.begin() + num));
-        }
-        return true;
-    }
+//    std::vector<size_t> controls_to_delete_this;
+//    std::vector<size_t> controls_to_delete_gate;
+//
+//    for (size_t i = 0; i < controls_.size(); i++) {
+//        if (controls_[i].first != gate.controls_[i].first) {
+//            return false;
+//        }
+//        if (controls_[i].second && (controls_[i].second != gate.controls_[i].second)) {
+//            controls_to_delete_gate.push_back(i);
+//        } else if (!controls_[i].second && (controls_[i].second != gate.controls_[i].second)) {
+//            controls_to_delete_this.push_back(i);
+//        }
+//    }
+//
+//    if (!(controls_to_delete_this.size() % 2)) {
+//        for (const auto num: controls_to_delete_this) {
+//            controls_.erase(std::next(controls_.begin() + num));
+//        }
+//        for (const auto num: controls_to_delete_gate) {
+//            gate.controls_.erase(std::next(controls_.begin() + num));
+//        }
+//        return true;
+//    }
 
     return false;
 }

@@ -189,7 +189,7 @@ TEST(Circuits, Production) {
     }
 }
 
-TEST(Circuit, Redution) {
+TEST(Circuits, Redution) {
     {
         Circuit c("Lines: 3");
         Circuit c1(c);

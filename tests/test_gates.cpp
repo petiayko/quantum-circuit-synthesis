@@ -30,10 +30,6 @@ TEST(Gates, Constructor) {
     EXPECT_THROW(Gate(GateType::kCNOT, {1}, {{1, false},
                                              {4, true}}, 5), GateException);
     EXPECT_THROW(Gate(GateType::kCNOT, {0, 1}, {{1, false}}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::kCNOT, {0}, {{1, true},
-                                             {1, true}}, 5), GateException);
-    EXPECT_THROW(Gate(GateType::kCNOT, {0}, {{1, true},
-                                             {1, false}}, 5), GateException);
 
     // SWAP
     EXPECT_THROW(Gate(GateType::SWAP, {}, {{1, true}}, 5), GateException);

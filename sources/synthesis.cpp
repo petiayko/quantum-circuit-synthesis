@@ -38,10 +38,10 @@ Circuit dummy_algorithm(const BinaryMapping &bm) {
         }
         for (size_t c_set = 1; c_set < bm_anf[i].size(); c_set++) {
             if (bm_anf[i][c_set]) {
-                std::vector<control> controls;
-                auto numbers = bits_mask(c_set, bm.inputs_number());
-                std::transform(numbers.begin(), numbers.end(), std::back_inserter(controls),
-                               [](auto num) { return std::make_pair(num, true); });
+                controls_type controls;
+                for (const auto num : bits_mask(c_set, bm.inputs_number())) {
+                    controls[num] = true;
+                }
                 c.add(Gate(GateType::kCNOT, {bm.inputs_number() + i}, controls, c_dim));
             }
         }
@@ -81,10 +81,10 @@ std::vector<Gate> generate_gates(GateType type, size_t nest, const std::vector<s
                                  size_t dim) {
     std::vector<Gate> result;
     for (int i = 0; i < 1 << controls.size(); i++) {
-        std::vector<control> marked_controls;
+        controls_type marked_controls;
         auto mask = decimal_to_binary_v<int>(i, controls.size());
         for (size_t j = 0; j < mask.size(); j++) {
-            marked_controls.emplace_back(controls[j], !mask[j]);
+            marked_controls[controls[j]] = !mask[j];
         }
         result.emplace_back(type, std::vector<size_t>{nest}, marked_controls, dim);
     }
