@@ -154,8 +154,6 @@ bool Gate::empty() const noexcept {
 }
 
 bool Gate::is_commutes(const Gate &gate) const {
-    // TODO make it private??
-
     if (dim_ != gate.dim_) {
         throw GateException("Impossible to determine the commutability for gates of different dimensions");
     }
@@ -539,6 +537,9 @@ bool Gate::rR4_(Gate &gate) noexcept {
     }
     gate.clear();
     controls_.extract(k);
+    if (controls_.size() == 1) {
+        type_ = GateType::CNOT;
+    }
     return true;
 }
 
@@ -583,7 +584,13 @@ bool Gate::rR5_(Gate &gate) noexcept {
     }
 
     controls_.extract(q);
+    if (controls_.size() == 1) {
+        type_ = GateType::CNOT;
+    }
     gate.controls_.extract(p);
+    if (gate.controls_.size() == 1) {
+        gate.type_ = GateType::CNOT;
+    }
 
     return true;
 }
@@ -929,12 +936,6 @@ void Circuit::reduce() noexcept {
             break;
         }
     }
-
-//    for (size_t i = 0; i < gates_.size() - 2; i++) {
-//        if (gates_[i].rR2_(gates_[i + 1], gates_[i + 2])) {
-//
-//        }
-//    }
 
     gates_.erase(std::remove_if(gates_.begin(), gates_.end(), [](const auto &g) {
         return g.type_ == GateType::EMPTY;

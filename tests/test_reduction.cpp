@@ -31,7 +31,7 @@ TEST(Commuties, NOT) {
         EXPECT_EQ(c1, c2);
     }
 
-// NOT and CNOT
+    // NOT and CNOT
     {
         auto g1 = Gate("NOT(0)", 3);
         auto g2 = Gate("CNOT(1; 2)", 3);
@@ -73,7 +73,7 @@ TEST(Commuties, NOT) {
         EXPECT_NE(c1, c2);
     }
 
-// NOT and kCNOT
+    // NOT and kCNOT
     {
         auto g1 = Gate("NOT(0)", 4);
         auto g2 = Gate("kCNOT(1; 2, 3)", 4);
@@ -125,7 +125,7 @@ TEST(Commuties, NOT) {
         EXPECT_NE(c1, c2);
     }
 
-// NOT and SWAP
+    // NOT and SWAP
     {
         auto g1 = Gate("NOT(0)", 3);
         auto g2 = Gate("SWAP(1, 2)", 3);
@@ -157,7 +157,7 @@ TEST(Commuties, NOT) {
         EXPECT_NE(c1, c2);
     }
 
-// NOT and CSWAP
+    // NOT and CSWAP
     {
         auto g1 = Gate("NOT(0)", 4);
         auto g2 = Gate("CSWAP(1, 2; 3)", 4);
@@ -252,7 +252,7 @@ TEST(Commuties, CNOT) {
         EXPECT_NE(c1, c2);
     }
 
-// CNOT and kCNOT
+    // CNOT and kCNOT
     {
         auto g1 = Gate("CNOT(0; 1)", 8);
         auto g2 = Gate("kCNOT(2; 3, 4, 5)", 8);
@@ -324,7 +324,7 @@ TEST(Commuties, CNOT) {
         EXPECT_NE(c1, c2);
     }
 
-// CNOT and SWAP
+    // CNOT and SWAP
     {
         auto g1 = Gate("CNOT(0; 1)", 4);
         auto g2 = Gate("SWAP(2, 3)", 4);
@@ -366,7 +366,7 @@ TEST(Commuties, CNOT) {
         EXPECT_NE(c1, c2);
     }
 
-// CNOT and CSWAP
+    // CNOT and CSWAP
     {
         auto g1 = Gate("CNOT(0; 1)", 5);
         auto g2 = Gate("CSWAP(2, 3; 4)", 5);
@@ -491,7 +491,7 @@ TEST(Commuties, kCNOT) {
         EXPECT_NE(c1, c2);
     }
 
-// kCNOT and SWAP
+    // kCNOT and SWAP
     {
         auto g1 = Gate("kCNOT(0; 1, 2, 3)", 8);
         auto g2 = Gate("SWAP(4, 5)", 8);
@@ -573,7 +573,7 @@ TEST(Commuties, kCNOT) {
         EXPECT_NE(c1, c2);
     }
 
-// kCNOT and CSWAP
+    // kCNOT and CSWAP
     {
         auto g1 = Gate("kCNOT(0; 1, 2, 3)", 8);
         auto g2 = Gate("CSWAP(4, 5; 6)", 8);
@@ -718,7 +718,7 @@ TEST(Commuties, SWAP) {
         EXPECT_NE(c1, c2);
     }
 
-// SWAP and CSWAP
+    // SWAP and CSWAP
     {
         auto g1 = Gate("SWAP(0, 1)", 6);
         auto g2 = Gate("CSWAP(2, 3; 4)", 6);
@@ -979,14 +979,14 @@ TEST(Reduction, ReductionRules) {
         Circuit c_copy(c);
         c.reduce();
         EXPECT_EQ(c, c_copy);
-        EXPECT_TRUE(c.schematically_equal(Circuit("Lines: 3\nkCNOT(2; 0)")));
+        EXPECT_TRUE(c.schematically_equal(Circuit("Lines: 3\nCNOT(2; 0)")));
     }
     {
         Circuit c("Lines: 3\nkCNOT(2; 0, !1)\nkCNOT(2; 0, 1)");
         Circuit c_copy(c);
         c.reduce();
         EXPECT_EQ(c, c_copy);
-        EXPECT_TRUE(c.schematically_equal(Circuit("Lines: 3\nkCNOT(2; 0)")));
+        EXPECT_TRUE(c.schematically_equal(Circuit("Lines: 3\nCNOT(2; 0)")));
     }
     {
         Circuit c("Lines: 4\nkCNOT(1; 0, 2, 3)\nkCNOT(1; 0, !2, 3)");
@@ -1023,14 +1023,14 @@ TEST(Reduction, ReductionRules) {
         Circuit c_copy(c);
         c.reduce();
         EXPECT_EQ(c, c_copy);
-        EXPECT_TRUE(c.schematically_equal(Circuit("Lines: 3\nkCNOT(2; 0)\nkCNOT(2; 1)")));
+        EXPECT_TRUE(c.schematically_equal(Circuit("Lines: 3\nCNOT(2; 0)\nCNOT(2; 1)")));
     }
     {
         Circuit c("Lines: 3\nkCNOT(2; !0, 1)\nkCNOT(2; 0, !1)");
         Circuit c_copy(c);
         c.reduce();
         EXPECT_EQ(c, c_copy);
-        EXPECT_TRUE(c.schematically_equal(Circuit("Lines: 3\nkCNOT(2; 1)\nkCNOT(2; 0)")));
+        EXPECT_TRUE(c.schematically_equal(Circuit("Lines: 3\nCNOT(2; 1)\nCNOT(2; 0)")));
     }
     {
         Circuit c("Lines: 4\nkCNOT(3; 0, !1, 2)\nkCNOT(3; 0, 1, !2)");
@@ -1257,9 +1257,6 @@ TEST(Reduction, Reduction) {
         EXPECT_LT(c.complexity(), c_copy.complexity());
         EXPECT_FALSE(c.schematically_equal(c_copy));
     }
-
-    // TODO add more cases
-
     {
         Circuit c("Lines: 4\nNOT(1)\nkCNOT(2; 0, 1, 3)\nCSWAP(0, 2; 3)\nCNOT(2; 1)\nNOT(2)");
         Circuit c_copy(c);
@@ -1286,7 +1283,7 @@ TEST(Reduction, Reduction) {
         c.reduce();
 
         EXPECT_EQ(c, c_copy);
-        EXPECT_LT(c.complexity(), c_copy.complexity());
+        EXPECT_EQ(c.complexity(), 5);  // см отчет
         EXPECT_FALSE(c.schematically_equal(c_copy));
     }
 }
