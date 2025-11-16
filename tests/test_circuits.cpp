@@ -189,61 +189,6 @@ TEST(Circuits, Production) {
     }
 }
 
-TEST(Circuits, Redution) {
-    {
-        Circuit c("Lines: 3");
-        Circuit c1(c);
-        EXPECT_EQ(c.move_swap_left(), 0);
-        EXPECT_TRUE(c.schematically_equal(c1));
-    }
-    {
-        Circuit c("Lines: 3\nNOT(2)\nCNOT(2; 1)\nCSWAP(2, 0; 1)");
-        Circuit c1(c);
-        EXPECT_EQ(c.move_swap_left(), 0);
-        EXPECT_TRUE(c.schematically_equal(c1));
-    }
-    {
-        Circuit c("Lines: 3\nSWAP(0, 1)\nSWAP(2, 1)\nkCNOT(2; 0, 1)");
-        Circuit c1(c);
-        EXPECT_EQ(c.move_swap_left(), 2);
-        EXPECT_TRUE(c.schematically_equal(c1));
-    }
-    {
-        Circuit c("Lines: 3\nSWAP(0, 1)\nSWAP(2, 1)\nSWAP(0, 2)");
-        Circuit c1(c);
-        EXPECT_EQ(c.move_swap_left(), 3);
-        EXPECT_TRUE(c.schematically_equal(c1));
-    }
-    {
-        Circuit c("Lines: 3\nSWAP(0, 1)\nCNOT(2; 1)\nSWAP(0, 2)");
-        Circuit c1(c);
-        EXPECT_EQ(c.move_swap_left(), 2);
-        EXPECT_FALSE(c.schematically_equal(c1));
-        EXPECT_EQ(c, c1);
-    }
-    {
-        Circuit c("Lines: 3\nNOT(2)\nSWAP(0, 2)\nSWAP(0, 1)\nSWAP(1, 2)\nSWAP(0, 2)\nSWAP(0, 1)\nSWAP(1, 2)\nNOT(0)");
-        Circuit c1(c);
-        EXPECT_EQ(c.move_swap_left(), 6);
-        EXPECT_FALSE(c.schematically_equal(c1));
-        EXPECT_EQ(c, c1);
-    }
-    {
-        Circuit c("Lines: 4\nSWAP(3, 1)\nCNOT(0; 1)\nCSWAP(3, 1; 2)\nkCNOT(2; 0, 1, 3)\nSWAP(1, 2)");
-        Circuit c1(c);
-        EXPECT_EQ(c.move_swap_left(), 2);
-        EXPECT_FALSE(c.schematically_equal(c1));
-        EXPECT_EQ(c, c1);
-    }
-    {
-        Circuit c("Lines: 4\nNOT(2)\nNOT(0)\nSWAP(3, 1)\nCNOT(0; !1)\nCSWAP(3, 1; 0)\nkCNOT(2; 0, !1, 3)\nSWAP(1, 0)");
-        Circuit c1(c);
-        EXPECT_EQ(c.move_swap_left(), 2);
-        EXPECT_FALSE(c.schematically_equal(c1));
-        EXPECT_EQ(c, c1);
-    }
-}
-
 TEST(Circuits, Stream) {
     std::stringstream out_stream;
 

@@ -80,7 +80,9 @@ private:
 
     bool rR5_(Gate &) noexcept;
 
-    bool rR6_(Gate &, Gate &) noexcept;
+    bool rR6_direct_(Gate &, Gate &) noexcept;
+
+    bool rR6_reversed_(Gate &, Gate &) noexcept;
 };
 
 

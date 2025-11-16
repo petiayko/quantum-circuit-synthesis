@@ -432,7 +432,9 @@ void Gate::swap_lines_(const Gate &g) {
         }
     }
 
-    if (controls_.contains(t1)) {
+    if (controls_.contains(t1) && controls_.contains(t2)) {
+        std::swap(controls_[t1], controls_[t2]);
+    } else if (controls_.contains(t1)) {
         auto control_line = controls_.extract(t1);
         control_line.key() = t2;
         controls_.insert(std::move(control_line));
@@ -491,36 +493,26 @@ bool Gate::rR3_(Gate &gate) noexcept {
     std::vector<control_type> difference;
     std::set_difference(controls_.begin(), controls_.end(), gate.controls_.begin(), gate.controls_.end(),
                         std::back_inserter(difference));
-    if (difference.size() == 1 && difference.front().first) {
-        for (auto &[number, is_inverted]: controls_) {
-            if (number == difference.front().first) {
-                is_inverted = !is_inverted;
-                break;
-            }
-        }
-        gate.clear();
-        return true;
-    }
-
-    difference.clear();
     std::set_difference(gate.controls_.begin(), gate.controls_.end(), controls_.begin(), controls_.end(),
                         std::back_inserter(difference));
-    if (difference.size() == 1 && difference.front().first) {
-        for (auto &[number, is_inverted]: gate.controls_) {
-            if (number == difference.front().first) {
-                is_inverted = !is_inverted;
-                break;
-            }
-        }
+
+    if (difference.size() != 1) {
+        return false;
+    }
+    if (auto it = controls_.find(difference.front().first); it != controls_.end()) {
+        it->second = !it->second;
+        gate.clear();
+        return true;
+    } else if (it = gate.controls_.find(difference.front().first); it != gate.controls_.end()) {
+        it->second = !it->second;
         this->clear();
         return true;
     }
+
     return false;
 }
 
 bool Gate::rR4_(Gate &gate) noexcept {
-    // переписать по Закаблукову
-
     if (type_ != GateType::kCNOT || gate.type_ != GateType::kCNOT) {
         return false;
     }
@@ -530,17 +522,24 @@ bool Gate::rR4_(Gate &gate) noexcept {
     if (controls_.size() != gate.controls_.size()) {
         return false;
     }
-//    for (size_t i = 0; i < controls_.size(); i++) {
-//        if (controls_[i].first != gate.controls_[i].first) {
-//            return false;
-//        }
-//        if (controls_[i].second != gate.controls_[i].second) {
-//            gate.clear();
-//            controls_.erase(std::next(controls_.begin() + i));
-//            return true;
-//        }
-//    }
-    return false;
+    // k not in I2 and not in J1
+    bool is_only = false;
+    size_t k = 0;
+    for (auto &[num, is_inverted]: controls_) {
+        if (!gate.controls_.contains(num)) {
+            return false;
+        }
+        if (is_inverted != gate.controls_[num]) {
+            if (is_only) {
+                return false;
+            }
+            k = num;
+            is_only = true;
+        }
+    }
+    gate.clear();
+    controls_.extract(k);
+    return true;
 }
 
 bool Gate::rR5_(Gate &gate) noexcept {
@@ -554,34 +553,42 @@ bool Gate::rR5_(Gate &gate) noexcept {
         return false;
     }
 
-//    std::vector<size_t> controls_to_delete_this;
-//    std::vector<size_t> controls_to_delete_gate;
-//
-//    for (size_t i = 0; i < controls_.size(); i++) {
-//        if (controls_[i].first != gate.controls_[i].first) {
-//            return false;
-//        }
-//        if (controls_[i].second && (controls_[i].second != gate.controls_[i].second)) {
-//            controls_to_delete_gate.push_back(i);
-//        } else if (!controls_[i].second && (controls_[i].second != gate.controls_[i].second)) {
-//            controls_to_delete_this.push_back(i);
-//        }
-//    }
-//
-//    if (!(controls_to_delete_this.size() % 2)) {
-//        for (const auto num: controls_to_delete_this) {
-//            controls_.erase(std::next(controls_.begin() + num));
-//        }
-//        for (const auto num: controls_to_delete_gate) {
-//            gate.controls_.erase(std::next(controls_.begin() + num));
-//        }
-//        return true;
-//    }
+    size_t p = 0;
+    bool p_set = false;
+    size_t q = 0;
+    bool q_set = false;
+    for (const auto &[num, is_inverted]: controls_) {
+        if (!gate.controls_.contains(num)) {
+            return false;
+        }
+        if (gate.controls_[num] != is_inverted) {
+            if (!is_inverted) {
+                if (q_set) {
+                    return false;
+                }
+                q = num;
+                q_set = true;
+                continue;
+            }
+            if (p_set) {
+                return false;
+            }
+            p = num;
+            p_set = true;
+        }
+    }
 
-    return false;
+    if (!(p_set && q_set)) {
+        return false;
+    }
+
+    controls_.extract(q);
+    gate.controls_.extract(p);
+
+    return true;
 }
 
-bool Gate::rR6_(Gate &gate2, Gate &gate3) noexcept {
+bool Gate::rR6_direct_(Gate &gate2, Gate &gate3) noexcept {
     if (type_ != GateType::kCNOT || gate2.type_ != GateType::kCNOT || gate3.type_ != GateType::kCNOT) {
         return false;
     }
@@ -591,68 +598,88 @@ bool Gate::rR6_(Gate &gate2, Gate &gate3) noexcept {
     if (gate2.nests_ != gate3.nests_) {
         return false;
     }
-    if (std::find_if(gate3.controls_.begin(), gate3.controls_.end(),
-                     [&gate2](const auto &p) {
-                         return p.first == gate2.nests_.front();
-                     }) != gate3.controls_.end() &&
-        std::find_if(gate2.controls_.begin(), gate2.controls_.end(),
-                     [&gate3](const auto &p) {
-                         return p.first == gate3.nests_.front();
-                     }) == gate2.controls_.end()) {
-        // 4 by Zakablukov
-        // t1 = gate3.nests_.front()
-        auto I1 = gate3.direct_controls();
-        auto J1 = gate3.inverted_controls();
-        auto I2 = gate2.direct_controls();
-        auto J2 = gate2.inverted_controls();
-        std::vector<size_t> I_union;
-        std::set_union(I1.begin(), I1.end(), I2.begin(), I2.end(), std::back_inserter(I_union));
-        if (std::find(I_union.begin(), I_union.end(), gate3.nests_.front()) != I_union.end() ||
-            I_union != this->direct_controls()) {
-            return false;
-        }
-        std::vector<size_t> J_union;
-        std::set_union(J1.begin(), J1.end(), J2.begin(), J2.end(), std::back_inserter(J_union));
-        if (std::find(J_union.begin(), J_union.end(), gate3.nests_.front()) != J_union.end() ||
-            J_union != this->inverted_controls()) {
-            return false;
-        }
-        *this = gate3;
-        gate3.clear();
-        return true;
-    } else if (std::find_if(gate2.controls_.begin(), gate2.controls_.end(),
-                            [*this](const auto &p) {
-                                return p.first == nests_.front();
-                            }) == controls_.end() &&
-               std::find_if(controls_.begin(), controls_.end(),
-                            [&gate2](const auto &p) {
-                                return p.first == gate2.nests_.front();
-                            }) != controls_.end()) {
-        // 6 by Zakablukov
-        // t2 = nests_.front()
-        auto I1 = this->direct_controls();
-        auto J1 = this->inverted_controls();
-        auto I2 = gate2.direct_controls();
-        auto J2 = gate2.inverted_controls();
-        std::vector<size_t> I_union;
-        std::set_union(I1.begin(), I1.end(), I2.begin(), I2.end(), std::back_inserter(I_union));
-        if (std::find(I_union.begin(), I_union.end(), this->nests_.front()) != I_union.end() ||
-            I_union != gate3.direct_controls()) {
-            return false;
-        }
-        std::vector<size_t> J_union;
-        std::set_union(J1.begin(), J1.end(), J2.begin(), J2.end(), std::back_inserter(J_union));
-        if (std::find(J_union.begin(), J_union.end(), this->nests_.front()) != J_union.end() ||
-            J_union != gate3.inverted_controls()) {
-            return false;
-        }
-        gate3 = *this;
-        *this = gate2;
-        gate2 = gate3;
-        gate3.clear();
-        return true;
+
+    size_t t1 = gate2.nests_.front();
+    size_t t2 = nests_.front();
+    if (!gate2.controls_.contains(t2) || controls_.contains(t1)) {
+        return false;
     }
-    return false;
+    if (gate3.controls_.contains(t1)) {
+        return false;
+    }
+
+    auto I1 = gate2.direct_controls();
+    auto J1 = gate2.inverted_controls();
+    auto I2 = direct_controls();
+    auto J2 = inverted_controls();
+    std::vector<size_t> I1I2;
+    std::set_union(I1.begin(), I1.end(), I2.begin(), I2.end(), std::back_inserter(I1I2));
+    if (auto it = std::find(I1I2.begin(), I1I2.end(), t2); it != I1I2.end()) {
+        I1I2.erase(it);
+    }
+    if (I1I2 != direct_controls()) {
+        return false;
+    }
+    std::vector<size_t> J1J2;
+    std::set_union(J1.begin(), J1.end(), J2.begin(), J2.end(), std::back_inserter(J1J2));
+    if (auto it = std::find(J1J2.begin(), J1J2.end(), t2); it != J1J2.end()) {
+        J1J2.erase(it);
+    }
+    if (J1J2 != inverted_controls()) {
+        return false;
+    }
+
+    gate3 = gate2;
+    gate2 = *this;
+    *this = gate3;
+    gate3.clear();
+    return true;
+}
+
+bool Gate::rR6_reversed_(Gate &gate2, Gate &gate3) noexcept {
+    if (type_ != GateType::kCNOT || gate2.type_ != GateType::kCNOT || gate3.type_ != GateType::kCNOT) {
+        return false;
+    }
+    if (gate2.is_commutes(gate3)) {
+        return false;
+    }
+    if (nests_ != gate2.nests_) {
+        return false;
+    }
+
+    size_t t1 = gate3.nests_.front();
+    size_t t2 = gate2.nests_.front();
+    if (!gate2.controls_.contains(t1) || gate3.controls_.contains(t2)) {
+        return false;
+    }
+    if (controls_.contains(t1)) {
+        return false;
+    }
+
+    auto I1 = gate3.direct_controls();
+    auto J1 = gate3.inverted_controls();
+    auto I2 = gate2.direct_controls();
+    auto J2 = gate2.inverted_controls();
+    std::vector<size_t> I1I2;
+    std::set_union(I1.begin(), I1.end(), I2.begin(), I2.end(), std::back_inserter(I1I2));
+    if (auto it = std::find(I1I2.begin(), I1I2.end(), t1); it != I1I2.end()) {
+        I1I2.erase(it);
+    }
+    if (I1I2 != direct_controls()) {
+        return false;
+    }
+    std::vector<size_t> J1J2;
+    std::set_union(J1.begin(), J1.end(), J2.begin(), J2.end(), std::back_inserter(J1J2));
+    if (auto it = std::find(J1J2.begin(), J1J2.end(), t1); it != J1J2.end()) {
+        J1J2.erase(it);
+    }
+    if (J1J2 != inverted_controls()) {
+        return false;
+    }
+
+    *this = gate3;
+    gate3.clear();
+    return true;
 }
 
 std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
@@ -828,7 +855,13 @@ void Circuit::reduce() noexcept {
         return;
     }
 
-    // TODO также устранить эквивалентные SWAP
+    // TODO также упростить подсхему из SWAP
+
+    for (auto &gate: gates_) {
+        if (gate.type_ == GateType::kCNOT && gate.controls_.size() == 1) {
+            gate.type_ = GateType::CNOT;
+        }
+    }
 
     for (const auto &[subcircuit_begin, subcircuit_end]: subcircuits_borders) {
         if (!(subcircuit_end - subcircuit_begin)) {
@@ -849,12 +882,12 @@ void Circuit::reduce() noexcept {
                 if (gates_[i].rR3_(gates_[j])) {
                     continue;
                 }
-//                if (gates_[i].rR4_(gates_[j])) {
-//                    continue;
-//                }
-//                if (gates_[i].rR5_(gates_[j])) {
-//                    continue;
-//                }
+                if (gates_[i].rR4_(gates_[j])) {
+                    continue;
+                }
+                if (gates_[i].rR5_(gates_[j])) {
+                    continue;
+                }
             }
         }
     }
@@ -879,7 +912,11 @@ void Circuit::reduce() noexcept {
                 keep = true;
                 continue;
             }
-            if (gates_[i].rR6_(gates_[j], gates_[k])) {
+            if (gates_[i].rR6_direct_(gates_[j], gates_[k])) {
+                keep = true;
+                continue;
+            }
+            if (gates_[i].rR6_reversed_(gates_[j], gates_[k])) {
                 keep = true;
                 continue;
             }
