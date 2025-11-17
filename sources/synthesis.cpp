@@ -8,6 +8,9 @@ Circuit synthesize(const BinaryMapping &bm, Algo algo, bool reduction) {
     if (algo == Algo::RW) {
         return RW_algorithm(bm, reduction);
     }
+    if (algo == Algo::SS) {
+        return SS_algorithm(bm, reduction);
+    }
     throw SynthException("Unknown synthesis algorithm");
 }
 
@@ -17,6 +20,9 @@ Circuit synthesize(const Substitution &sub, Algo algo, bool reduction) {
     }
     if (algo == Algo::RW) {
         return RW_algorithm(sub, reduction);
+    }
+    if (algo == Algo::SS) {
+        return SS_algorithm(sub, reduction);
     }
     throw SynthException("Unknown synthesis algorithm");
 }
@@ -50,8 +56,14 @@ Circuit dummy_algorithm(const BinaryMapping &bm, bool reduction) {
     if (reduction) {
         c.reduce();
     }
-
     return c;
+}
+
+Circuit dummy_algorithm(const Substitution &sub, bool reduction) {
+    if (!is_power_of_2(sub.power())) {
+        throw SynthException("Substitution size must be power of 2");
+    }
+    return dummy_algorithm(BinaryMapping(sub), reduction);
 }
 
 void generate_controls_(size_t len, size_t max, size_t exclude, size_t start, std::vector<size_t> &current,
@@ -218,14 +230,6 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
     return c;
 }
 
-Circuit dummy_algorithm(const Substitution &sub, bool reduction) {
-    if (!is_power_of_2(sub.power())) {
-        throw SynthException("Substitution size must be power of 2");
-    }
-    BinaryMapping bm(sub);
-    return dummy_algorithm(bm, reduction);
-}
-
 Circuit RW_algorithm(const Substitution &sub, bool reduction) {
     if (!is_power_of_2(sub.power())) {
         throw SynthException("Substitution size should be power of 2");
@@ -233,6 +237,88 @@ Circuit RW_algorithm(const Substitution &sub, bool reduction) {
     if (sub.is_identical()) {
         return Circuit(std::log2(sub.power()));
     }
-    BinaryMapping bm(sub);
-    return RW_algorithm(bm, reduction);
+    return RW_algorithm(BinaryMapping(sub), reduction);
+}
+
+Circuit SS_algorithm(const BinaryMapping &bm, bool reduction) {
+    return SS_algorithm(Substitution(bm), reduction);
+}
+
+std::unordered_map<Gate, Substitution> generate_gates_substitutions(const size_t dim) {
+    std::unordered_map<Gate, Substitution> result;
+    Gate gate;
+
+    for (size_t i = 0; i < dim; i++) {
+        gate = Gate(GateType::NOT, {i}, {}, dim);
+        result.insert({gate, gate.act()});
+        for (size_t j = 0; j < dim; j++) {
+            if (j == i) {
+                continue;
+            }
+            gate = Gate(GateType::SWAP, {i, j}, {}, dim);
+            result.insert({gate, gate.act()});
+            for (bool control: {true, false}) {
+                gate = Gate(GateType::CNOT, {i}, {{j, control}}, dim);
+                result.insert({gate, gate.act()});
+            }
+            for (size_t k = 0; k < dim; k++) {
+                if (k == i || k == j) {
+                    continue;
+                }
+                for (bool control: {true, false}) {
+                    gate = Gate(GateType::CSWAP, {i, j}, {{k, control}}, dim);
+                    result.insert({gate, gate.act()});
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+Circuit SS_algorithm(const Substitution &sub, bool reduction) {
+    if (!is_power_of_2(sub.power())) {
+        throw SynthException("Substitution size should be power of 2");
+    }
+
+    size_t dim = std::log2(sub.power());
+    Circuit c(dim);
+    Substitution sub_base(sub.power());
+    if (sub_base == sub) {
+        return c;
+    }
+    size_t distance_base = cayley_distance(sub, sub_base);
+
+    size_t counter = 0;
+    Gate best_gate;
+    Substitution best_gate_sub(2);  // we have no default constructor or Subs
+    const auto gates_subs = generate_gates_substitutions(dim);
+    while (sub_base != sub && counter < 1000) {
+        counter++;
+        size_t distance_min = distance_base;
+        for (const auto &[g, g_sub]: gates_subs) {
+            auto current_distance = cayley_distance(sub_base * g_sub, sub);
+            if (current_distance < distance_min) {
+                best_gate = g;
+                best_gate_sub = g_sub;
+                distance_min = current_distance;
+            }
+        }
+        if (best_gate.empty()) {
+            throw SynthException("Can not chose the best gate");
+        }
+        c.add(best_gate);
+        sub_base *= best_gate_sub;
+    }
+
+    if (reduction) {
+        c.reduce();
+    }
+
+    if (c.produce_mapping() != sub) {
+        LOG_DEBUG("The synthesized circuit produces an incorrect mapping", static_cast<std::string>(c));
+        throw SynthException("Unable to synthesize Circuit");
+    }
+
+    return c;
 }

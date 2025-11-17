@@ -144,6 +144,8 @@ private:
     void by_string_(const std::string &);
 };
 
+size_t cayley_distance(const Substitution &, const Substitution &);
+
 class Substitution {
 public:
     explicit Substitution(const std::vector<size_t> &);
@@ -154,11 +156,13 @@ public:
 
     explicit Substitution(const std::string &);
 
+    explicit Substitution(const size_t);
+
     explicit Substitution(std::istream &);
 
-    Substitution(const Substitution &);
-
     Substitution(const BinaryMapping &);
+
+    Substitution(const Substitution &);
 
     Substitution &operator=(const Substitution &);
 
@@ -172,6 +176,8 @@ public:
 
     bool operator!=(const BinaryMapping &) const;
 
+    Substitution &operator*=(const Substitution &);
+
     size_t power() const noexcept;
 
     bool is_identical() const noexcept;
@@ -182,6 +188,8 @@ public:
 
     std::vector<std::vector<size_t>> cycles() const noexcept;
 
+    Substitution invert() const noexcept;
+
     bool is_odd() const noexcept;
 
     friend std::ostream &operator<<(std::ostream &, const Substitution &) noexcept;
@@ -191,5 +199,7 @@ private:
 
     void by_string_(const std::string &);
 };
+
+Substitution operator*(const Substitution &, const Substitution &);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP

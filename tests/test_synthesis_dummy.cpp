@@ -1,0 +1,109 @@
+#include <gtest/gtest.h>
+
+#include "synthesis.hpp"
+
+
+TEST(Synthesis, MappingDummy) {
+    {
+        BinaryMapping bm(table{{0, 0}});
+        Circuit c("Lines: 2; 1");
+        EXPECT_EQ(dummy_algorithm(bm), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY, true), c);
+    }
+    {
+        BinaryMapping bm(table{{1, 1}});
+        Circuit c("Lines: 2; 1\nNOT(1)");
+        EXPECT_EQ(dummy_algorithm(bm), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY, true), c);
+    }
+    {
+        BinaryMapping bm(table{{0, 0, 0, 0, 0, 0, 0, 0}});
+        Circuit c("Lines: 4; 1");
+        EXPECT_EQ(dummy_algorithm(bm), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY, true), c);
+    }
+    {
+        BinaryMapping bm(table{{1, 1, 1, 1, 1, 1, 1, 1}});
+        Circuit c("Lines: 4; 1\nNOT(3)");
+        EXPECT_EQ(dummy_algorithm(bm), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY, true), c);
+    }
+    {
+        BinaryMapping bm(table{{1, 0, 0, 0}});
+        Circuit c("Lines: 3; 1\nNOT(2)\nkCNOT(2; 1)\nkCNOT(2; 0)\nkCNOT(2; 0, 1)");
+        EXPECT_EQ(dummy_algorithm(bm), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY, true), c);
+    }
+    {
+        BinaryMapping bm(table{{1, 0, 0, 0},
+                               {0, 0, 1, 0}});
+        Circuit c("Lines: 4; 2\n"
+                  "NOT(2)\nkCNOT(2; 1)\nkCNOT(2; 0)\nkCNOT(2; 0, 1)\n"
+                  "kCNOT(3; 0)\nkCNOT(3; 0, 1)");
+        EXPECT_EQ(dummy_algorithm(bm), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY, true), c);
+    }
+    {
+        BinaryMapping bm(table{{1, 0, 0, 0},
+                               {0, 0, 1, 0},
+                               {0, 0, 1, 0},
+                               {1, 1, 1, 0},
+                               {1, 0, 1, 0}});
+        Circuit c("Lines: 7; 5\n"
+                  "NOT(2)\nkCNOT(2; 1)\nkCNOT(2; 0)\nkCNOT(2; 0, 1)\n"
+                  "kCNOT(3; 0)\nkCNOT(3; 0, 1)\n"
+                  "kCNOT(4; 0)\nkCNOT(4; 0, 1)\n"
+                  "NOT(5)\nkCNOT(5; 0, 1)\n"
+                  "NOT(6)\nkCNOT(6; 1)");
+        EXPECT_EQ(dummy_algorithm(bm), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(bm, Algo::DUMMY, true), c);
+    }
+}
+
+TEST(Synthesis, SubstitutionDummy) {
+    EXPECT_THROW(dummy_algorithm(Substitution("0 2 1")), SynthException);
+    {
+        Substitution sub("0 1");
+        Circuit c_etalon("Lines: 2; 1\nkCNOT(1; 0)");
+        Circuit c = dummy_algorithm(sub);
+        EXPECT_EQ(synthesize(sub, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(sub, Algo::DUMMY, true), c);
+        EXPECT_EQ(c_etalon, c);
+    }
+    {
+        Substitution sub("1 0");
+        Circuit c_etalon("Lines: 2; 1\nNOT(1)\nkCNOT(1; 0)");
+        Circuit c = dummy_algorithm(sub);
+        EXPECT_EQ(synthesize(sub, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(sub, Algo::DUMMY, true), c);
+        EXPECT_EQ(c_etalon, c);
+    }
+    {
+        Substitution sub("3 2 0 1");
+        Circuit c_etalon("Lines: 4; 2\n"
+                         "NOT(2)\nkCNOT(2; 0)\n"
+                         "NOT(3)\nkCNOT(3; 1)\nkCNOT(3; 0)");
+        Circuit c = dummy_algorithm(sub);
+        EXPECT_EQ(synthesize(sub, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(sub, Algo::DUMMY, true), c);
+        EXPECT_EQ(c_etalon, c);
+    }
+    {
+        Substitution sub("5 7 2 1 6 3 0 4");
+        Circuit c_etalon("Lines: 6; 3\n"
+                         "NOT(3)\nkCNOT(3; 1)\nkCNOT(3; 0, 2)\n"
+                         "kCNOT(4; 2)\nkCNOT(4; 1)\nkCNOT(4; 0)\nkCNOT(4; 0, 2)\n"
+                         "NOT(5)\nkCNOT(5; 1)\nkCNOT(5; 1, 2)\nkCNOT(5; 0)\nkCNOT(5; 0, 2)\nkCNOT(5; 0, 1)\n");
+        Circuit c = dummy_algorithm(sub);
+        EXPECT_EQ(synthesize(sub, Algo::DUMMY), c);
+        EXPECT_EQ(synthesize(sub, Algo::DUMMY, true), c);
+        EXPECT_EQ(c_etalon, c);
+    }
+}
