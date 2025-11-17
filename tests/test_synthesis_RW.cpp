@@ -177,7 +177,7 @@ TEST(Synthesis, MappingRW) {
 }
 
 TEST(Synthesis, SubstitutionRW) {
-    EXPECT_THROW(synthesize(Substitution("0 2 1")), SynthException);
+    EXPECT_THROW(RW_algorithm(Substitution("0 2 1")), SynthException);
     {
         Substitution sub("0 1 2 3");
         Circuit c = RW_algorithm(sub);

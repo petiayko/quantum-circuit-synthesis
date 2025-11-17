@@ -156,6 +156,8 @@ public:
 
     explicit Substitution(const std::string &);
 
+    explicit Substitution(const size_t);
+
     explicit Substitution(std::istream &);
 
     Substitution(const BinaryMapping &);

@@ -68,7 +68,7 @@ TEST(Synthesis, MappingDummy) {
 }
 
 TEST(Synthesis, SubstitutionDummy) {
-    EXPECT_THROW(synthesize(Substitution("0 2 1")), SynthException);
+    EXPECT_THROW(dummy_algorithm(Substitution("0 2 1")), SynthException);
     {
         Substitution sub("0 1");
         Circuit c_etalon("Lines: 2; 1\nkCNOT(1; 0)");

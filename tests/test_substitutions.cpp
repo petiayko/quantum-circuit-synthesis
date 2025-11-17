@@ -41,6 +41,12 @@ TEST(Substitutions, Constructor) {
     EXPECT_NO_THROW(Substitution("0 1 2 3 4 5 6 7 8 9\n# comment\n a B c D E f"));
     EXPECT_NO_THROW(Substitution("0x0 2 0X3 0x4 0X5 0x1 0x7 0x6 0x8 0x9 C 0xb 0xA"));
 
+    EXPECT_THROW(Substitution(0), SubException);
+    EXPECT_THROW(Substitution(1), SubException);
+    EXPECT_EQ(Substitution(2), Substitution("0 1"));
+    EXPECT_EQ(Substitution(5), Substitution("0 1 2 3 4"));
+    EXPECT_EQ(Substitution(10), Substitution("0 1 2 3 4 5 6 7 8 9"));
+
     Substitution s("0 4 1 2 3 5");
     Substitution s1(s);
     Substitution s2 = s1;

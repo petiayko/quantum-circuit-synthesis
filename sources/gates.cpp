@@ -325,6 +325,14 @@ void Gate::act(cf_set &vec) const {
     }
 }
 
+Substitution Gate::act() const noexcept {
+    // TODO тестировать и оптимизировать
+    Substitution sub(1 << dim_);
+    cf_set sub_cf(BinaryMapping(sub).coordinate_functions());
+    act(sub_cf);
+    return Substitution(sub_cf);
+}
+
 bool Gate::operator==(const Gate &g) const {
     return (type_ == g.type_ && dim_ && g.dim_ && nests_ == g.nests_ && controls_ == g.controls_);
 }
@@ -730,6 +738,24 @@ Gate::operator std::string() const {
 
 std::ostream &operator<<(std::ostream &out, const Gate &g) noexcept {
     return out << static_cast<std::string>(g);
+}
+
+size_t std::hash<Gate>::operator()(const Gate &gate) const {
+    size_t result = 1;
+    result ^= std::hash<GateType>()(gate.type_);
+    result ^= std::hash<size_t>()(gate.dim_);
+    result >>= 1;
+
+    for (const auto &num: gate.nests_) {
+        result ^= std::hash<size_t>()(num);
+    }
+    result <<= 1;
+
+    for (const auto &[num, is_inverted]: gate.controls_) {
+        result ^= std::hash<size_t>()(num) ^ std::hash<bool>()(is_inverted);
+    }
+    result >>= 1;
+    return result;
 }
 
 // Circuit

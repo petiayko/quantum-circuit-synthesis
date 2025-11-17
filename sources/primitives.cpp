@@ -618,6 +618,15 @@ Substitution::Substitution(const std::string &s) {
     by_string_(s);
 }
 
+Substitution::Substitution(const size_t power) {
+    if (power < 2) {
+        throw SubException("Substitution power should be greater than 1");
+    }
+    for (size_t i = 0; i < power; i++) {
+        sub_.push_back(i);
+    }
+}
+
 Substitution::Substitution(std::istream &s) {
     std::stringstream ss;
     ss << s.rdbuf();
