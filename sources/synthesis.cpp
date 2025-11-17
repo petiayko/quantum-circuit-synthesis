@@ -8,6 +8,9 @@ Circuit synthesize(const BinaryMapping &bm, Algo algo, bool reduction) {
     if (algo == Algo::RW) {
         return RW_algorithm(bm, reduction);
     }
+    if (algo == Algo::SS) {
+        return SS_algorithm(bm, reduction);
+    }
     throw SynthException("Unknown synthesis algorithm");
 }
 
@@ -17,6 +20,9 @@ Circuit synthesize(const Substitution &sub, Algo algo, bool reduction) {
     }
     if (algo == Algo::RW) {
         return RW_algorithm(sub, reduction);
+    }
+    if (algo == Algo::SS) {
+        return SS_algorithm(sub, reduction);
     }
     throw SynthException("Unknown synthesis algorithm");
 }
@@ -52,6 +58,14 @@ Circuit dummy_algorithm(const BinaryMapping &bm, bool reduction) {
     }
 
     return c;
+}
+
+Circuit dummy_algorithm(const Substitution &sub, bool reduction) {
+    if (!is_power_of_2(sub.power())) {
+        throw SynthException("Substitution size must be power of 2");
+    }
+    BinaryMapping bm(sub);
+    return dummy_algorithm(bm, reduction);
 }
 
 void generate_controls_(size_t len, size_t max, size_t exclude, size_t start, std::vector<size_t> &current,
@@ -218,14 +232,6 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
     return c;
 }
 
-Circuit dummy_algorithm(const Substitution &sub, bool reduction) {
-    if (!is_power_of_2(sub.power())) {
-        throw SynthException("Substitution size must be power of 2");
-    }
-    BinaryMapping bm(sub);
-    return dummy_algorithm(bm, reduction);
-}
-
 Circuit RW_algorithm(const Substitution &sub, bool reduction) {
     if (!is_power_of_2(sub.power())) {
         throw SynthException("Substitution size should be power of 2");
@@ -235,4 +241,19 @@ Circuit RW_algorithm(const Substitution &sub, bool reduction) {
     }
     BinaryMapping bm(sub);
     return RW_algorithm(bm, reduction);
+}
+
+Circuit SS_algorithm(const BinaryMapping &bm, bool reduction) {
+    return RW_algorithm(bm, reduction);
+}
+
+Circuit SS_algorithm(const Substitution &sub, bool reduction) {
+    if (!is_power_of_2(sub.power())) {
+        throw SynthException("Substitution size should be power of 2");
+    }
+//    if (sub.is_identical()) {
+//        return Circuit(std::log2(sub.power()));
+//    }
+    BinaryMapping bm(sub);
+    return SS_algorithm(bm, reduction);
 }
