@@ -46,10 +46,12 @@ if (BUILD_TESTS)
     add_executable(tests
             ${CMAKE_CURRENT_SOURCE_DIR}
             tests/test_boolean_functions.cpp
+            tests/test_circuits.cpp
+            tests/test_gates.cpp
             tests/test_mappings.cpp
             tests/test_substitutions.cpp
-            tests/test_gates.cpp
-            tests/test_circuits.cpp
+
+            tests/test_synthesis_general.cpp
             tests/test_synthesis_dummy.cpp
             tests/test_synthesis_RW.cpp
             tests/test_synthesis_SS.cpp

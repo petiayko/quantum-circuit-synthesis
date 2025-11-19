@@ -340,6 +340,7 @@ bool Gate::operator==(const Gate &g) const {
 void Gate::validate_() const {
     for (auto num: nests_) {
         if (num > dim_ - 1) {
+            std::cout << "Bad gate: " << *this << std::endl;
             throw GateException("Invalid nest line: " + std::to_string(num));
         }
         if (std::count(nests_.begin(), nests_.end(), num) != 1) {

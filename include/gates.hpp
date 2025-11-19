@@ -25,6 +25,9 @@ class Circuit;
 
 class Gate {
 public:
+    // TODO для валидации вентиля, для функции генерации вентилей создать статичные лямбды, которые бы валидацию проводили:
+    //  Gate::validate(controls) -> bool
+
     Gate() = default;
 
     explicit Gate(GateType, const std::vector<size_t> &, const controls_type &, size_t);

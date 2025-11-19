@@ -13,6 +13,14 @@ enum class Algo {
     EMPTY = 2048,
 };
 
+std::vector<Gate> generate_all_gates(const std::vector<GateType> &, size_t);
+
+std::vector<Gate> generate_all_gates(size_t);
+
+std::vector<Gate> generate_all_gates(const std::vector<GateType> &, size_t, size_t, size_t);
+
+std::vector<Gate> generate_all_gates(size_t, size_t);
+
 Circuit synthesize(const BinaryMapping &, Algo = Algo::RW, bool = false);
 
 Circuit synthesize(const Substitution &, Algo = Algo::RW, bool = false);
