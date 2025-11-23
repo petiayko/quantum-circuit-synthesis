@@ -2,6 +2,7 @@
 #define QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 
 #include <unordered_map>
+
 #include "primitives.hpp"
 #include "strings.hpp"
 
@@ -24,6 +25,9 @@ class Circuit;
 
 class Gate {
 public:
+    // TODO для валидации вентиля, для функции генерации вентилей создать статичные лямбды, которые бы валидацию проводили:
+    //  Gate::validate(controls) -> bool
+
     Gate() = default;
 
     explicit Gate(GateType, const std::vector<size_t> &, const controls_type &, size_t);
@@ -52,6 +56,8 @@ public:
 
     void act(cf_set &) const;
 
+    Substitution act() const noexcept;
+
     bool operator==(const Gate &) const;
 
     explicit operator std::string() const;
@@ -59,12 +65,14 @@ public:
     friend std::ostream &operator<<(std::ostream &, const Gate &) noexcept;
 
 private:
-    GateType type_{};
+    GateType type_ = GateType::EMPTY;
     size_t dim_{};
     std::vector<size_t> nests_;
     controls_type controls_;
 
     friend class Circuit;
+
+    friend struct std::hash<Gate>;
 
     void validate_() const;
 
@@ -85,6 +93,11 @@ private:
     bool rR6_direct_(Gate &, Gate &) noexcept;
 
     bool rR6_reversed_(Gate &, Gate &) noexcept;
+};
+
+template<>
+struct std::hash<Gate> {
+    size_t operator()(const Gate &) const;
 };
 
 
