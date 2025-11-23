@@ -4,6 +4,58 @@
 
 
 TEST(Synthesis, MappingSS) {
+    {
+        BinaryMapping bm(table{{0, 1, 1, 0, 1, 1, 1, 1}});
+        Circuit c = RW_algorithm(bm);
+        EXPECT_EQ(synthesize(bm, Algo::RW), c);
+        EXPECT_EQ(synthesize(bm, Algo::RW, true), c);
+        EXPECT_EQ(c.produce_mapping().coordinate_functions().back(), BooleanFunction("01101111"));
+        EXPECT_EQ(c.memory(), 1);
+    }
+    {
+        BinaryMapping bm(table{{0, 1},
+                               {1, 0},
+                               {0, 0},
+                               {1, 1}});
+        EXPECT_THROW(synthesize(bm, Algo::SS), SynthException);
+        EXPECT_THROW(SS_algorithm(bm), SynthException);
+    }
+    {
+        BinaryMapping bm(table{{0, 1, 1, 1},
+                               {0, 0, 0, 0},
+                               {1, 0, 0, 1},
+                               {0, 1, 0, 0},
+                               {1, 1, 0, 1}});
+        EXPECT_THROW(synthesize(bm, Algo::SS), SynthException);
+        EXPECT_THROW(SS_algorithm(bm), SynthException);
+    }
+    {
+        BinaryMapping bm(table{{0, 0, 1, 1}});
+        Circuit c = SS_algorithm(bm);
+        EXPECT_EQ(synthesize(bm, Algo::SS), c);
+        EXPECT_EQ(synthesize(bm, Algo::SS, true), c);
+        EXPECT_EQ(c.produce_mapping().coordinate_functions().back(), BooleanFunction("0011"));
+        EXPECT_EQ(c.memory(), 0);
+    }
+    {
+        BinaryMapping bm(table{{0, 0, 1, 1},
+                               {0, 1, 0, 1}});
+        Circuit c = SS_algorithm(bm);
+        EXPECT_EQ(synthesize(bm, Algo::SS), c);
+        EXPECT_EQ(synthesize(bm, Algo::SS, true), c);
+        EXPECT_EQ(c.produce_mapping(), bm);
+        EXPECT_EQ(c.memory(), 0);
+    }
+    {
+        BinaryMapping bm(table{{0, 0, 0, 0, 1, 1, 1, 1},
+                               {0, 0, 1, 1, 0, 0, 1, 1},
+                               {0, 1, 0, 1, 0, 1, 0, 1}});
+        Circuit c = SS_algorithm(bm);
+        EXPECT_EQ(synthesize(bm, Algo::SS), c);
+        EXPECT_EQ(synthesize(bm, Algo::SS, true), c);
+        EXPECT_EQ(c.produce_mapping(), bm);
+        EXPECT_EQ(c.memory(), 0);
+    }
 }
 
 TEST(Synthesis, SubstitutionSS) {

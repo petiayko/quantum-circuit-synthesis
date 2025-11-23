@@ -385,7 +385,10 @@ Circuit RW_algorithm(const Substitution &sub, bool reduction) {
 }
 
 Circuit SS_algorithm(const BinaryMapping &bm, bool reduction) {
-    return SS_algorithm(Substitution(bm), reduction);
+    auto bm_extended = bm.extend();
+    auto c = SS_algorithm(Substitution(bm_extended), reduction);
+    c.set_memory(bm_extended.inputs_number() - bm.inputs_number());
+    return c;
 }
 
 Circuit SS_algorithm(const Substitution &sub, bool reduction) {
