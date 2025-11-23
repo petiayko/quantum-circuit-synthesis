@@ -254,8 +254,6 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
         precomputed_gates[i] = generate_all_gates({GateType::CNOT, GateType::kCNOT}, i, MAX_CONTROL_LINES, outputs);
     }
 
-//    const auto precomputed_gates = generate_all_gates({GateType::CNOT, GateType::kCNOT}, MAX_CONTROL_LINES, outputs);
-
     for (int i = outputs - 1;; i--) {
         if (c.produce_mapping() == bm_extend) {
             c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
@@ -282,14 +280,11 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
 
         // CNOT
         // TODO act not to bm, act to BF???
-        for (const auto &gate: generate_all_gates({GateType::CNOT, GateType::kCNOT}, nest, MAX_CONTROL_LINES, outputs)) {
+//        for (const auto &gate: generate_all_gates({GateType::CNOT, GateType::kCNOT}, nest, MAX_CONTROL_LINES, outputs)) {
+        for (const auto &gate: precomputed_gates[nest]) {
             if (gate.type() != GateType::CNOT || gate.nests().front() != nest) {
                 continue;
             }
-//            if (gate == Gate("CNOT(1; 0)", outputs) || gate == Gate("CNOT(2; 0)", outputs) || gate == Gate("CNOT(3; 0)", outputs)) {
-//                std::cout << "Good gate: " << gate << std::endl;
-//            }
-//            std::cout << "CNOT to check: " << gate << std::endl;
             gate.act(bm_cf);
             auto complexity_new = bm_cf[nest].complexity();
             if (complexity_new - complexity >= max_complexity_diff) {
@@ -298,18 +293,6 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
             }
             gate.act(bm_cf);
         }
-
-//        for (const auto &controls: generate_controls(1, outputs, i)) {
-//            for (const auto &gate: generate_gates(GateType::CNOT, nest, controls, outputs)) {
-//                gate.act(bm_cf);
-//                auto complexity_new = bm_cf[nest].complexity();
-//                if (complexity_new - complexity > max_complexity_diff) {
-//                    max_complexity_diff = complexity_new - complexity;
-//                    best_gate = gate;
-//                }
-//                gate.act(bm_cf);
-//            }
-//        }
         if (max_complexity_diff) {
             c.insert(best_gate, 0);
             best_gate.act(bm_cf);
@@ -317,11 +300,10 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
         }
 
         // kCNOT 2
-        for (const auto &gate: generate_all_gates({GateType::CNOT, GateType::kCNOT}, nest, MAX_CONTROL_LINES, outputs)) {
+        for (const auto &gate: precomputed_gates[nest]) {
             if (gate.controls().size() != 2 || gate.nests().front() != nest) {
                 continue;
             }
-//            std::cout << "kCNOT2 to check: " << gate << std::endl;
             gate.act(bm_cf);
             auto complexity_new = bm_cf[nest].complexity();
             if (complexity_new - complexity >= max_complexity_diff) {
@@ -330,17 +312,6 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
             }
             gate.act(bm_cf);
         }
-//        for (const auto &controls: generate_controls(2, outputs, i)) {
-//            for (const auto &gate: generate_gates(GateType::kCNOT, nest, controls, outputs)) {
-//                gate.act(bm_cf);
-//                auto complexity_new = bm_cf[nest].complexity();
-//                if (complexity_new - complexity > max_complexity_diff) {
-//                    max_complexity_diff = complexity_new - complexity;
-//                    best_gate = gate;
-//                }
-//                gate.act(bm_cf);
-//            }
-//        }
         if (max_complexity_diff) {
             c.insert(best_gate, 0);
             best_gate.act(bm_cf);
@@ -348,14 +319,10 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
         }
 
         // kCNOT 3
-        for (const auto &gate: generate_all_gates({GateType::CNOT, GateType::kCNOT}, nest, MAX_CONTROL_LINES, outputs)) {
+        for (const auto &gate: precomputed_gates[nest]) {
             if (gate.controls().size() != 3 || gate.nests().front() != nest) {
                 continue;
             }
-//            if (gate == Gate("kCNOT(0; 1, 2, 3)", outputs)) {
-//                std::cout << "Good gate: " << gate << std::endl;
-//            }
-//            std::cout << "kCNOT3 to check: " << gate << std::endl;
             gate.act(bm_cf);
             auto complexity_new = bm_cf[nest].complexity();
             if (complexity_new - complexity >= max_complexity_diff) {
@@ -364,17 +331,6 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
             }
             gate.act(bm_cf);
         }
-//        for (const auto &controls: generate_controls(3, outputs, i)) {
-//            for (const auto &gate: generate_gates(GateType::kCNOT, nest, controls, outputs)) {
-//                gate.act(bm_cf);
-//                auto complexity_new = bm_cf[nest].complexity();
-//                if (complexity_new - complexity > max_complexity_diff) {
-//                    max_complexity_diff = complexity_new - complexity;
-//                    best_gate = gate;
-//                }
-//                gate.act(bm_cf);
-//            }
-//        }
         if (max_complexity_diff) {
             c.insert(best_gate, 0);
             best_gate.act(bm_cf);
@@ -432,43 +388,6 @@ Circuit SS_algorithm(const BinaryMapping &bm, bool reduction) {
     return SS_algorithm(Substitution(bm), reduction);
 }
 
-//std::unordered_map<Gate, Substitution> generate_gates_substitutions(const std::vector<GateType> &types, size_t dim) {
-//    std::unordered_map<Gate, Substitution> result;
-//
-//    for (const auto type: types) {
-//        size_t control_lines;
-//        if (type == GateType::NOT || type == GateType::SWAP) {
-//            control_lines = 0;
-//        } else if (type == GateType::CNOT || type == GateType::CSWAP) {
-//            control_lines = 1;
-//        } else if (type == GateType::kCNOT) {
-//            for (size_t controls = 2; controls < dim - 1; controls++) {
-//                for (const auto &gate: generate_gates(GateType::kCNOT, dim, controls)) {
-//                    result.insert({gate, gate.act()});
-//                }
-//            }
-//            continue;
-//        }
-//        for (const auto &gate: generate_gates(type, dim, 0)) {
-//            result.insert({gate, gate.act()});
-//        }
-//        for (const auto &gate: generate_gates(GateType::NOT, dim, control_lines)) {
-//            result.insert({gate, gate.act()});
-//        }
-//    }
-//    return result;
-//}
-//
-//std::unordered_map<Gate, Substitution> generate_gates_substitutions(size_t dim) {
-//    return generate_gates_substitutions({
-//                                                GateType::NOT,
-//                                                GateType::CNOT,
-//                                                GateType::kCNOT,
-//                                                GateType::SWAP,
-//                                                GateType::CSWAP
-//                                        }, dim);
-//}
-
 Circuit SS_algorithm(const Substitution &sub, bool reduction) {
     if (!is_power_of_2(sub.power())) {
         throw SynthException("Substitution size should be power of 2");
@@ -476,45 +395,42 @@ Circuit SS_algorithm(const Substitution &sub, bool reduction) {
 
     size_t dim = std::log2(sub.power());
     Circuit c(dim);
-//    Substitution sub_base(sub.power());
-//    if (sub_base == sub) {
-//        return c;
-//    }
-//    size_t distance_base = cayley_distance(sub, sub_base);
-//
-//    size_t counter = 0;
-//    Gate best_gate;
-//    Substitution best_gate_sub(2);  // we have no default constructor or Subs
-//    std::unordered_map<Gate, Substitution> gates_substitutions;
-//    for (const auto &gate : generate_all_gates(dim)) {
-//        gates_substitutions[gate] = gate.act();
-//    }
-//    while (sub_base != sub && counter < 1000) {
-//        counter++;
-//        size_t distance_min = distance_base;
-//        for (const auto &[g, g_sub]: gates_substitutions) {
-//            auto current_distance = cayley_distance(sub_base * g_sub, sub);
-//            if (current_distance < distance_min) {
-//                best_gate = g;
-//                best_gate_sub = g_sub;
-//                distance_min = current_distance;
-//            }
-//        }
-//        if (best_gate.empty()) {
-//            throw SynthException("Can not chose the best gate");
-//        }
-//        c.add(best_gate);
-//        sub_base *= best_gate_sub;
-//    }
-//
+    Substitution sub_base(sub.power());
+    if (sub_base == sub) {
+        return c;
+    }
+
+    std::unordered_map<Gate, Substitution> gates_substitutions;
+    for (const auto &gate: generate_all_gates(dim)) {
+        gates_substitutions.insert({gate, gate.act()});
+    }
+
+    size_t distance_min = std::numeric_limits<size_t>::max();
+
+    while (sub_base != sub) {
+        Gate best_gate;
+        for (const auto &[g, g_sub]: gates_substitutions) {
+            auto current_distance = cayley_distance(sub_base * g_sub, sub);
+            if (current_distance < distance_min) {
+                best_gate = g;
+                distance_min = current_distance;
+            }
+        }
+        if (best_gate.empty()) {
+            throw SynthException("Can not chose the best gate");
+        }
+        c.add(best_gate);
+        sub_base *= best_gate.act();
+    }
+
     if (reduction) {
         c.reduce();
     }
-//
-//    if (c.produce_mapping() != sub) {
-//        LOG_DEBUG("The synthesized circuit produces an incorrect mapping", static_cast<std::string>(c));
-//        throw SynthException("Unable to synthesize Circuit");
-//    }
+
+    if (c.produce_mapping() != sub) {
+        LOG_DEBUG("The synthesized circuit produces an incorrect mapping", static_cast<std::string>(c));
+        throw SynthException("Unable to synthesize Circuit");
+    }
 
     return c;
 }
