@@ -280,7 +280,6 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
 
         // CNOT
         // TODO act not to bm, act to BF???
-//        for (const auto &gate: generate_all_gates({GateType::CNOT, GateType::kCNOT}, nest, MAX_CONTROL_LINES, outputs)) {
         for (const auto &gate: precomputed_gates[nest]) {
             if (gate.type() != GateType::CNOT || gate.nests().front() != nest) {
                 continue;
