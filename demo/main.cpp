@@ -8,7 +8,7 @@
 
 using configuration = std::map<std::string, std::string>;
 
-static const std::string version = "1.2.0";
+static const std::string version = "1.2.1";
 static const std::string program_name = "QCS";
 
 void print_program_info() {
@@ -40,7 +40,7 @@ void print_program_help() {
     std::cout << std::endl;
 
     std::cout << "Synthesis options:" << std::endl;
-    std::cout << "  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'ss')" << std::endl;
+    std::cout << "  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'ss', 'nss')" << std::endl;
     std::cout << "  -r, --reduction     reduce the output circuit (default: false)" << std::endl;
     std::cout << std::endl;
 
@@ -179,6 +179,8 @@ int main(int argc, char *argv[]) {
         algo = Algo::RW;
     } else if (algo_s == "ss") {
         algo = Algo::SS;
+    } else if (algo_s == "nss") {
+        algo = Algo::NSS;
     } else if (!algo_s.empty()) {
         algo = Algo::UNKNOWN;
     }

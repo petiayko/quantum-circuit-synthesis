@@ -26,7 +26,7 @@ QCS (Quantum Circuit Synthesis) - консольная программа для
 
 ```bash
 ./qcs --help
-QCS v1.1.0
+QCS v1.2.1
 (c) Peter Makretskiy, IU8 BMSTU, 2025.
 Program for synthesizing quantum circuits from mapping
 
@@ -39,7 +39,7 @@ Operating modes:
   -t, --type ARG      type of input ('tt' - truth table, 'sub' - substitution, 'qc' - quantum circuit)
 
 Synthesis options:
-  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw')
+  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'ss', 'nss')
   -r, --reduction     reduce the output circuit (default: false)
 
 Parameters:
@@ -51,7 +51,7 @@ Parameters:
 
 ```bash
 ./qcs --version
-1.1.0
+1.2.1
 ```
 
 * `-l arg` или `--log arg` устанавливает максимальный уровень логирования. Опциональный параметр, значение по умолчанию
@@ -72,7 +72,8 @@ Parameters:
   обратном режиме работа недопустимо. Аргумент обязательный. Допустимые значения аргумента:
     * `dummy` - алгоритм независимого построения каждой координатной функции отображения;
     * `rw` - алгоритм, основанный на спектре Радемахера-Уолша координатных функций отображения;
-    * `ss` - алгоритм, основанный на наилучшем выборе вентилей, представляемых в виде подстановок.
+    * `ss` - алгоритм, основанный на наилучшем выборе вентилей, представляемых в виде подстановок;
+    * `nss` - алгоритм, основанный на разложении исходной подстановки в композицию "соседних" циклов.
 
 * `-r` или `--reduction` (**экспериментальная опция**) определяет, будет ли итоговая схема упрощена. Опциональный
   параметр. Недопустим в обратном режиме работы.
