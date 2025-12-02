@@ -61,55 +61,207 @@ TEST(Substitutions, Constructor) {
     EXPECT_EQ(s_vec[3], 3);
 }
 
-TEST(Substitutions, Methods) {
+TEST(Substitutions, Cycles) {
     Substitution s("0 2 4 1 3");
     EXPECT_EQ(s.power(), 5);
 
     auto cycles = s.cycles();
+    auto triple_cycles = s.tcycles();
     auto transpositions = s.transpositions();
     ASSERT_EQ(cycles.size(), 2);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0}));
     EXPECT_EQ(cycles[1], (std::vector<size_t>{1, 2, 4, 3}));
+    ASSERT_EQ(triple_cycles.size(), 3);
+    EXPECT_EQ(triple_cycles[0], (std::vector<size_t>{0}));
+    EXPECT_EQ(triple_cycles[1], (std::vector<size_t>{1, 2, 4}));
+    EXPECT_EQ(triple_cycles[2], (std::vector<size_t>{1, 3}));
     EXPECT_TRUE(s.is_odd());
     EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{1, 2},
                                                                       {2, 4},
                                                                       {4, 3}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(triple_cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
 
-    Substitution s1("0 1 2 3");
-    cycles = s1.cycles();
-    transpositions = s1.transpositions();
+    s = Substitution("0 1 2 3");
+    cycles = s.cycles();
+    triple_cycles = s.tcycles();
+    transpositions = s.transpositions();
     ASSERT_EQ(cycles.size(), 4);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0}));
     EXPECT_EQ(cycles[1], (std::vector<size_t>{1}));
     EXPECT_EQ(cycles[2], (std::vector<size_t>{2}));
     EXPECT_EQ(cycles[3], (std::vector<size_t>{3}));
-    EXPECT_FALSE(s1.is_odd());
+    EXPECT_EQ(triple_cycles, cycles);
+    EXPECT_FALSE(s.is_odd());
     EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{}));
-    EXPECT_TRUE(s1.is_identical());
+    EXPECT_TRUE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(triple_cycles));
+    EXPECT_THROW((Substitution(transpositions)), SubException);
 
-    Substitution s2("1 0 3 2 5 4 7 6");
-    cycles = s2.cycles();
-    transpositions = s2.transpositions();
+    s = Substitution("1 0 3 2 5 4 7 6");
+    cycles = s.cycles();
+    triple_cycles = s.tcycles();
+    transpositions = s.transpositions();
     ASSERT_EQ(cycles.size(), 4);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 1}));
     EXPECT_EQ(cycles[1], (std::vector<size_t>{2, 3}));
     EXPECT_EQ(cycles[2], (std::vector<size_t>{4, 5}));
     EXPECT_EQ(cycles[3], (std::vector<size_t>{6, 7}));
-    EXPECT_FALSE(s2.is_odd());
+    ASSERT_EQ(triple_cycles.size(), 4);
+    EXPECT_EQ(triple_cycles[0], (std::vector<size_t>{0, 2, 1}));
+    EXPECT_EQ(triple_cycles[1], (std::vector<size_t>{1, 3, 2}));
+    EXPECT_EQ(triple_cycles[2], (std::vector<size_t>{4, 6, 5}));
+    EXPECT_EQ(triple_cycles[3], (std::vector<size_t>{5, 7, 6}));
+    EXPECT_FALSE(s.is_odd());
     EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 1},
                                                                       {2, 3},
                                                                       {4, 5},
                                                                       {6, 7}}));
-    EXPECT_FALSE(s2.is_identical());
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(triple_cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
 
-    Substitution s3("1 0");
-    cycles = s3.cycles();
-    transpositions = s3.transpositions();
+    s = Substitution("1 0");
+    cycles = s.cycles();
+    triple_cycles = s.tcycles();
+    transpositions = s.transpositions();
     ASSERT_EQ(cycles.size(), 1);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 1}));
-    EXPECT_TRUE(s3.is_odd());
+    EXPECT_EQ(triple_cycles, cycles);
+    EXPECT_TRUE(s.is_odd());
     EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 1}}));
-    EXPECT_FALSE(s3.is_identical());
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(triple_cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
+
+    s = Substitution("2 0 1 6 4 5 3 7");
+    cycles = s.cycles();
+    triple_cycles = s.tcycles();
+    transpositions = s.transpositions();
+    ASSERT_EQ(cycles.size(), 5);
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 2, 1}));
+    EXPECT_EQ(cycles[1], (std::vector<size_t>{3, 6}));
+    EXPECT_EQ(cycles[2], (std::vector<size_t>{4}));
+    EXPECT_EQ(cycles[3], (std::vector<size_t>{5}));
+    EXPECT_EQ(cycles[4], (std::vector<size_t>{7}));
+    ASSERT_EQ(triple_cycles.size(), 5);
+    EXPECT_EQ(triple_cycles[0], (std::vector<size_t>{0, 2, 1}));
+    EXPECT_EQ(triple_cycles[1], (std::vector<size_t>{4}));
+    EXPECT_EQ(triple_cycles[2], (std::vector<size_t>{5}));
+    EXPECT_EQ(triple_cycles[3], (std::vector<size_t>{7}));
+    EXPECT_EQ(triple_cycles[4], (std::vector<size_t>{3, 6}));
+    EXPECT_TRUE(s.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 2},
+                                                                      {2, 1},
+                                                                      {3, 6}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(triple_cycles));
+    EXPECT_EQ(Substitution("2 0 1 6 4 5 3"), Substitution(transpositions));  // 7 - fixed point
+
+    s = Substitution("3 2 0 4 7 6 1 5");
+    cycles = s.cycles();
+    triple_cycles = s.tcycles();
+    transpositions = s.transpositions();
+    ASSERT_EQ(cycles.size(), 1);
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 3, 4, 7, 5, 6, 1, 2}));
+    ASSERT_EQ(triple_cycles.size(), 4);
+    EXPECT_EQ(triple_cycles[0], (std::vector<size_t>{0, 3, 4}));
+    EXPECT_EQ(triple_cycles[1], (std::vector<size_t>{0, 7, 5}));
+    EXPECT_EQ(triple_cycles[2], (std::vector<size_t>{0, 6, 1}));
+    EXPECT_EQ(triple_cycles[3], (std::vector<size_t>{0, 2}));
+    EXPECT_TRUE(s.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 3},
+                                                                      {3, 4},
+                                                                      {4, 7},
+                                                                      {7, 5},
+                                                                      {5, 6},
+                                                                      {6, 1},
+                                                                      {1, 2}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(triple_cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
+
+    s = Substitution("6 5 7 0 3 2 4 1 9 8");
+    cycles = s.cycles();
+    triple_cycles = s.tcycles();
+    transpositions = s.transpositions();
+    ASSERT_EQ(cycles.size(), 3);
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 6, 4, 3}));
+    EXPECT_EQ(cycles[1], (std::vector<size_t>{1, 5, 2, 7}));
+    EXPECT_EQ(cycles[2], (std::vector<size_t>{8, 9}));
+    ASSERT_EQ(triple_cycles.size(), 5);
+    EXPECT_EQ(triple_cycles[0], (std::vector<size_t>{0, 6, 4}));
+    EXPECT_EQ(triple_cycles[1], (std::vector<size_t>{1, 5, 2}));
+    EXPECT_EQ(triple_cycles[2], (std::vector<size_t>{0, 1, 3}));
+    EXPECT_EQ(triple_cycles[3], (std::vector<size_t>{1, 3, 7}));
+    EXPECT_EQ(triple_cycles[4], (std::vector<size_t>{8, 9}));
+
+    EXPECT_TRUE(s.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 6},
+                                                                      {6, 4},
+                                                                      {4, 3},
+                                                                      {1, 5},
+                                                                      {5, 2},
+                                                                      {2, 7},
+                                                                      {8, 9}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(triple_cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
+
+    s = Substitution("3 2 0 4 1 6 7 5");
+    cycles = s.cycles();
+    triple_cycles = s.tcycles();
+    transpositions = s.transpositions();
+    ASSERT_EQ(cycles.size(), 2);
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 3, 4, 1, 2}));
+    EXPECT_EQ(cycles[1], (std::vector<size_t>{5, 6, 7}));
+    ASSERT_EQ(triple_cycles.size(), 3);
+    EXPECT_EQ(triple_cycles[0], (std::vector<size_t>{0, 3, 4}));
+    EXPECT_EQ(triple_cycles[1], (std::vector<size_t>{0, 1, 2}));
+    EXPECT_EQ(triple_cycles[2], (std::vector<size_t>{5, 6, 7}));
+    EXPECT_FALSE(s.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 3},
+                                                                      {3, 4},
+                                                                      {4, 1},
+                                                                      {1, 2},
+                                                                      {5, 6},
+                                                                      {6, 7}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(triple_cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
+
+    s = Substitution("1 2 3 0 5 6 7 4");
+    cycles = s.cycles();
+    triple_cycles = s.tcycles();
+    transpositions = s.transpositions();
+    ASSERT_EQ(cycles.size(), 2);
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 1, 2, 3}));
+    EXPECT_EQ(cycles[1], (std::vector<size_t>{4, 5, 6, 7}));
+    ASSERT_EQ(triple_cycles.size(), 4);
+    EXPECT_EQ(triple_cycles[0], (std::vector<size_t>{0, 1, 2}));
+    EXPECT_EQ(triple_cycles[1], (std::vector<size_t>{4, 5, 6}));
+    EXPECT_EQ(triple_cycles[2], (std::vector<size_t>{0, 4, 3}));
+    EXPECT_EQ(triple_cycles[3], (std::vector<size_t>{3, 7, 4}));
+    EXPECT_FALSE(s.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 1},
+                                                                      {1, 2},
+                                                                      {2, 3},
+                                                                      {4, 5},
+                                                                      {5, 6},
+                                                                      {6, 7}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(triple_cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
 }
 
 TEST(Substitutions, Operations) {

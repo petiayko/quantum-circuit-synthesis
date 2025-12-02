@@ -52,33 +52,33 @@ public:
 
     BooleanFunction &operator~() noexcept;
 
-    operator bool() const;
+    [[nodiscard]] operator bool() const;
 
-    size_t size() const noexcept;
+    [[nodiscard]] size_t size() const noexcept;
 
-    size_t dim() const noexcept;
+    [[nodiscard]] size_t dim() const noexcept;
 
-    size_t weight() const noexcept;
+    [[nodiscard]] size_t weight() const noexcept;
 
-    bool is_balanced() const noexcept;
+    [[nodiscard]] bool is_balanced() const noexcept;
 
-    bool is_constant() const noexcept;
+    [[nodiscard]] bool is_constant() const noexcept;
 
-    size_t variable() const;
+    [[nodiscard]] size_t variable() const;
 
-    std::vector<bool> mobius_transformation() const noexcept;
+    [[nodiscard]] std::vector<bool> mobius_transformation() const noexcept;
 
-    std::vector<int> RW_spectrum() const noexcept;
+    [[nodiscard]] std::vector<int> RW_spectrum() const noexcept;
 
-    int adjacent_zeros() const noexcept;
+    [[nodiscard]] int adjacent_zeros() const noexcept;
 
-    int complexity() const noexcept;
+    [[nodiscard]] int complexity() const noexcept;
 
-    BinaryMapping extend() const;
+    [[nodiscard]] BinaryMapping extend() const;
 
-    binary_vector vector() const noexcept;
+    [[nodiscard]] binary_vector vector() const noexcept;
 
-    std::string to_table(char = '\t') const noexcept;
+    [[nodiscard]] std::string to_table(char = '\t') const noexcept;
 
     friend std::ostream &operator<<(std::ostream &, const BooleanFunction &) noexcept;
 
@@ -122,33 +122,40 @@ public:
 
     bool operator!=(const Substitution &) const;
 
-    cf_set coordinate_functions() const noexcept;
+    [[nodiscard]] cf_set coordinate_functions() const noexcept;
 
-    size_t inputs_number() const noexcept;
+    [[nodiscard]] size_t inputs_number() const noexcept;
 
-    size_t outputs_number() const noexcept;
+    [[nodiscard]] size_t outputs_number() const noexcept;
 
-    bool is_substitution() const noexcept;
+    [[nodiscard]] bool is_substitution() const noexcept;
 
-    BinaryMapping extend() const;
+    [[nodiscard]] BinaryMapping extend() const;
 
-    std::string to_table(char = '\t') const noexcept;
+    [[nodiscard]] std::string to_table(char = '\t') const noexcept;
 
     friend std::ostream &operator<<(std::ostream &, const BinaryMapping &) noexcept;
 
 private:
     cf_set cf_;
 
-    table to_table_() const noexcept;
+    [[nodiscard]] table to_table_() const noexcept;
 
     void by_string_(const std::string &);
 };
 
 size_t cayley_distance(const Substitution &, const Substitution &);
 
+using cycle_type = std::vector<size_t>;
+using transposition_type = std::pair<size_t, size_t>;
+
 class Substitution {
 public:
     explicit Substitution(const std::vector<size_t> &);
+
+    explicit Substitution(const std::vector<cycle_type> &);
+
+    explicit Substitution(const std::vector<transposition_type> &);
 
     explicit Substitution(const cf_set &);
 
@@ -178,21 +185,27 @@ public:
 
     Substitution &operator*=(const Substitution &);
 
-    size_t power() const noexcept;
+    [[nodiscard]] size_t power() const noexcept;
 
-    bool is_identical() const noexcept;
+    [[nodiscard]] bool is_identical() const noexcept;
 
-    std::vector<size_t> vector() const noexcept;
+    [[nodiscard]] std::vector<size_t> vector() const noexcept;
 
-    std::vector<std::pair<size_t, size_t>> transpositions() const noexcept;
+    [[nodiscard]] std::vector<cycle_type> cycles() const noexcept;
 
-    std::vector<std::vector<size_t>> cycles() const noexcept;
+    [[nodiscard]] std::vector<transposition_type> transpositions() const noexcept;
 
-    Substitution invert() const noexcept;
+    [[nodiscard]] std::vector<cycle_type> tcycles() const noexcept;
 
-    bool is_odd() const noexcept;
+    [[nodiscard]] std::vector<cycle_type> ncycles() const noexcept;
+
+    [[nodiscard]] Substitution invert() const noexcept;
+
+    [[nodiscard]] bool is_odd() const noexcept;
 
     friend std::ostream &operator<<(std::ostream &, const Substitution &) noexcept;
+
+    friend Substitution substitution_by_cycle(const cycle_type &);
 
 private:
     std::vector<size_t> sub_;
@@ -201,5 +214,7 @@ private:
 };
 
 Substitution operator*(const Substitution &, const Substitution &);
+
+Substitution substitution_by_cycle(const cycle_type &);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP

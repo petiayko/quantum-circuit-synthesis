@@ -540,9 +540,40 @@ size_t cayley_distance(const Substitution &sub1, const Substitution &sub2) {
 
 Substitution::Substitution(const std::vector<size_t> &v) {
     if (v.empty()) {
-        throw SubException("Empty coordinate function set");
+        throw SubException("Empty images set");
     }
     sub_ = v;
+    if (!is_substitution(sub_)) {
+        sub_.clear();
+        throw SubException("Unable to build substitution");
+    }
+}
+
+Substitution::Substitution(const std::vector<cycle_type> &cycles) {
+    *this = Substitution(2);
+    for (const auto &cycle: cycles) {
+        *this *= substitution_by_cycle(cycle);
+    }
+}
+
+Substitution::Substitution(const std::vector<transposition_type> &transpositions) {
+    if (transpositions.empty()) {
+        throw SubException("Unable to handle empty transpositions set");
+    }
+    size_t power = 0;
+    for (const auto &trans: transpositions) {
+        power = trans.first > power ? trans.first : power;
+        power = trans.second > power ? trans.second : power;
+    }
+
+    *this = Substitution(power + 1);
+    for (const auto &[i, j]: transpositions) {
+        auto temp_sub = Substitution(power + 1);
+        std::swap(temp_sub.sub_[i], temp_sub.sub_[j]);
+//        *this = *this * temp_sub;
+        *this = temp_sub * *this;
+    }
+
     if (!is_substitution(sub_)) {
         sub_.clear();
         throw SubException("Unable to build substitution");
@@ -715,29 +746,16 @@ std::vector<size_t> Substitution::vector() const noexcept {
     return sub_;
 }
 
-std::vector<std::pair<size_t, size_t>> Substitution::transpositions() const noexcept {
-    std::vector<std::pair<size_t, size_t>> transpositions;
-    for (const auto &cycle: this->cycles()) {
-        if (cycle.size() == 1) {
-            continue;
-        }
-        for (size_t i = 0; i < cycle.size() - 1; i++) {
-            transpositions.emplace_back(cycle[i], cycle[i + 1]);
-        }
-    }
-    return transpositions;
-}
-
-std::vector<std::vector<size_t>> Substitution::cycles() const noexcept {
+std::vector<cycle_type> Substitution::cycles() const noexcept {
     std::unordered_set<size_t> visited;
-    std::vector<std::vector<size_t>> cycles;
+    std::vector<cycle_type> cycles;
 
     for (size_t i = 0; i < sub_.size(); i++) {
         if (visited.count(i)) {
             continue;
         }
 
-        std::vector<size_t> cycle;
+        cycle_type cycle;
         auto element = i;
         while (!visited.count(element)) {
             visited.insert(element);
@@ -747,6 +765,121 @@ std::vector<std::vector<size_t>> Substitution::cycles() const noexcept {
         cycles.push_back(cycle);
     }
     return cycles;
+}
+
+std::vector<transposition_type> Substitution::transpositions() const noexcept {
+    std::vector<transposition_type> transpositions;
+    for (const auto &cycle: this->cycles()) {
+        if (cycle.size() == 1) {
+            continue;
+        }
+        for (size_t i = 0; i < cycle.size() - 1; i++) {
+//            transpositions.insert(transpositions.begin(), std::make_pair(cycle[i], cycle[i + 1]));
+            transpositions.emplace_back(cycle[i], cycle[i + 1]);
+        }
+    }
+    return transpositions;
+}
+
+std::vector<cycle_type> Substitution::tcycles() const noexcept {
+    // tcycles = 3-cycles
+    std::vector<cycle_type> result;
+    std::vector<cycle_type> two_cycles;
+    for (const auto &cycle: this->cycles()) {
+        if (cycle.size() < 4) {
+            if (cycle.size() == 2) {
+                two_cycles.push_back(cycle);
+                continue;
+            }
+            result.push_back(cycle);
+            continue;
+        }
+        size_t i = 1;
+        for (; i < cycle.size() - 2;) {
+            result.emplace_back();
+            result.back().reserve(3);
+            result.back().push_back(cycle[0]);
+            result.back().push_back(cycle[i]);
+            result.back().push_back(cycle[++i]);
+            ++i;
+        }
+        if (i < cycle.size()) {
+            cycle_type current_cycle;
+            current_cycle.reserve(3);
+            current_cycle.push_back(cycle[0]);
+            for (; i < cycle.size(); i++) {
+                current_cycle.push_back(cycle[i]);
+            }
+            if (current_cycle.size() == 2) {
+                two_cycles.push_back(current_cycle);
+                continue;
+            }
+            result.push_back(current_cycle);
+        }
+    }
+
+    if (two_cycles.size() < 2) {
+        std::copy(two_cycles.begin(), two_cycles.end(), std::back_inserter(result));
+        return result;
+    }
+    for (size_t i = 0; i < two_cycles.size() - 1; i += 2) {
+        auto &left = two_cycles[i];
+        auto &right = two_cycles[i + 1];
+
+        left = {left.front(), right.front(), left.back()};
+        std::rotate(
+                left.begin(),
+                left.begin() + std::distance(
+                        left.begin(),
+                        std::min_element(left.begin(), left.end())
+                ),
+                left.end()
+        );
+
+        right = {left.back(), right.back(), right.front()};
+        std::rotate(
+                right.begin(),
+                right.begin() + std::distance(
+                        right.begin(),
+                        std::min_element(right.begin(), right.end())
+                ),
+                right.end()
+        );
+    }
+    std::copy(two_cycles.begin(), two_cycles.end(), std::back_inserter(result));
+
+    return result;
+}
+
+size_t heterogeneous_columns_number(const cycle_type &cycle) {
+    if (cycle.size() != 3) {
+        throw SubException("Cycle should have length of 3");
+    }
+    auto max_value = *std::max_element(cycle.begin(), cycle.end());
+    size_t max_length = std::bit_width(max_value);
+    size_t count = 0;
+
+    for (size_t i = 0; i < max_length; i++) {
+        auto bit_pos = max_length - i - 1;
+//        auto u_bit = (cycle[0] >> bit_pos) & 1;
+//        auto s_bit = (cycle[1] >> bit_pos) & 1;
+//        auto t_bit = (cycle[2] >> bit_pos) & 1;
+//        count += !(u_bit == s_bit && s_bit == t_bit);
+        count += !((((cycle[0] >> bit_pos) & 1) + ((cycle[1] >> bit_pos) & 1) + ((cycle[2] >> bit_pos) & 1)) % 3);
+    }
+
+    return count;
+}
+
+std::vector<cycle_type> Substitution::ncycles() const noexcept {
+    // ncycles - neighbor cycles
+    for (const auto &cycle: tcycles()) {
+        auto het_cols = heterogeneous_columns_number(cycle);
+        if (het_cols == 1) {
+            continue;
+        }
+    }
+    return {};
 }
 
 Substitution Substitution::invert() const noexcept {
@@ -791,6 +924,24 @@ void Substitution::by_string_(const std::string &s) {
         sub_.clear();
         throw SubException("Unable to build substitution");
     }
+}
+
+Substitution substitution_by_cycle(const cycle_type &cycle) {
+    if (cycle.empty()) {
+        throw SubException("Unable to handle empty cycle");
+    }
+    size_t power = *std::max_element(cycle.begin(), cycle.end());
+    if (!power) {
+        return Substitution(2);
+    }
+    Substitution sub(power + 1);
+    if (cycle.size() == 1) {
+        return sub;
+    }
+    for (size_t i = 0; i < cycle.size() - 1; i++) {
+        std::swap(sub.sub_[cycle[i]], sub.sub_[cycle[i + 1]]);
+    }
+    return sub;
 }
 
 std::ostream &operator<<(std::ostream &out, const Substitution &sub) noexcept {
