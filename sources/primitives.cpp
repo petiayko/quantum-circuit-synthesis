@@ -549,6 +549,36 @@ Substitution::Substitution(const std::vector<size_t> &v) {
     }
 }
 
+Substitution::Substitution(const std::vector<cycle_type> &cycles) {
+    *this = Substitution(2);
+    for (const auto &cycle: cycles) {
+        *this *= substitution_by_cycle(cycle);
+    }
+}
+
+Substitution::Substitution(const std::vector<transposition_type> &transpositions) {
+    if (transpositions.empty()) {
+        throw SubException("Unable to handle empty transpositions set");
+    }
+    size_t power = 0;
+    for (const auto &trans: transpositions) {
+        power = trans.first > power ? trans.first : power;
+        power = trans.second > power ? trans.second : power;
+    }
+
+    *this = Substitution(power + 1);
+    for (const auto &[i, j]: transpositions) {
+        auto temp_sub = Substitution(power + 1);
+        std::swap(temp_sub.sub_[i], temp_sub.sub_[j]);
+        *this = temp_sub * *this;
+    }
+
+    if (!is_substitution(sub_)) {
+        sub_.clear();
+        throw SubException("Unable to build substitution");
+    }
+}
+
 Substitution::Substitution(const cf_set &cf) {
     if (cf.empty()) {
         throw SubException("Empty coordinate function set");
@@ -715,8 +745,8 @@ std::vector<size_t> Substitution::vector() const noexcept {
     return sub_;
 }
 
-std::vector<std::pair<size_t, size_t>> Substitution::transpositions() const noexcept {
-    std::vector<std::pair<size_t, size_t>> transpositions;
+std::vector<transposition_type> Substitution::transpositions() const noexcept {
+    std::vector<transposition_type> transpositions;
     for (const auto &cycle: this->cycles()) {
         if (cycle.size() == 1) {
             continue;
@@ -728,16 +758,16 @@ std::vector<std::pair<size_t, size_t>> Substitution::transpositions() const noex
     return transpositions;
 }
 
-std::vector<std::vector<size_t>> Substitution::cycles() const noexcept {
+std::vector<cycle_type> Substitution::cycles() const noexcept {
     std::unordered_set<size_t> visited;
-    std::vector<std::vector<size_t>> cycles;
+    std::vector<cycle_type> cycles;
 
     for (size_t i = 0; i < sub_.size(); i++) {
         if (visited.count(i)) {
             continue;
         }
 
-        std::vector<size_t> cycle;
+        cycle_type cycle;
         auto element = i;
         while (!visited.count(element)) {
             visited.insert(element);
@@ -758,11 +788,7 @@ Substitution Substitution::invert() const noexcept {
 }
 
 bool Substitution::is_odd() const noexcept {
-    int indicator = 1;  // is not odd
-    for (const auto &cycle: this->cycles()) {
-        indicator *= static_cast<int>(std::pow(-1, cycle.size() - 1));
-    }
-    return indicator == -1;
+    return transpositions().size() % 2;
 }
 
 void Substitution::by_string_(const std::string &s) {
@@ -791,6 +817,24 @@ void Substitution::by_string_(const std::string &s) {
         sub_.clear();
         throw SubException("Unable to build substitution");
     }
+}
+
+Substitution substitution_by_cycle(const cycle_type &cycle) {
+    if (cycle.empty()) {
+        throw SubException("Unable to handle empty cycle");
+    }
+    size_t power = *std::max_element(cycle.begin(), cycle.end());
+    if (!power) {
+        return Substitution(2);
+    }
+    Substitution sub(power + 1);
+    if (cycle.size() == 1) {
+        return sub;
+    }
+    for (size_t i = 0; i < cycle.size() - 1; i++) {
+        std::swap(sub.sub_[cycle[i]], sub.sub_[cycle[i + 1]]);
+    }
+    return sub;
 }
 
 std::ostream &operator<<(std::ostream &out, const Substitution &sub) noexcept {

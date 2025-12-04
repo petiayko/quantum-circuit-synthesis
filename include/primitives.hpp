@@ -144,11 +144,18 @@ private:
     void by_string_(const std::string &);
 };
 
+using cycle_type = std::vector<size_t>;
+using transposition_type = std::pair<size_t, size_t>;
+
 size_t cayley_distance(const Substitution &, const Substitution &);
 
 class Substitution {
 public:
     explicit Substitution(const std::vector<size_t> &);
+
+    explicit Substitution(const std::vector<cycle_type> &);
+
+    explicit Substitution(const std::vector<transposition_type> &);
 
     explicit Substitution(const cf_set &);
 
@@ -184,15 +191,17 @@ public:
 
     [[nodiscard]] std::vector<size_t> vector() const noexcept;
 
-    [[nodiscard]] std::vector<std::pair<size_t, size_t>> transpositions() const noexcept;
+    [[nodiscard]] std::vector<transposition_type> transpositions() const noexcept;
 
-    [[nodiscard]] std::vector<std::vector<size_t>> cycles() const noexcept;
+    [[nodiscard]] std::vector<cycle_type> cycles() const noexcept;
 
     [[nodiscard]] Substitution invert() const noexcept;
 
     [[nodiscard]] bool is_odd() const noexcept;
 
     friend std::ostream &operator<<(std::ostream &, const Substitution &) noexcept;
+
+    friend Substitution substitution_by_cycle(const cycle_type &);
 
 private:
     std::vector<size_t> sub_;
@@ -201,5 +210,7 @@ private:
 };
 
 Substitution operator*(const Substitution &, const Substitution &);
+
+Substitution substitution_by_cycle(const cycle_type &);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP
