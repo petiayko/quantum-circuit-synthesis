@@ -9,6 +9,7 @@ enum class Algo {
     DUMMY,
     RW,
     SS,
+    ZKB,
     UNKNOWN = 1024,
     EMPTY = 2048,
 };
@@ -36,5 +37,9 @@ Circuit RW_algorithm(const Substitution &, bool = false);
 Circuit SS_algorithm(const BinaryMapping &, bool = false);
 
 Circuit SS_algorithm(const Substitution &, bool = false);
+
+Circuit ZKB_algorithm(const BinaryMapping &, bool = false);
+
+Circuit ZKB_algorithm(const Substitution &, bool = false);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_SYNTHESIS_HPP

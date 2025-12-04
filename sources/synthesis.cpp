@@ -11,6 +11,9 @@ Circuit synthesize(const BinaryMapping &bm, Algo algo, bool reduction) {
     if (algo == Algo::SS) {
         return SS_algorithm(bm, reduction);
     }
+    if (algo == Algo::ZKB) {
+        return ZKB_algorithm(bm, reduction);
+    }
     throw SynthException("Unknown synthesis algorithm");
 }
 
@@ -23,6 +26,9 @@ Circuit synthesize(const Substitution &sub, Algo algo, bool reduction) {
     }
     if (algo == Algo::SS) {
         return SS_algorithm(sub, reduction);
+    }
+    if (algo == Algo::ZKB) {
+        return ZKB_algorithm(sub, reduction);
     }
     throw SynthException("Unknown synthesis algorithm");
 }
@@ -423,6 +429,39 @@ Circuit SS_algorithm(const Substitution &sub, bool reduction) {
         }
         c.add(best_gate);
         sub_base *= best_gate.act();
+    }
+
+    if (reduction) {
+        c.reduce();
+    }
+
+    if (c.produce_mapping() != sub) {
+        LOG_DEBUG("The synthesized circuit produces an incorrect mapping", static_cast<std::string>(c));
+        throw SynthException("Unable to synthesize Circuit");
+    }
+
+    return c;
+}
+
+Circuit ZKB_algorithm(const BinaryMapping &bm, bool reduction) {
+    auto bm_extended = bm.extend();
+    auto c = ZKB_algorithm(Substitution(bm_extended), reduction);
+    c.set_memory(bm_extended.inputs_number() - bm.inputs_number());
+    return c;
+}
+
+Circuit ZKB_algorithm(const Substitution &sub, bool reduction) {
+    if (!is_power_of_2(sub.power())) {
+        throw SynthException("Substitution size should be power of 2");
+    }
+    if (sub.power() < 4) {
+        throw SynthException("Impossible to apply the ZKB algorithm to a substitution of power less than 16");
+    }
+
+    size_t dim = std::log2(sub.power());
+    Circuit c(dim);
+    if (sub.is_identical()) {
+        return c;
     }
 
     if (reduction) {
