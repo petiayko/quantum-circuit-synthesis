@@ -12,11 +12,11 @@
 
 inline void trim(std::string &s) noexcept {
     size_t start = 0;
-    while (start < s.size() && std::isspace(static_cast<unsigned char>(s[start]))) {
+    while (start < s.size() && std::isspace(s[start])) {
         ++start;
     }
     size_t end = s.size();
-    while (end > start && std::isspace(static_cast<unsigned char>(s[end - 1]))) {
+    while (end > start && std::isspace(s[end - 1])) {
         --end;
     }
     if (start > 0 || end < s.size()) {
@@ -33,7 +33,7 @@ inline T strict_stoi(const std::string &s, int base = 10) {
     std::string_view sv(s);
 
     size_t start = 0;
-    while (start < sv.size() && std::isspace(static_cast<unsigned char>(sv[start]))) {
+    while (start < sv.size() && std::isspace(sv[start])) {
         ++start;
     }
     if (start == sv.size()) {
@@ -53,13 +53,12 @@ inline T strict_stoi(const std::string &s, int base = 10) {
         throw StringException("Number out of range: " + std::string(sv.substr(start)));
     }
 
-    while (ptr < end && std::isspace(static_cast<unsigned char>(*ptr))) {
+    while (ptr < end && std::isspace(*ptr)) {
         ++ptr;
     }
     if (ptr != end) {
         throw StringException("Extra characters after number: " + std::string(sv));
     }
-
     return value;
 }
 
