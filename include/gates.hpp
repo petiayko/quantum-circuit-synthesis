@@ -1,6 +1,7 @@
 #ifndef QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 #define QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 
+#include <set>
 #include <unordered_map>
 
 #include "primitives.hpp"

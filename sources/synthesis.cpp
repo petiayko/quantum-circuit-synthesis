@@ -450,18 +450,155 @@ Circuit ZKB_algorithm(const BinaryMapping &bm, bool reduction) {
     return c;
 }
 
+inline std::vector<Gate> ZKB_algorithm(const transposition_type &trans, size_t dim) {
+    if (trans.first == trans.second) {
+        throw SubException("Invalid transposition");
+    }
+
+    std::set<size_t> b00;
+    std::set<size_t> b01;
+    std::set<size_t> b10;
+    std::set<size_t> b11;
+
+    for (size_t i = 0; i < dim; i++) {
+        auto bit_pos = dim - i - 1;
+        bool x_bit = (trans.first >> bit_pos) & 1;
+        bool y_bit = (trans.second >> bit_pos) & 1;
+        if (!x_bit && !y_bit) {
+            b00.insert(i);
+        } else if (!x_bit && y_bit) {
+            b01.insert(i);
+        } else if (x_bit && !y_bit) {
+            b10.insert(i);
+        } else {
+            b11.insert(i);
+        }
+    }
+
+    controls_type kernel_controls;
+    for (size_t control = 0; control < dim; control++) {
+        if (b00.contains(control)) {
+            kernel_controls[control] = false;
+            continue;
+        }
+        kernel_controls[control] = true;
+    }
+
+    std::vector<Gate> result;
+
+    if (b01.size() + b10.size() == 1) {
+        auto j = b01.empty() ? *b10.begin() : *b01.begin();
+        kernel_controls.extract(j);
+        result.emplace_back(GateType::kCNOT, std::vector<size_t>{j}, kernel_controls, dim);
+        return result;
+    }
+
+    if (!b01.empty() && !b10.empty()) {
+        auto j = *b10.begin();
+        auto k = *b01.begin();
+
+        std::vector<Gate> b10_cnot_gates;
+        for (auto i: b10) {
+            if (i == j) {
+                continue;
+            }
+            b10_cnot_gates.emplace_back(
+                    GateType::CNOT,
+                    std::vector<size_t>{i},
+                    controls_type({{k, true}}),
+                    dim
+            );
+        }
+        std::vector<Gate> b01_cnot_gates;
+        for (auto i: b01) {
+            b01_cnot_gates.emplace_back(
+                    GateType::CNOT,
+                    std::vector<size_t>{i},
+                    controls_type({{j, true}}),
+                    dim
+            );
+        }
+        // NOT gates skipped - we took them into account by marking kernel inputs inverse
+        std::copy(b10_cnot_gates.begin(), b10_cnot_gates.end(), std::back_inserter(result));
+        std::copy(b01_cnot_gates.begin(), b01_cnot_gates.end(), std::back_inserter(result));
+        kernel_controls.extract(j);
+        result.emplace_back(GateType::kCNOT, std::vector<size_t>{j}, kernel_controls, dim);
+        std::copy(b01_cnot_gates.begin(), b01_cnot_gates.end(), std::back_inserter(result));
+        std::copy(b10_cnot_gates.begin(), b10_cnot_gates.end(), std::back_inserter(result));
+        return result;
+    }
+
+    if (b01.empty()) {
+        auto j = *b10.begin();
+
+        std::vector<Gate> b10_cnot_gates;
+        b10_cnot_gates.emplace_back(GateType::NOT, std::vector<size_t>{j}, controls_type{}, dim);
+        for (auto i: b10) {
+            if (i == j) {
+                continue;
+            }
+            b10_cnot_gates.emplace_back(
+                    GateType::CNOT,
+                    std::vector<size_t>{i},
+                    controls_type({{j, true}}),
+                    dim
+            );
+        }
+        b10_cnot_gates.emplace_back(GateType::NOT, std::vector<size_t>{j}, controls_type{}, dim);
+        // NOT gates skipped - we took them into account by marking kernel inputs inverse
+        std::copy(b10_cnot_gates.begin(), b10_cnot_gates.end(), std::back_inserter(result));
+        kernel_controls.extract(j);
+        result.emplace_back(GateType::kCNOT, std::vector<size_t>{j}, kernel_controls, dim);
+        std::copy(b10_cnot_gates.begin(), b10_cnot_gates.end(), std::back_inserter(result));
+        return result;
+    }
+
+    if (b10.empty()) {
+        auto j = *b01.begin();
+
+        std::vector<Gate> b01_cnot_gates;
+        b01_cnot_gates.emplace_back(GateType::NOT, std::vector<size_t>{j}, controls_type{}, dim);
+        for (auto i: b01) {
+            if (i == j) {
+                continue;
+            }
+            b01_cnot_gates.emplace_back(
+                    GateType::CNOT,
+                    std::vector<size_t>{i},
+                    controls_type({{j, true}}),
+                    dim
+            );
+        }
+        b01_cnot_gates.emplace_back(GateType::NOT, std::vector<size_t>{j}, controls_type{}, dim);
+        // NOT gates skipped - we took them into account by marking kernel inputs inverse
+        std::copy(b01_cnot_gates.begin(), b01_cnot_gates.end(), std::back_inserter(result));
+        kernel_controls.extract(j);
+        result.emplace_back(GateType::kCNOT, std::vector<size_t>{j}, kernel_controls, dim);
+        std::copy(b01_cnot_gates.begin(), b01_cnot_gates.end(), std::back_inserter(result));
+        return result;
+    }
+    return result;
+}
+
 Circuit ZKB_algorithm(const Substitution &sub, bool reduction) {
     if (!is_power_of_2(sub.power())) {
         throw SynthException("Substitution size should be power of 2");
     }
-    if (sub.power() < 4) {
+
+    size_t dim = std::log2(sub.power());
+    if (dim < 4) {
         throw SynthException("Impossible to apply the ZKB algorithm to a substitution of power less than 16");
     }
 
-    size_t dim = std::log2(sub.power());
     Circuit c(dim);
     if (sub.is_identical()) {
         return c;
+    }
+
+    for (const auto &trans: sub.transpositions()) {
+        for (const auto &gate: ZKB_algorithm(trans, dim)) {
+            c.insert(gate, 0);
+        }
     }
 
     if (reduction) {

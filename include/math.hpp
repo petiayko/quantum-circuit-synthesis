@@ -45,7 +45,7 @@ inline std::string decimal_to_binary_s(T v, size_t l = 0) noexcept {
 template<class T = size_t>
 inline std::vector<bool> decimal_to_binary_v(T v, size_t l = 0) noexcept {
     std::vector<bool> result;
-    result.reserve(std::max(sizeof(T) * 8, l));
+//    result.reserve(std::max(sizeof(T) * 8, l));
     if (!v) {
         result.push_back(false);
     } else {
