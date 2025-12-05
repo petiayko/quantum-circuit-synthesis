@@ -148,7 +148,7 @@ size_t BooleanFunction::weight() const noexcept {
 }
 
 bool BooleanFunction::is_balanced() const noexcept {
-    return this->weight() * 2 == this->size();
+    return this->weight() << 1 == this->size();
 }
 
 bool BooleanFunction::is_constant() const noexcept {
@@ -337,15 +337,20 @@ BinaryMapping::BinaryMapping(const BinaryMapping &mp) {
 }
 
 BinaryMapping::BinaryMapping(const Substitution &sub) {
-    auto power = static_cast<size_t>(std::log2(sub.power()));
-    table truth_table(power);
-    for (const auto &v: sub.vector()) {
-        auto v_binary = decimal_to_binary_s(v, power);
-        for (size_t i = 0; i < v_binary.size(); i++) {
-            truth_table[i].push_back(v_binary[i] == '1');
+    if (!is_power_of_2(sub.power())) {
+        throw BMException("Impossible to transform Substitution into a Binary Mapping whose degree is not power of 2");
+    }
+    size_t cols = std::log2(sub.power());
+    table truth_table(cols, binary_vector(sub.power(), false));
+    for (size_t col = 0; col < cols; col++) {
+        size_t bit_pos = cols - col - 1;
+        size_t mask = 1u << bit_pos;
+        auto& cf_col = truth_table[col];
+        for (size_t row = 0; row < sub.power(); row++) {
+            cf_col[row] = sub.vector()[row] & mask;
         }
     }
-    cf_.reserve(truth_table.size());
+    cf_.reserve(cols);
     for (const auto &bf: truth_table) {
         cf_.emplace_back(bf);
     }
@@ -398,7 +403,7 @@ size_t BinaryMapping::outputs_number() const noexcept {
 
 bool BinaryMapping::is_substitution() const noexcept {
     try {
-        auto _ = Substitution(*this);
+        Substitution(*this);
         return true;
     } catch (...) {
         return false;
@@ -668,7 +673,7 @@ Substitution::Substitution(const Substitution &sub) {
 }
 
 Substitution::Substitution(const BinaryMapping &mp) {
-    sub_ = Substitution(mp.coordinate_functions()).sub_;
+    *this = Substitution(mp.coordinate_functions());
 }
 
 Substitution &Substitution::operator=(const Substitution &sub) {

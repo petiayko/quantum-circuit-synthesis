@@ -4,6 +4,58 @@
 
 
 TEST(Synthesis, MappingZKB) {
+    {
+        BinaryMapping bm(table{{0, 1, 1, 0, 1, 1, 1, 1}});
+        Circuit c = ZKB_algorithm(bm);
+        EXPECT_EQ(synthesize(bm, Algo::ZKB), c);
+        EXPECT_EQ(synthesize(bm, Algo::ZKB, true), c);
+        EXPECT_EQ(c.produce_mapping().coordinate_functions().back(), BooleanFunction("01101111"));
+        EXPECT_EQ(c.memory(), 1);
+    }
+    {
+        BinaryMapping bm(table{{0, 1},
+                               {1, 0},
+                               {0, 0},
+                               {1, 1}});
+        Circuit c = ZKB_algorithm(bm);
+        EXPECT_EQ(synthesize(bm, Algo::ZKB), c);
+        EXPECT_EQ(synthesize(bm, Algo::ZKB, true), c);
+        EXPECT_EQ(c.produce_mapping(), BinaryMapping(table{{0, 1},
+                                                           {0, 1},
+                                                           {1, 0},
+                                                           {0, 0},
+                                                           {1, 1}}));
+        EXPECT_EQ(c.memory(), 4);
+    }
+    {
+        BinaryMapping bm(table{{0, 1, 1, 1},
+                               {0, 0, 0, 0},
+                               {1, 0, 0, 1},
+                               {0, 1, 0, 0},
+                               {1, 1, 0, 1}});
+        Circuit c = ZKB_algorithm(bm);
+        EXPECT_EQ(synthesize(bm, Algo::ZKB), c);
+        EXPECT_EQ(synthesize(bm, Algo::ZKB, true), c);
+        EXPECT_EQ(c.produce_mapping(), BinaryMapping(table{{0, 0, 1, 1},
+                                                           {0, 1, 0, 1},
+                                                           {0, 1, 1, 1},
+                                                           {0, 0, 0, 0},
+                                                           {1, 0, 0, 1},
+                                                           {0, 1, 0, 0},
+                                                           {1, 1, 0, 1}}));
+        EXPECT_EQ(c.memory(), 5);
+    }
+    {
+        BinaryMapping bm(table{{0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1},
+                               {0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0},
+                               {1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1},
+                               {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}});
+        Circuit c = ZKB_algorithm(bm);
+        EXPECT_EQ(synthesize(bm, Algo::ZKB), c);
+        EXPECT_EQ(synthesize(bm, Algo::ZKB, true), c);
+        EXPECT_EQ(c.produce_mapping(), bm);
+        EXPECT_EQ(c.memory(), 0);
+    }
 }
 
 TEST(Synthesis, SubstitutionZKB) {

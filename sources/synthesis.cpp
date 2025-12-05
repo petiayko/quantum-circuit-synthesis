@@ -477,11 +477,7 @@ inline std::vector<Gate> ZKB_algorithm(const transposition_type &trans, size_t d
 
     controls_type kernel_controls;
     for (size_t control = 0; control < dim; control++) {
-        if (b00.contains(control)) {
-            kernel_controls[control] = false;
-            continue;
-        }
-        kernel_controls[control] = true;
+        kernel_controls[control] = !b00.contains(control);
     }
 
     std::vector<Gate> result;
