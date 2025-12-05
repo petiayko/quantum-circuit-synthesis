@@ -82,13 +82,13 @@ TEST(BooleanFunction, Methods) {
     EXPECT_EQ(BooleanFunction("0000111100001111").variable(), 1);
     EXPECT_EQ(BooleanFunction("0011001100110011").variable(), 2);
     EXPECT_EQ(BooleanFunction("0101010101010101").variable(), 3);
-    EXPECT_THROW(BooleanFunction("00").variable(), BFException);
-    EXPECT_THROW(BooleanFunction("10").variable(), BFException);
-    EXPECT_THROW(BooleanFunction("11").variable(), BFException);
-    EXPECT_THROW(BooleanFunction("00000000").variable(), BFException);
-    EXPECT_THROW(BooleanFunction("1111").variable(), BFException);
-    EXPECT_THROW(BooleanFunction("10101010").variable(), BFException);
-    EXPECT_THROW(BooleanFunction("11111111111111110000000000000000").variable(), BFException);
+    EXPECT_THROW([[maybe_unused]] auto _ = BooleanFunction("00").variable(), BFException);
+    EXPECT_THROW([[maybe_unused]] auto _ = BooleanFunction("10").variable(), BFException);
+    EXPECT_THROW([[maybe_unused]] auto _ = BooleanFunction("11").variable(), BFException);
+    EXPECT_THROW([[maybe_unused]] auto _ = BooleanFunction("00000000").variable(), BFException);
+    EXPECT_THROW([[maybe_unused]] auto _ = BooleanFunction("1111").variable(), BFException);
+    EXPECT_THROW([[maybe_unused]] auto _ = BooleanFunction("10101010").variable(), BFException);
+    EXPECT_THROW([[maybe_unused]] auto _ = BooleanFunction("11111111111111110000000000000000").variable(), BFException);
 
     EXPECT_EQ(bf_1.vector(), binary_vector({true, false, false, false, true, false, true, false}));
     EXPECT_EQ(bf_2.vector(), binary_vector({false, true}));

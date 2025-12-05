@@ -41,7 +41,7 @@ size_t count_gates(GateType type, size_t dim, bool on_nest = false) noexcept {
         if (dim < 2) {
             return 0;
         }
-        return dim * (dim - 1) / 2;
+        return dim * (dim - 1) >> 1;
     } else if (type == GateType::CSWAP) {
         if (dim < 3) {
             return 0;

@@ -1,6 +1,7 @@
 #ifndef QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 #define QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 
+#include <set>
 #include <unordered_map>
 
 #include "primitives.hpp"
@@ -34,21 +35,21 @@ public:
 
     explicit Gate(const std::string &, size_t);
 
-    size_t dim() const noexcept;
+    [[nodiscard]] size_t dim() const noexcept;
 
-    GateType type() const noexcept;
+    [[nodiscard]] GateType type() const noexcept;
 
-    std::vector<size_t> nests() const noexcept;
+    [[nodiscard]] std::vector<size_t> nests() const noexcept;
 
-    std::vector<size_t> controls() const noexcept;
+    [[nodiscard]] std::vector<size_t> controls() const noexcept;
 
-    std::vector<size_t> direct_controls() const noexcept;
+    [[nodiscard]] std::vector<size_t> direct_controls() const noexcept;
 
-    std::vector<size_t> inverted_controls() const noexcept;
+    [[nodiscard]] std::vector<size_t> inverted_controls() const noexcept;
 
-    bool empty() const noexcept;
+    [[nodiscard]] bool empty() const noexcept;
 
-    bool is_commutes(const Gate &) const;
+    [[nodiscard]] bool is_commutes(const Gate &) const;
 
     void clear() noexcept;
 
@@ -56,7 +57,7 @@ public:
 
     void act(cf_set &) const;
 
-    Substitution act() const noexcept;
+    [[nodiscard]] Substitution act() const noexcept;
 
     bool operator==(const Gate &) const;
 
@@ -111,11 +112,11 @@ public:
 
     explicit Circuit(std::istream &);
 
-    size_t dim() const noexcept;
+    [[nodiscard]] size_t dim() const noexcept;
 
-    size_t memory() const noexcept;
+    [[nodiscard]] size_t memory() const noexcept;
 
-    size_t complexity() const noexcept;
+    [[nodiscard]] size_t complexity() const noexcept;
 
     void set_memory(size_t);
 
@@ -129,9 +130,9 @@ public:
 
     void reduce() noexcept;
 
-    BinaryMapping produce_mapping() const noexcept;
+    [[nodiscard]] BinaryMapping produce_mapping() const noexcept;
 
-    bool schematically_equal(const Circuit &) const noexcept;
+    [[nodiscard]] bool schematically_equal(const Circuit &) const noexcept;
 
     size_t move_swap_left();
 
