@@ -17,6 +17,7 @@ def write_substitution_to_file(substitution, path):
             f.write('# Automatically generated with sub_generator.py\n')
             substitution_str = ' '.join(map(str, substitution))
             f.write(substitution_str)
+            f.write('\n')
 
     except IOError as e:
         print(f'An error occurred while writing to file: {e}')
@@ -25,13 +26,13 @@ def write_substitution_to_file(substitution, path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Random substitution generator')
-    parser.add_argument('n', type=int, help='Substitution size (should be gather than 1)')
-    parser.add_argument('path', type=str, help='Path to output file')
+    parser.add_argument('-n', type=int, help='Substitution size (should be gather than 1)')
+    parser.add_argument('-path', type=str, help='Path to output file')
 
     args = parser.parse_args()
 
-    if args.N <= 1:
+    if args.n <= 1:
         print('Substitution size \'n\' should be gather than 1')
         sys.exit(1)
 
-    write_substitution_to_file(generate_substitution(args.N), args.path)
+    write_substitution_to_file(generate_substitution(args.n), args.path)
