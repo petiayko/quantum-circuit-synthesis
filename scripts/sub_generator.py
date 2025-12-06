@@ -31,6 +31,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    if args.n is None:
+        print('Parameter \'n\' is required')
+        sys.exit(1)
+
+    if args.path is None:
+        print('Parameter \'path\' is required')
+        sys.exit(1)
+
     if args.n <= 1:
         print('Substitution size \'n\' should be gather than 1')
         sys.exit(1)
