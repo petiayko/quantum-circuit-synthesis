@@ -155,8 +155,9 @@ TEST(Synthesis, SubstitutionRW) {
     }
     {
         Substitution sub("4 6 2 0 15 13 7 5 9 11 3 1 14 12 10 8");
-        // kill me for this
-        EXPECT_THROW(synthesize(sub, Algo::RW), SynthException);
-        EXPECT_THROW(RW_algorithm(sub), SynthException);
+        Circuit c = RW_algorithm(sub);
+        EXPECT_EQ(synthesize(sub, Algo::RW), c);
+        EXPECT_EQ(synthesize(sub, Algo::RW, true), c);
+        EXPECT_EQ(c.produce_mapping(), sub);
     }
 }

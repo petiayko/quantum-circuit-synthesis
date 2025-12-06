@@ -338,7 +338,7 @@ BinaryMapping::BinaryMapping(const BinaryMapping &mp) {
 
 BinaryMapping::BinaryMapping(const Substitution &sub) {
     if (!is_power_of_2(sub.power())) {
-        throw BMException("Impossible to transform Substitution into a Binary Mapping whose degree is not power of 2");
+        throw BMException("Impossible to transform Substitution into BM whose power is not power of 2");
     }
     size_t cols = std::log2(sub.power());
     table truth_table(cols, binary_vector(sub.power(), false));
