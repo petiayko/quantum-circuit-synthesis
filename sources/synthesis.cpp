@@ -420,7 +420,7 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
 
     if (c.produce_mapping() != bm_extend) {
         LOG_DEBUG("The synthesized circuit produces an incorrect mapping", static_cast<std::string>(c));
-        throw SynthException("Unable to synthesize Circuit!");
+        throw SynthException("Unable to synthesize Circuit");
     }
 
     c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
