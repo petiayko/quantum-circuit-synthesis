@@ -247,101 +247,149 @@ std::vector<Gate> generate_all_gates(size_t nest, size_t dim) {
 }
 
 Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
-    const size_t MAX_CONTROL_LINES = 3;
-
     auto bm_extend = bm.extend();
     auto bm_cf = bm_extend.coordinate_functions();
     const auto outputs = bm_extend.outputs_number();
 
     auto c = Circuit(outputs);
 
-    std::unordered_map<size_t, std::vector<Gate>> precomputed_gates;
-    for (size_t i = 0; i < outputs; i++) {
-        precomputed_gates[i] = generate_all_gates({GateType::CNOT, GateType::kCNOT}, i, MAX_CONTROL_LINES, outputs);
+    std::unordered_map<size_t, std::vector<Gate>> precomputed_gates_cnot;
+    std::unordered_map<size_t, std::vector<Gate>> precomputed_gates_kcnot2;
+    std::unordered_map<size_t, std::vector<Gate>> precomputed_gates_kcnot3;
+
+    for (size_t nest = 0; nest < outputs; nest++) {
+        precomputed_gates_cnot[nest] = generate_all_gates({GateType::CNOT}, nest, 1, outputs);
+        precomputed_gates_kcnot2[nest] = generate_all_gates({GateType::kCNOT}, nest, 2, outputs);
+        precomputed_gates_kcnot3[nest] = generate_all_gates({GateType::kCNOT}, nest, 3, outputs);
     }
 
-    for (int i = outputs - 1;; i--) {
+    while (true) {
         if (c.produce_mapping() == bm_extend) {
             c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
             return c;
         }
 
-        if (i < 0) {
-            i = outputs - 1;
-        }
-        size_t nest = i;
-
-        if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
-            continue;
-        } else if (bm_cf[nest] == ~BooleanFunction(nest, outputs)) {
-            auto g = Gate(GateType::NOT, {nest}, {}, outputs);
-            c.insert(g, 0);
-            g.act(bm_cf);
-            continue;
+        for (size_t nest = 0; nest < outputs; nest++) {
+            if (bm_cf[nest] == ~BooleanFunction(nest, outputs)) {
+                auto g = Gate(GateType::NOT, {nest}, {}, outputs);
+                c.insert(g, 0);
+                g.act(bm_cf);
+            }
         }
 
-        auto complexity = bm_cf[nest].complexity();
-        auto max_complexity_diff = 0;
-        Gate best_gate;
+        bool gate_chosen = false;
 
-        // CNOT
-        // TODO act not to bm, act to BF???
-        for (const auto &gate: precomputed_gates[nest]) {
-            if (gate.type() != GateType::CNOT || gate.nests().front() != nest) {
+        for (size_t nest = 0; nest < outputs; nest++) {
+            if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
                 continue;
             }
-            gate.act(bm_cf);
-            auto complexity_new = bm_cf[nest].complexity();
-            if (complexity_new - complexity >= max_complexity_diff) {
-                max_complexity_diff = complexity_new - complexity;
-                best_gate = gate;
+            auto complexity = bm_cf[nest].complexity();
+            auto max_complexity_diff = 0;
+            Gate best_gate;
+
+            for (const auto &gate: precomputed_gates_cnot[nest]) {
+                gate.act(bm_cf);
+                auto complexity_new = bm_cf[nest].complexity();
+                if (complexity_new - complexity >= max_complexity_diff) {
+                    max_complexity_diff = complexity_new - complexity;
+                    best_gate = gate;
+                }
+                gate.act(bm_cf);
             }
-            gate.act(bm_cf);
+            if (max_complexity_diff) {
+                c.insert(best_gate, 0);
+                best_gate.act(bm_cf);
+                gate_chosen = true;
+                break;
+            }
         }
-        if (max_complexity_diff) {
-            c.insert(best_gate, 0);
-            best_gate.act(bm_cf);
+        if (gate_chosen) {
             continue;
         }
 
-        // kCNOT 2
-        for (const auto &gate: precomputed_gates[nest]) {
-            if (gate.controls().size() != 2 || gate.nests().front() != nest) {
+        for (size_t nest = 0; nest < outputs; nest++) {
+            if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
                 continue;
             }
-            gate.act(bm_cf);
-            auto complexity_new = bm_cf[nest].complexity();
-            if (complexity_new - complexity >= max_complexity_diff) {
-                max_complexity_diff = complexity_new - complexity;
-                best_gate = gate;
+            auto complexity = bm_cf[nest].complexity();
+            auto max_complexity_diff = 0;
+            Gate best_gate;
+
+            for (const auto &gate: precomputed_gates_cnot[nest]) {
+                gate.act(bm_cf);
+                auto complexity_new = bm_cf[nest].complexity();
+                if (complexity_new - complexity >= max_complexity_diff) {
+                    max_complexity_diff = complexity_new - complexity;
+                    best_gate = gate;
+                }
+                gate.act(bm_cf);
             }
-            gate.act(bm_cf);
+            if (max_complexity_diff) {
+                c.insert(best_gate, 0);
+                best_gate.act(bm_cf);
+                gate_chosen = true;
+                break;
+            }
         }
-        if (max_complexity_diff) {
-            c.insert(best_gate, 0);
-            best_gate.act(bm_cf);
+        if (gate_chosen) {
             continue;
         }
 
-        // kCNOT 3
-        for (const auto &gate: precomputed_gates[nest]) {
-            if (gate.controls().size() != 3 || gate.nests().front() != nest) {
+        for (size_t nest = 0; nest < outputs; nest++) {
+            if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
                 continue;
             }
-            gate.act(bm_cf);
-            auto complexity_new = bm_cf[nest].complexity();
-            if (complexity_new - complexity >= max_complexity_diff) {
-                max_complexity_diff = complexity_new - complexity;
-                best_gate = gate;
+            auto complexity = bm_cf[nest].complexity();
+            auto max_complexity_diff = 0;
+            Gate best_gate;
+
+            for (const auto &gate: precomputed_gates_kcnot2[nest]) {
+                gate.act(bm_cf);
+                auto complexity_new = bm_cf[nest].complexity();
+                if (complexity_new - complexity >= max_complexity_diff) {
+                    max_complexity_diff = complexity_new - complexity;
+                    best_gate = gate;
+                }
+                gate.act(bm_cf);
             }
-            gate.act(bm_cf);
+            if (max_complexity_diff) {
+                c.insert(best_gate, 0);
+                best_gate.act(bm_cf);
+                gate_chosen = true;
+                break;
+            }
         }
-        if (max_complexity_diff) {
-            c.insert(best_gate, 0);
-            best_gate.act(bm_cf);
+        if (gate_chosen) {
             continue;
         }
 
+        for (size_t nest = 0; nest < outputs; nest++) {
+            if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
+                continue;
+            }
+            auto complexity = bm_cf[nest].complexity();
+            auto max_complexity_diff = 0;
+            Gate best_gate;
+
+            for (const auto &gate: precomputed_gates_kcnot3[nest]) {
+                gate.act(bm_cf);
+                auto complexity_new = bm_cf[nest].complexity();
+                if (complexity_new - complexity >= max_complexity_diff) {
+                    max_complexity_diff = complexity_new - complexity;
+                    best_gate = gate;
+                }
+                gate.act(bm_cf);
+            }
+            if (max_complexity_diff) {
+                c.insert(best_gate, 0);
+                best_gate.act(bm_cf);
+                gate_chosen = true;
+                break;
+            }
+        }
+        if (gate_chosen) {
+            continue;
+        }
         break;
     }
 
@@ -362,8 +410,8 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
             }
         }
     } catch (const BFException &e) {
-        std::cout << c;
-        throw SynthException("Unable to synthesize Circuit");
+        LOG_DEBUG("The synthesized circuit produces an incorrect mapping", static_cast<std::string>(c));
+        throw SynthException(std::string("Unable to synthesize Circuit: ") + e.what());
     }
 
     if (reduction) {
