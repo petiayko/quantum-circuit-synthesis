@@ -1,9 +1,38 @@
 #ifndef QUANTUM_CIRCUIT_SYNTHESIS_SYNTHESIS_HPP
 #define QUANTUM_CIRCUIT_SYNTHESIS_SYNTHESIS_HPP
 
+#include <atomic>
+#include <thread>
+
 #include "exseptions.hpp"
 #include "gates.hpp"
 #include "logger.hpp"
+
+class JobsConfig {
+public:
+    static JobsConfig &instance() {
+        static JobsConfig config;
+        return config;
+    }
+
+    size_t set(size_t jobs) {
+        const auto max_jobs = std::thread::hardware_concurrency();
+        if (jobs > max_jobs) {
+            jobs = max_jobs;
+        }
+        std::atomic_ref(jobs_).store(jobs);
+        return jobs;
+    }
+
+    [[nodiscard]] size_t get() const {
+        return std::atomic_ref(jobs_).load();
+    }
+
+private:
+    JobsConfig() = default;
+
+    size_t jobs_ = 1;
+};
 
 enum class Algo {
     DUMMY,

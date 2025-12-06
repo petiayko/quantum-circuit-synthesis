@@ -58,6 +58,8 @@ size_t count_gates(GateType type, size_t dim, bool on_nest = false) noexcept {
 
 
 TEST(Synthesis, AllGatesGenerator) {
+    JobsConfig::instance().set(std::thread::hardware_concurrency());
+
     EXPECT_THROW(generate_all_gates(0), SynthException);
 
     auto gates = generate_all_gates(1);
@@ -134,6 +136,8 @@ TEST(Synthesis, AllGatesGenerator) {
 }
 
 TEST(Synthesis, NestGatesGenerator) {
+    JobsConfig::instance().set(std::thread::hardware_concurrency());
+
     EXPECT_THROW(generate_all_gates(0, 0), SynthException);
     EXPECT_THROW(generate_all_gates(3, 2), SynthException);
     EXPECT_THROW(generate_all_gates(4, 4), SynthException);

@@ -1,14 +1,9 @@
-#include <algorithm>
-#include <iostream>
-#include <map>
-#include <string>
-
 #include "computings.hpp"
 
 
 using configuration = std::map<std::string, std::string>;
 
-static const std::string version = "1.2.2";
+static const std::string version = "1.2.3";
 static const std::string program_name = "QCS";
 
 void print_program_info() {
@@ -40,8 +35,10 @@ void print_program_help() {
     std::cout << std::endl;
 
     std::cout << "Synthesis options:" << std::endl;
-    std::cout << "  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'ss', 'zkb')" << std::endl;
+    std::cout << "  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'ss', 'zkb')"
+              << std::endl;
     std::cout << "  -r, --reduction     reduce the output circuit (default: false)" << std::endl;
+    std::cout << "  -j, --jobs ARG      maximum number of jobs running in parallel (default: 1)" << std::endl;
     std::cout << std::endl;
 
     std::cout << "Parameters:" << std::endl;
@@ -64,6 +61,8 @@ configuration parse_arguments(int argc, char *argv[]) {
             {"--algo",      "--algo"},
             {"-r",          "--reduction"},
             {"--reduction", "--reduction"},
+            {"-j",          "--jobs"},
+            {"--jobs",      "--jobs"},
             {"-i",          "--input"},
             {"--input",     "--input"},
             {"-o",          "--output"},
@@ -76,6 +75,7 @@ configuration parse_arguments(int argc, char *argv[]) {
             {"--type",      false},
             {"--algo",      false},
             {"--reduction", false},
+            {"--jobs",      false},
             {"--input",     false},
             {"--output",    false},
     };
@@ -116,7 +116,10 @@ int main(int argc, char *argv[]) {
     try {
         config = parse_arguments(argc, argv);
     } catch (const ArgumentException &e) {
-        LOG_ERROR("Processing parameters", std::string("Error: ") + e.what());
+        LOG_ERROR("Processing parameters", std::string("While parameters parsing an error occurred: ") + e.what());
+        return 1;
+    } catch (const std::exception &e) {
+        LOG_ERROR("Processing parameters", std::string("Unexpected error occurred: ") + e.what());
         return 1;
     }
 
@@ -213,10 +216,31 @@ int main(int argc, char *argv[]) {
     } else if (log_level_s == "debug") {
         log_level = LogLevel::DEBUG;
     } else {
-        LOG_ERROR("Processing parameters", "Wrong log level was provided");
-        return -1;
+        LOG_ERROR("Processing parameters", "Unknown log level was provided");
+        return 1;
     }
-    Logger::get_instance().set_level(log_level);
+    Logger::instance().set_level(log_level);
+
+    it = config.find("--jobs");
+    size_t jobs = 1;
+    if (it != config.end()) {
+        try {
+            if (std::stoi(it->second) < 1) {
+                throw;
+            }
+        } catch (...) {
+            LOG_ERROR("Processing parameters", "Jobs number should be integer gather than 1");
+            return 1;
+        }
+        jobs = std::stoi(it->second);
+        if (jobs != JobsConfig::instance().set(jobs)) {
+            LOG_WARNING("Processing parameters",
+                        "Maximum number of jobs allowed for your device is " +
+                        std::to_string(JobsConfig::instance().get()));
+            LOG_WARNING("Processing parameters",
+                        "Maximum number of jobs value was set to " + std::to_string(JobsConfig::instance().get()));
+        }
+    }
 
     LOG_INFO("Starting", "");
     try {

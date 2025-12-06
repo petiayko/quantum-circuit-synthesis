@@ -4,6 +4,8 @@
 
 
 TEST(Synthesis, MappingDummy) {
+    JobsConfig::instance().set(std::thread::hardware_concurrency());
+
     {
         BinaryMapping bm(table{{0, 0}});
         Circuit c("Lines: 2; 1");
@@ -68,6 +70,8 @@ TEST(Synthesis, MappingDummy) {
 }
 
 TEST(Synthesis, SubstitutionDummy) {
+    JobsConfig::instance().set(std::thread::hardware_concurrency());
+
     EXPECT_THROW(dummy_algorithm(Substitution("0 2 1")), SynthException);
     {
         Substitution sub("0 1");

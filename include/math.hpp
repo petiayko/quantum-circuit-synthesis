@@ -90,7 +90,7 @@ inline size_t binary_dot(T a, T b) noexcept {
 }
 
 template<typename T = size_t>
-inline std::vector<size_t> bits_mask(T a, int base) noexcept {
+inline std::vector<size_t> bits_mask(T a, size_t base) noexcept {
     std::vector<size_t> bits;
     auto a_binary = decimal_to_binary_s<T>(a, base);
     for (size_t i = 0; i < a_binary.size(); i++) {

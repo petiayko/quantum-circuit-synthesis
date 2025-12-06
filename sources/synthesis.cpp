@@ -34,6 +34,8 @@ Circuit synthesize(const Substitution &sub, Algo algo, bool reduction) {
 }
 
 Circuit dummy_algorithm(const BinaryMapping &bm, bool reduction) {
+    std::cout << "Dummy. Jobs: " << JobsConfig::instance().get() << std::endl;
+
     const auto bm_bf = bm.coordinate_functions();
     std::vector<std::vector<bool>> bm_anf;
     bm_anf.resize(bm_bf.size());
@@ -44,6 +46,7 @@ Circuit dummy_algorithm(const BinaryMapping &bm, bool reduction) {
     auto c_dim = bm.inputs_number() + bm.outputs_number();
     auto c = Circuit(c_dim);
     c.set_memory(bm.outputs_number());
+    // TODO separate here
     for (size_t i = 0; i < bm.outputs_number(); i++) {
         if (bm_anf[i].front()) {
             c.add(Gate(GateType::NOT, {bm.inputs_number() + i}, {}, c_dim));
@@ -188,12 +191,13 @@ std::vector<Gate> generate_all_gates(const std::vector<GateType> &types, size_t 
         throw SynthException("Dimension value should be at least 1");
     }
     std::vector<Gate> result;
+    // TODO separate here!
+    std::cout << "Generate all gates. Jobs: " << JobsConfig::instance().get() << std::endl;
     for (const auto type: std::unordered_set<GateType>(types.begin(), types.end())) {
         for (const auto &gate: generate_gates_by_type(type, dim - 1, dim)) {
             result.push_back(gate);
         }
     }
-
     return result;
 }
 
@@ -640,7 +644,9 @@ Circuit ZKB_algorithm(const Substitution &sub, bool reduction) {
         return c;
     }
 
+    std::cout << "ZKB. Jobs: " << JobsConfig::instance().get() << std::endl;
     for (const auto &trans: sub.transpositions()) {
+        // TODO separate here
         for (const auto &gate: ZKB_algorithm(trans, dim)) {
             c.insert(gate, 0);
         }

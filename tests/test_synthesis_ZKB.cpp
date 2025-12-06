@@ -4,6 +4,8 @@
 
 
 TEST(Synthesis, MappingZKB) {
+    JobsConfig::instance().set(std::thread::hardware_concurrency());
+
     {
         BinaryMapping bm(table{{0, 1, 1, 0, 1, 1, 1, 1}});
         Circuit c = ZKB_algorithm(bm);
@@ -59,6 +61,8 @@ TEST(Synthesis, MappingZKB) {
 }
 
 TEST(Synthesis, SubstitutionZKB) {
+    JobsConfig::instance().set(std::thread::hardware_concurrency());
+
     EXPECT_THROW(ZKB_algorithm(Substitution("0 2 1")), SynthException);
     EXPECT_THROW(ZKB_algorithm(Substitution("1 0")), SynthException);
     EXPECT_THROW(ZKB_algorithm(Substitution("0 2 1 3")), SynthException);

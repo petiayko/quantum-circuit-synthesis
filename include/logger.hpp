@@ -8,11 +8,11 @@
 #include <string>
 #include <mutex>
 
-#define LOG_DEBUG(action, result)    Logger::get_instance().log(LogLevel::DEBUG, action, result)
-#define LOG_INFO(action, result)     Logger::get_instance().log(LogLevel::INFO, action, result)
-#define LOG_WARNING(action, result)  Logger::get_instance().log(LogLevel::WARNING, action, result)
-#define LOG_ERROR(action, result)    Logger::get_instance().log(LogLevel::ERROR, action, result)
-#define LOG_CRITICAL(action, result) Logger::get_instance().log(LogLevel::CRITICAL, action, result)
+#define LOG_DEBUG(action, result)    Logger::instance().log(LogLevel::DEBUG, action, result)
+#define LOG_INFO(action, result)     Logger::instance().log(LogLevel::INFO, action, result)
+#define LOG_WARNING(action, result)  Logger::instance().log(LogLevel::WARNING, action, result)
+#define LOG_ERROR(action, result)    Logger::instance().log(LogLevel::ERROR, action, result)
+#define LOG_CRITICAL(action, result) Logger::instance().log(LogLevel::CRITICAL, action, result)
 
 enum class LogLevel {
     DEBUG,
@@ -24,7 +24,7 @@ enum class LogLevel {
 
 class Logger {
 public:
-    static Logger &get_instance() {
+    static Logger &instance() {
         static Logger instance;
         return instance;
     }
