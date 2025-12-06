@@ -2,7 +2,9 @@
 out/
 cmake-build-debug/
 cmake-build-release/
+build/
+/.venv
 .idea/
 Testing/
-*.py
+
 *.txt

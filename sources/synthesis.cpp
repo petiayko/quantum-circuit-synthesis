@@ -473,7 +473,8 @@ Circuit SS_algorithm(const Substitution &sub, bool reduction) {
             }
         }
         if (best_gate.empty()) {
-            throw SynthException("Can not chose the best gate");
+            LOG_DEBUG("Can not chose the best gate", static_cast<std::string>(c));
+            throw SynthException("Unable to synthesize Circuit");
         }
         c.add(best_gate);
         sub_base *= best_gate.act();
