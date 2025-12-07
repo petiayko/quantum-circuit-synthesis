@@ -41,6 +41,12 @@ TEST(Substitutions, Constructor) {
     EXPECT_NO_THROW(Substitution("0 1 2 3 4 5 6 7 8 9\n# comment\n a B c D E f"));
     EXPECT_NO_THROW(Substitution("0x0 2 0X3 0x4 0X5 0x1 0x7 0x6 0x8 0x9 C 0xb 0xA"));
 
+    EXPECT_THROW(Substitution(0), SubException);
+    EXPECT_THROW(Substitution(1), SubException);
+    EXPECT_EQ(Substitution(2), Substitution("0 1"));
+    EXPECT_EQ(Substitution(5), Substitution("0 1 2 3 4"));
+    EXPECT_EQ(Substitution(10), Substitution("0 1 2 3 4 5 6 7 8 9"));
+
     Substitution s("0 4 1 2 3 5");
     Substitution s1(s);
     Substitution s2 = s1;
@@ -68,42 +74,184 @@ TEST(Substitutions, Methods) {
     EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{1, 2},
                                                                       {2, 4},
                                                                       {4, 3}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
 
-    Substitution s1("0 1 2 3");
-    cycles = s1.cycles();
-    transpositions = s1.transpositions();
+    s = Substitution("0 1 2 3");
+    cycles = s.cycles();
+    transpositions = s.transpositions();
     ASSERT_EQ(cycles.size(), 4);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0}));
     EXPECT_EQ(cycles[1], (std::vector<size_t>{1}));
     EXPECT_EQ(cycles[2], (std::vector<size_t>{2}));
     EXPECT_EQ(cycles[3], (std::vector<size_t>{3}));
-    EXPECT_FALSE(s1.is_odd());
+    EXPECT_FALSE(s.is_odd());
     EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{}));
-    EXPECT_TRUE(s1.is_identical());
+    EXPECT_TRUE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_THROW((Substitution(transpositions)), SubException);
 
-    Substitution s2("1 0 3 2 5 4 7 6");
-    cycles = s2.cycles();
-    transpositions = s2.transpositions();
+    s = Substitution("1 0 3 2 5 4 7 6");
+    cycles = s.cycles();
+    transpositions = s.transpositions();
     ASSERT_EQ(cycles.size(), 4);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 1}));
     EXPECT_EQ(cycles[1], (std::vector<size_t>{2, 3}));
     EXPECT_EQ(cycles[2], (std::vector<size_t>{4, 5}));
     EXPECT_EQ(cycles[3], (std::vector<size_t>{6, 7}));
-    EXPECT_FALSE(s2.is_odd());
+    EXPECT_FALSE(s.is_odd());
     EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 1},
                                                                       {2, 3},
                                                                       {4, 5},
                                                                       {6, 7}}));
-    EXPECT_FALSE(s2.is_identical());
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
 
-    Substitution s3("1 0");
-    cycles = s3.cycles();
-    transpositions = s3.transpositions();
+    s = Substitution("1 0");
+    cycles = s.cycles();
+    transpositions = s.transpositions();
     ASSERT_EQ(cycles.size(), 1);
     EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 1}));
-    EXPECT_TRUE(s3.is_odd());
+    EXPECT_TRUE(s.is_odd());
     EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 1}}));
-    EXPECT_FALSE(s3.is_identical());
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
+
+    s = Substitution("2 0 1 6 4 5 3 7");
+    cycles = s.cycles();
+    transpositions = s.transpositions();
+    ASSERT_EQ(cycles.size(), 5);
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 2, 1}));
+    EXPECT_EQ(cycles[1], (std::vector<size_t>{3, 6}));
+    EXPECT_EQ(cycles[2], (std::vector<size_t>{4}));
+    EXPECT_EQ(cycles[3], (std::vector<size_t>{5}));
+    EXPECT_EQ(cycles[4], (std::vector<size_t>{7}));
+    EXPECT_TRUE(s.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 2},
+                                                                      {2, 1},
+                                                                      {3, 6}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(Substitution("2 0 1 6 4 5 3"), Substitution(transpositions));  // 7 - fixed point
+
+    s = Substitution("3 2 0 4 7 6 1 5");
+    cycles = s.cycles();
+    transpositions = s.transpositions();
+    ASSERT_EQ(cycles.size(), 1);
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 3, 4, 7, 5, 6, 1, 2}));
+    EXPECT_TRUE(s.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 3},
+                                                                      {3, 4},
+                                                                      {4, 7},
+                                                                      {7, 5},
+                                                                      {5, 6},
+                                                                      {6, 1},
+                                                                      {1, 2}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
+
+    s = Substitution("6 5 7 0 3 2 4 1 9 8");
+    cycles = s.cycles();
+    transpositions = s.transpositions();
+    ASSERT_EQ(cycles.size(), 3);
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 6, 4, 3}));
+    EXPECT_EQ(cycles[1], (std::vector<size_t>{1, 5, 2, 7}));
+    EXPECT_EQ(cycles[2], (std::vector<size_t>{8, 9}));
+
+    EXPECT_TRUE(s.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 6},
+                                                                      {6, 4},
+                                                                      {4, 3},
+                                                                      {1, 5},
+                                                                      {5, 2},
+                                                                      {2, 7},
+                                                                      {8, 9}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
+
+    s = Substitution("3 2 0 4 1 6 7 5");
+    cycles = s.cycles();
+    transpositions = s.transpositions();
+    ASSERT_EQ(cycles.size(), 2);
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 3, 4, 1, 2}));
+    EXPECT_EQ(cycles[1], (std::vector<size_t>{5, 6, 7}));
+    EXPECT_FALSE(s.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 3},
+                                                                      {3, 4},
+                                                                      {4, 1},
+                                                                      {1, 2},
+                                                                      {5, 6},
+                                                                      {6, 7}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
+
+    s = Substitution("1 2 3 0 5 6 7 4");
+    cycles = s.cycles();
+    transpositions = s.transpositions();
+    ASSERT_EQ(cycles.size(), 2);
+    EXPECT_EQ(cycles[0], (std::vector<size_t>{0, 1, 2, 3}));
+    EXPECT_EQ(cycles[1], (std::vector<size_t>{4, 5, 6, 7}));
+    EXPECT_FALSE(s.is_odd());
+    EXPECT_EQ(transpositions, (std::vector<std::pair<size_t, size_t>>{{0, 1},
+                                                                      {1, 2},
+                                                                      {2, 3},
+                                                                      {4, 5},
+                                                                      {5, 6},
+                                                                      {6, 7}}));
+    EXPECT_FALSE(s.is_identical());
+    EXPECT_EQ(s, Substitution(cycles));
+    EXPECT_EQ(s, Substitution(transpositions));
+}
+
+TEST(Substitutions, Operations) {
+    Substitution s1("1 2 0 3");
+    EXPECT_EQ(s1.invert(), Substitution("2 0 1 3"));
+
+    Substitution s2("1 0");
+    EXPECT_EQ(s2.invert(), Substitution("1 0"));
+
+    s1 *= s2;
+    EXPECT_EQ(s1, Substitution("0 2 1 3"));
+
+    s1 *= s2;
+    EXPECT_EQ(s1, Substitution("1 2 0 3"));
+
+    s1 *= s1;
+    EXPECT_EQ(s1, Substitution("2 0 1 3"));
+
+    s1 *= Substitution("1 2 0 3");
+    EXPECT_EQ(s1, Substitution("0 1 2 3"));
+
+    EXPECT_EQ(Substitution("4 6 0 1 3 2 5") * Substitution("0 1"), Substitution("4 6 0 1 3 2 5"));
+    EXPECT_EQ(Substitution("0 1") * Substitution("4 6 0 1 3 2 5"), Substitution("4 6 0 1 3 2 5"));
+    EXPECT_EQ(Substitution("0 1 2 3 4 5") * Substitution("0 1 2 3 4 5"), Substitution("0 1 2 3 4 5"));
+    EXPECT_EQ(Substitution("0 1 2 3 4 5") * Substitution("0 1 2 3 4 5 6"), Substitution("0 1 2 3 4 5 6"));
+    EXPECT_EQ(Substitution("0 1 2 3 4 5 6") * Substitution("0 1 2 3 4 5"), Substitution("0 1 2 3 4 5 6"));
+    EXPECT_NE(Substitution("2 4 8 3 0 7 6 1 5") * Substitution("4 0 3 1 2"),
+              Substitution("4 0 3 1 2") * Substitution("2 4 8 3 0 7 6 1 5"));
+
+    EXPECT_EQ(Substitution("4 6 0 1 3 2 5") * Substitution("4 6 0 1 3 2 5").invert(), Substitution("0 1 2 3 4 5 6"));
+    EXPECT_EQ(Substitution("2 4 8 3 0 7 6 1 5") * Substitution("2 4 8 3 0 7 6 1 5").invert(),
+              Substitution("0 1 2 3 4 5 6 7 8"));
+
+    EXPECT_EQ(Substitution("0 1"), Substitution("0 1").invert());
+    EXPECT_EQ(Substitution("0 1 2 3"), Substitution("0 1 2 3").invert());
+    EXPECT_EQ(Substitution("0 1 2 3 4 5"), Substitution("0 1 2 3 4 5").invert());
+
+    EXPECT_EQ(cayley_distance(Substitution("0 1 2 3 4"), Substitution("0 1 2 3 4")), 0);
+    EXPECT_EQ(cayley_distance(Substitution("4 2 0 1 3"), Substitution("4 2 0 1 3")), 0);
+    EXPECT_EQ(cayley_distance(Substitution("0 1 2 3 4"), Substitution("4 2 0 1 3")), 4);
+    EXPECT_EQ(cayley_distance(Substitution("4 2 0 1 3"), Substitution("0 1 2 3 4")), 4);
+    EXPECT_EQ(cayley_distance(Substitution("4 2 0 1 3"), Substitution("3 1 0 2")), 2);
+    EXPECT_EQ(cayley_distance(Substitution("3 1 0 2"), Substitution("4 2 0 1 3")), 2);
+    EXPECT_EQ(cayley_distance(Substitution("1 0"), Substitution("9 A 1 4 5 7 2 3 0 6 8")), 8);
+    EXPECT_EQ(cayley_distance(Substitution("9 A 1 4 5 7 2 3 0 6 8"), Substitution("1 0")), 8);
 }
 
 TEST(Substitutions, Stream) {

@@ -40,7 +40,7 @@ jobs:
       - name: Collect binaries
         run: |
           mkdir -p binaries
-          cp ${{github.workspace}}/build/qcs.exe binaries/
+          cp ${{github.workspace}}/build/qcs*.exe binaries/
           cp ${{github.workspace}}/build/tests.exe binaries/
 
       - name: Upload binaries

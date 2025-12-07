@@ -7,8 +7,8 @@ TEST(Commuties, NOT) {
     {
         auto g1 = Gate("NOT(0)", 2);
         auto g2 = Gate("NOT(2)", 3);
-        EXPECT_THROW(g1.is_commutes(g2), GateException);
-        EXPECT_THROW(g2.is_commutes(g1), GateException);
+        EXPECT_THROW([[maybe_unused]] auto _ = g1.is_commutes(g2), GateException);
+        EXPECT_THROW([[maybe_unused]] auto _ = g2.is_commutes(g1), GateException);
     }
     {
         auto g1 = Gate("NOT(0)", 3);

@@ -8,6 +8,15 @@ Circuit synthesize(const BinaryMapping &bm, Algo algo, bool reduction) {
     if (algo == Algo::RW) {
         return RW_algorithm(bm, reduction);
     }
+    if (algo == Algo::SS) {
+        return SS_algorithm(bm, reduction);
+    }
+    if (algo == Algo::ZKB) {
+        return ZKB_algorithm(bm, reduction);
+    }
+    if (algo == Algo::CA) {
+        return CA_algorithm(bm, reduction);
+    }
     throw SynthException("Unknown synthesis algorithm");
 }
 
@@ -18,83 +27,317 @@ Circuit synthesize(const Substitution &sub, Algo algo, bool reduction) {
     if (algo == Algo::RW) {
         return RW_algorithm(sub, reduction);
     }
+    if (algo == Algo::SS) {
+        return SS_algorithm(sub, reduction);
+    }
+    if (algo == Algo::ZKB) {
+        return ZKB_algorithm(sub, reduction);
+    }
+    if (algo == Algo::CA) {
+        return CA_algorithm(sub, reduction);
+    }
     throw SynthException("Unknown synthesis algorithm");
 }
 
 Circuit dummy_algorithm(const BinaryMapping &bm, bool reduction) {
     const auto bm_bf = bm.coordinate_functions();
-    std::vector<std::vector<bool>> bm_anf;
-    bm_anf.resize(bm_bf.size());
-    std::transform(bm_bf.cbegin(), bm_bf.cend(), bm_anf.begin(), [](const BooleanFunction &bf) {
-        return bf.mobius_transformation();
-    });
 
-    auto c_dim = bm.inputs_number() + bm.outputs_number();
+    auto outputs = bm.outputs_number();
+    auto c_dim = bm.inputs_number() + outputs;
     auto c = Circuit(c_dim);
-    c.set_memory(bm.outputs_number());
-    for (size_t i = 0; i < bm.outputs_number(); i++) {
-        if (bm_anf[i].front()) {
-            c.add(Gate(GateType::NOT, {bm.inputs_number() + i}, {}, c_dim));
-        }
-        for (size_t c_set = 1; c_set < bm_anf[i].size(); c_set++) {
-            if (bm_anf[i][c_set]) {
-                controls_type controls;
-                for (const auto num: bits_mask(c_set, bm.inputs_number())) {
-                    controls[num] = true;
-                }
-                c.add(Gate(GateType::kCNOT, {bm.inputs_number() + i}, controls, c_dim));
+    c.set_memory(outputs);
+
+    std::vector<std::future<std::vector<Gate>>> futures;
+    auto process_range = [&](size_t start, size_t end) -> std::vector<Gate> {
+        std::vector<Gate> gates;
+        for (size_t i = start; i < end; i++) {
+            auto anf = bm_bf[i].mobius_transformation();
+
+            if (anf.front()) {
+                gates.emplace_back(GateType::NOT, std::vector<size_t>{bm.inputs_number() + i}, controls_type{}, c_dim);
             }
+
+            for (size_t c_set = 1; c_set < anf.size(); c_set++) {
+                if (anf[c_set]) {
+                    controls_type controls;
+                    for (const auto num: bits_mask(c_set, bm.inputs_number())) {
+                        controls[num] = true;
+                    }
+                    gates.emplace_back(GateType::kCNOT, std::vector<size_t>{bm.inputs_number() + i}, controls, c_dim);
+                }
+            }
+        }
+        return gates;
+    };
+
+    size_t num_threads = JobsConfig::instance().get();
+    size_t batch_size = (outputs + num_threads - 1) / num_threads;
+
+    for (size_t i = 0; i < outputs; i += batch_size) {
+        size_t start = i;
+        size_t end = std::min(i + batch_size, outputs);
+        futures.push_back(std::async(std::launch::async, process_range, start, end));
+    }
+
+    for (auto &future: futures) {
+        auto gates = future.get();
+        for (const auto &gate: gates) {
+            c.add(gate);
         }
     }
 
     if (reduction) {
         c.reduce();
     }
-
     return c;
 }
 
-void generate_controls_(size_t len, size_t max, size_t exclude, size_t start, std::vector<size_t> &current,
-                        std::vector<std::vector<size_t>> &result) {
-    if (current.size() == len) {
-        result.push_back(current);
-        return;
+Circuit dummy_algorithm(const Substitution &sub, bool reduction) {
+    if (!is_power_of_2(sub.power())) {
+        throw SynthException("Substitution size must be power of 2");
     }
-
-    for (size_t i = start; i < max; i++) {
-        if (i == exclude) {
-            continue;
-        }
-        current.push_back(i);
-        generate_controls_(len, max, exclude, i + 1, current, result);
-        current.pop_back();
-    }
+    return dummy_algorithm(BinaryMapping(sub), reduction);
 }
 
-std::vector<std::vector<size_t>> generate_controls(size_t len, size_t max, size_t exclude) {
-    if (len > max - (exclude < max)) {
+size_t count_gates(GateType type, size_t dim, bool on_nest) noexcept {
+    size_t number = 0;
+    if (type == GateType::NOT) {
+        number = 1;
+    } else if (type == GateType::CNOT) {
+        if (dim < 2) {
+            return 0;
+        }
+        number = 2 * (dim - 1);
+    } else if (type == GateType::kCNOT) {
+        if (dim < 3) {
+            return 0;
+        }
+        number = std::pow(3, dim - 1) - 2 * dim + 1;
+    } else if (type == GateType::SWAP) {
+        if (dim < 2) {
+            return 0;
+        }
+        return dim * (dim - 1) >> 1;
+    } else if (type == GateType::CSWAP) {
+        if (dim < 3) {
+            return 0;
+        }
+        return dim * (dim - 1) * (dim - 2);
+    } else {
+        return -1;
+    }
+    if (on_nest) {
+        return number;
+    }
+    return number * dim;
+}
+
+std::vector<controls_type> generate_gate_controls(size_t nest, size_t min_controls, size_t max_controls, size_t dim) {
+    if (max_controls < min_controls) {
         return {};
     }
 
-    std::vector<std::vector<size_t>> result;
-    std::vector<size_t> current;
-    generate_controls_(len, max, exclude, 0, current, result);
-    return result;
-}
+    const size_t nest_bit = 1u << (dim - nest - 1);
 
-std::vector<Gate> generate_gates(GateType type, size_t nest, const std::vector<size_t> &controls,
-                                 size_t dim) {
-    std::vector<Gate> result;
-    for (int i = 0; i < 1 << controls.size(); i++) {
-        controls_type marked_controls;
-        auto mask = decimal_to_binary_v<int>(i, controls.size());
-        for (size_t j = 0; j < mask.size(); j++) {
-            marked_controls[controls[j]] = !mask[j];
+    size_t max_possible_results = 0;
+    for (size_t k = min_controls; k <= max_controls; k++) {
+        size_t comb = 1;
+        for (size_t i = 0; i < k; i++) {
+            comb *= (dim - i - 1) / (i + 1);
         }
-        result.emplace_back(type, std::vector<size_t>{nest}, marked_controls, dim);
+        max_possible_results += comb * (1 << k);
+    }
+
+    std::vector<controls_type> result;
+    result.reserve(max_possible_results);
+
+    for (size_t controls_mask = 0; controls_mask < (1u << dim); controls_mask++) {
+        if (controls_mask & nest_bit) {
+            continue;
+        }
+
+        size_t controls_number = std::popcount(controls_mask);
+        if (controls_number < min_controls || controls_number > max_controls) {
+            continue;
+        }
+
+        std::vector<size_t> indices;
+        indices.reserve(controls_number);
+
+        size_t temp_mask = controls_mask;
+        while (temp_mask) {
+            size_t lsb = temp_mask & -temp_mask;
+            indices.push_back(dim - std::countr_zero(lsb) - 1);
+            temp_mask ^= lsb;
+        }
+
+        for (size_t inv_mask = 0; inv_mask < (1u << controls_number); inv_mask++) {
+            controls_type control_map;
+
+            for (size_t i = 0; i < controls_number; i++) {
+                control_map[indices[i]] = (inv_mask >> (controls_number - i - 1)) & 1;
+            }
+
+            result.push_back(std::move(control_map));
+        }
     }
 
     return result;
+}
+
+std::vector<Gate> generate_gates_by_type_nest(GateType type, size_t nest, size_t max_controls, size_t dim) {
+    // generate ALL possible Gates with
+    //      set type
+    //      set nest line
+    //      set dim
+    //      AND with control lines number not gather than max_controls
+    if (type == GateType::SWAP || type == GateType::CSWAP) {
+        throw GateException("Unable to generate SWAP or CSWAP gates by nest line number");
+    }
+
+    std::vector<Gate> result;
+    result.reserve(count_gates(type, dim, true));
+
+    size_t min_controls = 0;
+    size_t real_max_controls = 0;
+    if (type == GateType::CNOT) {
+        min_controls = 1;
+        real_max_controls = 1;
+    } else if (type == GateType::kCNOT) {
+        min_controls = 2;
+        real_max_controls = max_controls;
+    }
+
+    for (const auto &controls: generate_gate_controls(nest, min_controls, real_max_controls, dim)) {
+        result.emplace_back(type, std::vector<size_t>{nest}, controls, dim);
+    }
+
+    return result;
+}
+
+std::vector<Gate> generate_gates_by_type(GateType type, size_t max_controls, size_t dim) {
+    std::vector<Gate> result;
+    result.reserve(count_gates(type, dim));
+
+    if (type == GateType::NOT || type == GateType::CNOT || type == GateType::kCNOT) {
+        size_t min_controls = 0;
+        size_t real_max_controls = 0;
+        if (type == GateType::CNOT) {
+            min_controls = 1;
+            real_max_controls = 1;
+        } else if (type == GateType::kCNOT) {
+            min_controls = 2;
+            real_max_controls = max_controls;
+        }
+
+        for (size_t nest = 0; nest < dim; nest++) {
+            for (const auto &controls: generate_gate_controls(nest, min_controls, real_max_controls, dim)) {
+                result.emplace_back(type, std::vector<size_t>{nest}, controls, dim);
+            }
+        }
+        return result;
+    }
+
+    if (type == GateType::SWAP) {
+        for (size_t i = 0; i < dim; i++) {
+            for (size_t j = i + 1; j < dim; j++) {
+                result.emplace_back(type, std::vector<size_t>{i, j}, controls_type(), dim);
+            }
+        }
+        return result;
+    }
+
+    for (size_t i = 0; i < dim; i++) {
+        for (size_t j = i + 1; j < dim; j++) {
+            for (size_t k = 0; k < dim; k++) {
+                if (k == i || k == j) {
+                    continue;
+                }
+                result.emplace_back(type, std::vector<size_t>{i, j}, controls_type{{k, true}}, dim);
+                result.emplace_back(type, std::vector<size_t>{i, j}, controls_type{{k, false}}, dim);
+            }
+        }
+    }
+
+    return result;
+}
+
+std::vector<Gate> generate_all_gates(const std::vector<GateType> &types, size_t dim) {
+    if (!dim) {
+        throw SynthException("Dimension value should be at least 1");
+    }
+
+    std::vector<Gate> result;
+    std::future<std::vector<Gate>> kcnot_future;
+    std::unordered_set<GateType> unique_types(types.begin(), types.end());
+    auto has_kcnot = bool(unique_types.extract(GateType::kCNOT));
+
+    if (has_kcnot) {
+        kcnot_future = std::async(std::launch::async, [&]() {
+            return generate_gates_by_type(GateType::kCNOT, dim - 1, dim);
+        });
+    }
+
+    std::for_each(unique_types.begin(), unique_types.end(), [&](auto type) {
+        auto gates = generate_gates_by_type(type, dim - 1, dim);
+        result.insert(result.end(), gates.begin(), gates.end());
+    });
+
+    if (has_kcnot) {
+        auto kcnot_gates = kcnot_future.get();
+        result.insert(result.end(), kcnot_gates.begin(), kcnot_gates.end());
+    }
+
+    return result;
+}
+
+std::vector<Gate> generate_all_gates(size_t dim) {
+    if (!dim) {
+        throw SynthException("Dimension value should be at least 1");
+    }
+    return generate_all_gates({
+                                      GateType::NOT,
+                                      GateType::CNOT,
+                                      GateType::kCNOT,
+                                      GateType::SWAP,
+                                      GateType::CSWAP,
+                              }, dim);
+}
+
+std::vector<Gate> generate_all_gates(const std::vector<GateType> &types, size_t nest,
+                                     size_t max_controls, size_t dim) {
+    if (!dim) {
+        throw SynthException("Gates dimension value should be at least 1");
+    }
+    if (nest > dim - 1) {
+        throw SynthException("For Gates generating set nest line should be gather or equal dimension value");
+    }
+    if (std::find(types.begin(), types.end(), GateType::SWAP) != types.end() ||
+        std::find(types.begin(), types.end(), GateType::CSWAP) != types.end()) {
+        throw SynthException("Impossible to generate SWAP of CSWAP gates on nest");
+    }
+    std::vector<Gate> result;
+    for (const auto type: std::unordered_set<GateType>(types.begin(), types.end())) {
+        for (const auto &gate: generate_gates_by_type_nest(type, nest, max_controls, dim)) {
+            result.push_back(gate);
+        }
+    }
+
+    return result;
+}
+
+std::vector<Gate> generate_all_gates(size_t nest, size_t dim) {
+    if (!dim) {
+        throw SynthException("Gates dimension value should be at least 1");
+    }
+    if (nest > dim - 1) {
+        throw SynthException("For Gates generating set nest line should be gather or equal dimension value");
+    }
+    return generate_all_gates({
+                                      GateType::NOT,
+                                      GateType::CNOT,
+                                      GateType::kCNOT,
+                              }, nest, dim, dim);
 }
 
 Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
@@ -104,85 +347,62 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
 
     auto c = Circuit(outputs);
 
-    for (int i = outputs - 1;; i--) {
+    std::array<std::unordered_map<size_t, std::vector<Gate>>, 3> precomputed_gates;
+
+    for (size_t nest = 0; nest < outputs; nest++) {
+        precomputed_gates[0][nest] = generate_all_gates({GateType::CNOT}, nest, 1, outputs);
+        precomputed_gates[1][nest] = generate_all_gates({GateType::kCNOT}, nest, 2, outputs);
+        precomputed_gates[2][nest] = generate_all_gates({GateType::kCNOT}, nest, 3, outputs);
+    }
+
+    while (true) {
         if (c.produce_mapping() == bm_extend) {
             c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
             return c;
         }
 
-        if (i < 0) {
-            i = outputs - 1;
-        }
-        size_t nest = i;
-
-        if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
-            continue;
-        } else if (bm_cf[nest] == ~BooleanFunction(nest, outputs)) {
-            auto g = Gate(GateType::NOT, {nest}, {}, outputs);
-            c.insert(g, 0);
-            g.act(bm_cf);
-            continue;
-        }
-
-        auto complexity = bm_cf[nest].complexity();
-        auto max_complexity_diff = 0;
-        Gate best_gate;
-
-        // CNOT
-        for (const auto &controls: generate_controls(1, outputs, i)) {
-            for (const auto &gate: generate_gates(GateType::CNOT, nest, controls, outputs)) {
-                gate.act(bm_cf);
-                auto complexity_new = bm_cf[nest].complexity();
-                if (complexity_new - complexity > max_complexity_diff) {
-                    max_complexity_diff = complexity_new - complexity;
-                    best_gate = gate;
-                }
-                gate.act(bm_cf);
+        for (size_t nest = 0; nest < outputs; nest++) {
+            if (bm_cf[nest] == ~BooleanFunction(nest, outputs)) {
+                auto g = Gate(GateType::NOT, {nest}, {}, outputs);
+                c.insert(g, 0);
+                g.act(bm_cf);
             }
         }
-        if (max_complexity_diff) {
-            c.insert(best_gate, 0);
-            best_gate.act(bm_cf);
-            continue;
-        }
 
-        // kCNOT 2
-        for (const auto &controls: generate_controls(2, outputs, i)) {
-            for (const auto &gate: generate_gates(GateType::kCNOT, nest, controls, outputs)) {
-                gate.act(bm_cf);
-                auto complexity_new = bm_cf[nest].complexity();
-                if (complexity_new - complexity > max_complexity_diff) {
-                    max_complexity_diff = complexity_new - complexity;
-                    best_gate = gate;
+        bool gate_chosen = false;
+
+        for (size_t gate_type_idx = 0; gate_type_idx < 3 && !gate_chosen; gate_type_idx++) {
+            for (size_t nest = 0; nest < outputs && !gate_chosen; nest++) {
+                if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
+                    continue;
                 }
-                gate.act(bm_cf);
+
+                auto complexity = bm_cf[nest].complexity();
+                auto max_complexity_diff = 0;
+                Gate best_gate;
+
+                for (const auto &gate: precomputed_gates[gate_type_idx][nest]) {
+                    gate.act(bm_cf);
+                    auto complexity_new = bm_cf[nest].complexity();
+                    if (complexity_new - complexity >= max_complexity_diff) {
+                        max_complexity_diff = complexity_new - complexity;
+                        best_gate = gate;
+                    }
+                    gate.act(bm_cf);
+                }
+
+                if (max_complexity_diff) {
+                    c.insert(best_gate, 0);
+                    best_gate.act(bm_cf);
+                    gate_chosen = true;
+                    break;
+                }
             }
         }
-        if (max_complexity_diff) {
-            c.insert(best_gate, 0);
-            best_gate.act(bm_cf);
-            continue;
-        }
 
-        // kCNOT 3
-        for (const auto &controls: generate_controls(3, outputs, i)) {
-            for (const auto &gate: generate_gates(GateType::kCNOT, nest, controls, outputs)) {
-                gate.act(bm_cf);
-                auto complexity_new = bm_cf[nest].complexity();
-                if (complexity_new - complexity > max_complexity_diff) {
-                    max_complexity_diff = complexity_new - complexity;
-                    best_gate = gate;
-                }
-                gate.act(bm_cf);
-            }
+        if (!gate_chosen) {
+            break;
         }
-        if (max_complexity_diff) {
-            c.insert(best_gate, 0);
-            best_gate.act(bm_cf);
-            continue;
-        }
-
-        break;
     }
 
     for (size_t i = 0; i < outputs; i++) {
@@ -202,7 +422,9 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
             }
         }
     } catch (const BFException &e) {
-        throw SynthException("Unable to synthesize Circuit");
+        LOG_DEBUG("Performing synthesis using the RW algorithm",
+                  "The synthesized circuit produces an incorrect mapping: " + static_cast<std::string>(c));
+        throw SynthException(std::string("Unable to synthesize Circuit: ") + e.what());
     }
 
     if (reduction) {
@@ -210,20 +432,13 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
     }
 
     if (c.produce_mapping() != bm_extend) {
-        LOG_DEBUG("The synthesized circuit produces an incorrect mapping", static_cast<std::string>(c));
+        LOG_DEBUG("Performing synthesis using the RW algorithm",
+                  "The synthesized circuit produces an incorrect mapping: " + static_cast<std::string>(c));
         throw SynthException("Unable to synthesize Circuit");
     }
 
     c.set_memory(bm_extend.inputs_number() - bm.inputs_number());
     return c;
-}
-
-Circuit dummy_algorithm(const Substitution &sub, bool reduction) {
-    if (!is_power_of_2(sub.power())) {
-        throw SynthException("Substitution size must be power of 2");
-    }
-    BinaryMapping bm(sub);
-    return dummy_algorithm(bm, reduction);
 }
 
 Circuit RW_algorithm(const Substitution &sub, bool reduction) {
@@ -233,6 +448,266 @@ Circuit RW_algorithm(const Substitution &sub, bool reduction) {
     if (sub.is_identical()) {
         return Circuit(std::log2(sub.power()));
     }
-    BinaryMapping bm(sub);
-    return RW_algorithm(bm, reduction);
+    return RW_algorithm(BinaryMapping(sub), reduction);
+}
+
+Circuit SS_algorithm(const BinaryMapping &bm, bool reduction) {
+    auto bm_extended = bm.extend();
+    auto c = SS_algorithm(Substitution(bm_extended), reduction);
+    c.set_memory(bm_extended.inputs_number() - bm.inputs_number());
+    return c;
+}
+
+Circuit SS_algorithm(const Substitution &sub, bool reduction) {
+    if (!is_power_of_2(sub.power())) {
+        throw SynthException("Substitution size should be power of 2");
+    }
+
+    size_t dim = std::log2(sub.power());
+    Circuit c(dim);
+    Substitution sub_base(sub.power());
+    if (sub_base == sub) {
+        return c;
+    }
+
+    std::unordered_map<Gate, Substitution> gates_substitutions;
+    for (const auto &gate: generate_all_gates(dim)) {
+        gates_substitutions.insert({gate, gate.act()});
+    }
+
+    size_t distance_min = std::numeric_limits<size_t>::max();
+
+    while (sub_base != sub) {
+        Gate best_gate;
+        for (const auto &[g, g_sub]: gates_substitutions) {
+            auto current_distance = cayley_distance(sub_base * g_sub, sub);
+            if (current_distance < distance_min) {
+                best_gate = g;
+                distance_min = current_distance;
+            }
+        }
+        if (best_gate.empty()) {
+            LOG_DEBUG("Performing synthesis using the SS algorithm",
+                      "Can not chose the best gate: " + static_cast<std::string>(c));
+            throw SynthException("Unable to synthesize Circuit");
+        }
+        c.add(best_gate);
+        sub_base *= best_gate.act();
+    }
+
+    if (reduction) {
+        c.reduce();
+    }
+
+    if (c.produce_mapping() != sub) {
+        LOG_DEBUG("Performing synthesis using the SS algorithm",
+                  "The synthesized circuit produces an incorrect mapping: " + static_cast<std::string>(c));
+        throw SynthException("Unable to synthesize Circuit");
+    }
+
+    return c;
+}
+
+Circuit ZKB_algorithm(const BinaryMapping &bm, bool reduction) {
+    auto bm_extended = bm.extend();
+    auto c = ZKB_algorithm(Substitution(bm_extended), reduction);
+    c.set_memory(bm_extended.inputs_number() - bm.inputs_number());
+    return c;
+}
+
+inline std::vector<Gate> ZKB_algorithm(const transposition_type &trans, size_t dim) {
+    if (trans.first == trans.second) {
+        throw SubException("Invalid transposition");
+    }
+
+    std::set<size_t> b00;
+    std::set<size_t> b01;
+    std::set<size_t> b10;
+    std::set<size_t> b11;
+
+    for (size_t i = 0; i < dim; i++) {
+        auto bit_pos = dim - i - 1;
+        bool x_bit = (trans.first >> bit_pos) & 1;
+        bool y_bit = (trans.second >> bit_pos) & 1;
+        if (!x_bit && !y_bit) {
+            b00.insert(i);
+        } else if (!x_bit && y_bit) {
+            b01.insert(i);
+        } else if (x_bit && !y_bit) {
+            b10.insert(i);
+        } else {
+            b11.insert(i);
+        }
+    }
+
+    controls_type kernel_controls;
+    for (size_t control = 0; control < dim; control++) {
+        kernel_controls[control] = !b00.contains(control);
+    }
+
+    std::vector<Gate> result;
+
+    if (b01.size() + b10.size() == 1) {
+        auto j = b01.empty() ? *b10.begin() : *b01.begin();
+        kernel_controls.extract(j);
+        result.emplace_back(GateType::kCNOT, std::vector<size_t>{j}, kernel_controls, dim);
+        return result;
+    }
+
+    if (!b01.empty() && !b10.empty()) {
+        auto j = *b10.begin();
+        auto k = *b01.begin();
+
+        std::vector<Gate> b10_cnot_gates;
+        for (auto i: b10) {
+            if (i == j) {
+                continue;
+            }
+            b10_cnot_gates.emplace_back(
+                    GateType::CNOT,
+                    std::vector<size_t>{i},
+                    controls_type({{k, true}}),
+                    dim
+            );
+        }
+        std::vector<Gate> b01_cnot_gates;
+        for (auto i: b01) {
+            b01_cnot_gates.emplace_back(
+                    GateType::CNOT,
+                    std::vector<size_t>{i},
+                    controls_type({{j, true}}),
+                    dim
+            );
+        }
+        // NOT gates skipped - we took them into account by marking kernel inputs inverse
+        std::copy(b10_cnot_gates.begin(), b10_cnot_gates.end(), std::back_inserter(result));
+        std::copy(b01_cnot_gates.begin(), b01_cnot_gates.end(), std::back_inserter(result));
+        kernel_controls.extract(j);
+        result.emplace_back(GateType::kCNOT, std::vector<size_t>{j}, kernel_controls, dim);
+        std::copy(b01_cnot_gates.begin(), b01_cnot_gates.end(), std::back_inserter(result));
+        std::copy(b10_cnot_gates.begin(), b10_cnot_gates.end(), std::back_inserter(result));
+        return result;
+    }
+
+    if (b01.empty()) {
+        auto j = *b10.begin();
+
+        std::vector<Gate> b10_cnot_gates;
+        b10_cnot_gates.emplace_back(GateType::NOT, std::vector<size_t>{j}, controls_type{}, dim);
+        for (auto i: b10) {
+            if (i == j) {
+                continue;
+            }
+            b10_cnot_gates.emplace_back(
+                    GateType::CNOT,
+                    std::vector<size_t>{i},
+                    controls_type({{j, true}}),
+                    dim
+            );
+        }
+        b10_cnot_gates.emplace_back(GateType::NOT, std::vector<size_t>{j}, controls_type{}, dim);
+        // NOT gates skipped - we took them into account by marking kernel inputs inverse
+        std::copy(b10_cnot_gates.begin(), b10_cnot_gates.end(), std::back_inserter(result));
+        kernel_controls.extract(j);
+        result.emplace_back(GateType::kCNOT, std::vector<size_t>{j}, kernel_controls, dim);
+        std::copy(b10_cnot_gates.begin(), b10_cnot_gates.end(), std::back_inserter(result));
+        return result;
+    }
+
+    if (b10.empty()) {
+        auto j = *b01.begin();
+
+        std::vector<Gate> b01_cnot_gates;
+        b01_cnot_gates.emplace_back(GateType::NOT, std::vector<size_t>{j}, controls_type{}, dim);
+        for (auto i: b01) {
+            if (i == j) {
+                continue;
+            }
+            b01_cnot_gates.emplace_back(
+                    GateType::CNOT,
+                    std::vector<size_t>{i},
+                    controls_type({{j, true}}),
+                    dim
+            );
+        }
+        b01_cnot_gates.emplace_back(GateType::NOT, std::vector<size_t>{j}, controls_type{}, dim);
+        // NOT gates skipped - we took them into account by marking kernel inputs inverse
+        std::copy(b01_cnot_gates.begin(), b01_cnot_gates.end(), std::back_inserter(result));
+        kernel_controls.extract(j);
+        result.emplace_back(GateType::kCNOT, std::vector<size_t>{j}, kernel_controls, dim);
+        std::copy(b01_cnot_gates.begin(), b01_cnot_gates.end(), std::back_inserter(result));
+        return result;
+    }
+    return result;
+}
+
+Circuit ZKB_algorithm(const Substitution &sub, bool reduction) {
+    if (!is_power_of_2(sub.power())) {
+        throw SynthException("Substitution size should be power of 2");
+    }
+
+    size_t dim = std::log2(sub.power());
+    // Actually 4, but...
+    if (dim < 3) {
+        throw SynthException("Impossible to apply the ZKB algorithm to a substitution of power less than 8");
+    }
+
+    Circuit c(dim);
+    if (sub.is_identical()) {
+        return c;
+    }
+
+    for (const auto &trans: sub.transpositions()) {
+        for (const auto &gate: ZKB_algorithm(trans, dim)) {
+            c.insert(gate, 0);
+        }
+    }
+
+    if (reduction) {
+        c.reduce();
+    }
+
+    if (c.produce_mapping() != sub) {
+        LOG_DEBUG("Performing synthesis using the ZKB algorithm",
+                  "The synthesized circuit produces an incorrect mapping: " + static_cast<std::string>(c));
+        throw SynthException("Unable to synthesize Circuit");
+    }
+
+    return c;
+}
+
+Circuit CA_algorithm(const BinaryMapping &bm, bool reduction) {
+    auto bm_extended = bm.extend();
+    auto c = CA_algorithm(Substitution(bm_extended), reduction);
+    c.set_memory(bm_extended.inputs_number() - bm.inputs_number());
+    return c;
+}
+
+Circuit CA_algorithm(const Substitution &sub, bool reduction) {
+    if (!is_power_of_2(sub.power())) {
+        throw SynthException("Substitution size should be power of 2");
+    }
+
+    size_t dim = std::log2(sub.power());
+
+    if (dim <= 2) {
+        LOG_INFO("Performing synthesis using CA algorithm", "Switching to SS algorithm");
+        try {
+            return SS_algorithm(sub, reduction);
+        } catch (...) {}
+        LOG_INFO("Performing synthesis using CA algorithm. SS algorithm did not produce a result",
+                 "Switching to RW algorithm");
+        return RW_algorithm(sub, reduction);
+    }
+    if (dim == 3) {
+        LOG_INFO("Performing synthesis using CA algorithm", "Switching to ZKB algorithm");
+        try {
+            return ZKB_algorithm(sub, reduction);
+        } catch (...) {}
+        LOG_INFO("Performing synthesis using CA algorithm. ZKB algorithm did not produce a result",
+                 "Switching to RW algorithm");
+        return RW_algorithm(sub, reduction);
+    }
+    LOG_INFO("Performing synthesis using CA algorithm", "Switching to ZKB algorithm");
+    return ZKB_algorithm(sub, reduction);
 }

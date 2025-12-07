@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.28)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXE_LINKER_FLAGS "-static")
-set(VERSION "1.1.0")
+set(VERSION "1.2.3")
 
 option(BUILD_TESTS "Build tests" ON)
-option(BUILD_COVERAGE "Build code coverage" ON)
+option(BUILD_COVERAGE "Build code coverage" OFF)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -20,6 +20,7 @@ project(quantum_circuit_synthesis VERSION ${VERSION})
 string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
+string(APPEND CMAKE_CXX_FLAGS " -fopenmp")
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 
@@ -29,7 +30,7 @@ add_library(${PROJECT_NAME} STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/sources/synthesis.cpp
 )
 
-add_executable(qcs
+add_executable(qcs_${VERSION}
         ${CMAKE_CURRENT_SOURCE_DIR}/demo/main.cpp
 )
 
@@ -38,7 +39,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         "$<INSTALL_INTERFACE:include>"
 )
 
-target_link_libraries(qcs ${PROJECT_NAME})
+target_link_libraries(qcs_${VERSION} ${PROJECT_NAME})
 
 if (BUILD_TESTS)
     # https://google.github.io/googletest/quickstart-cmake.html
@@ -46,11 +47,17 @@ if (BUILD_TESTS)
     add_executable(tests
             ${CMAKE_CURRENT_SOURCE_DIR}
             tests/test_boolean_functions.cpp
+            tests/test_circuits.cpp
+            tests/test_gates.cpp
             tests/test_mappings.cpp
             tests/test_substitutions.cpp
-            tests/test_gates.cpp
-            tests/test_circuits.cpp
-            tests/test_synthesis.cpp
+
+            tests/test_synthesis_general.cpp
+            tests/test_synthesis_CA.cpp
+            tests/test_synthesis_dummy.cpp
+            tests/test_synthesis_RW.cpp
+            tests/test_synthesis_SS.cpp
+            tests/test_synthesis_ZKB.cpp
             tests/test_reduction.cpp
 
             tests/test_math.cpp
@@ -60,4 +67,13 @@ if (BUILD_TESTS)
     target_link_libraries(tests ${PROJECT_NAME} GTest::gtest_main)
     include(GoogleTest)
     gtest_discover_tests(tests)
+endif ()
+
+if (BUILD_COVERAGE)
+    set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/externals/CMake-codecov/cmake" ${CMAKE_MODULE_PATH})
+    find_package(codecov)
+    string(APPEND CMAKE_CXX_FLAGS " --coverage")
+    add_coverage(${PROJECT_NAME})
+    add_coverage(tests)
+    coverage_evaluate()
 endif ()

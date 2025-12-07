@@ -1,7 +1,9 @@
 #ifndef QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 #define QUANTUM_CIRCUIT_SYNTHESIS_GATES_HPP
 
+#include <set>
 #include <unordered_map>
+
 #include "primitives.hpp"
 #include "strings.hpp"
 
@@ -24,33 +26,38 @@ class Circuit;
 
 class Gate {
 public:
+    // TODO для валидации вентиля, для функции генерации вентилей создать статичные лямбды, которые бы валидацию проводили:
+    //  Gate::validate(controls) -> bool
+
     Gate() = default;
 
     explicit Gate(GateType, const std::vector<size_t> &, const controls_type &, size_t);
 
     explicit Gate(const std::string &, size_t);
 
-    size_t dim() const noexcept;
+    [[nodiscard]] size_t dim() const noexcept;
 
-    GateType type() const noexcept;
+    [[nodiscard]] GateType type() const noexcept;
 
-    std::vector<size_t> nests() const noexcept;
+    [[nodiscard]] std::vector<size_t> nests() const noexcept;
 
-    std::vector<size_t> controls() const noexcept;
+    [[nodiscard]] std::vector<size_t> controls() const noexcept;
 
-    std::vector<size_t> direct_controls() const noexcept;
+    [[nodiscard]] std::vector<size_t> direct_controls() const noexcept;
 
-    std::vector<size_t> inverted_controls() const noexcept;
+    [[nodiscard]] std::vector<size_t> inverted_controls() const noexcept;
 
-    bool empty() const noexcept;
+    [[nodiscard]] bool empty() const noexcept;
 
-    bool is_commutes(const Gate &) const;
+    [[nodiscard]] bool is_commutes(const Gate &) const;
 
     void clear() noexcept;
 
     void act(binary_vector &) const;
 
     void act(cf_set &) const;
+
+    [[nodiscard]] Substitution act() const noexcept;
 
     bool operator==(const Gate &) const;
 
@@ -59,12 +66,14 @@ public:
     friend std::ostream &operator<<(std::ostream &, const Gate &) noexcept;
 
 private:
-    GateType type_{};
+    GateType type_ = GateType::EMPTY;
     size_t dim_{};
     std::vector<size_t> nests_;
     controls_type controls_;
 
     friend class Circuit;
+
+    friend struct std::hash<Gate>;
 
     void validate_() const;
 
@@ -87,6 +96,11 @@ private:
     bool rR6_reversed_(Gate &, Gate &) noexcept;
 };
 
+template<>
+struct std::hash<Gate> {
+    size_t operator()(const Gate &) const;
+};
+
 
 class Circuit {
 public:
@@ -98,11 +112,11 @@ public:
 
     explicit Circuit(std::istream &);
 
-    size_t dim() const noexcept;
+    [[nodiscard]] size_t dim() const noexcept;
 
-    size_t memory() const noexcept;
+    [[nodiscard]] size_t memory() const noexcept;
 
-    size_t complexity() const noexcept;
+    [[nodiscard]] size_t complexity() const noexcept;
 
     void set_memory(size_t);
 
@@ -116,9 +130,9 @@ public:
 
     void reduce() noexcept;
 
-    BinaryMapping produce_mapping() const noexcept;
+    [[nodiscard]] BinaryMapping produce_mapping() const noexcept;
 
-    bool schematically_equal(const Circuit &) const noexcept;
+    [[nodiscard]] bool schematically_equal(const Circuit &) const noexcept;
 
     size_t move_swap_left();
 

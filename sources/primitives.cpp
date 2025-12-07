@@ -148,7 +148,7 @@ size_t BooleanFunction::weight() const noexcept {
 }
 
 bool BooleanFunction::is_balanced() const noexcept {
-    return this->weight() * 2 == this->size();
+    return this->weight() << 1 == this->size();
 }
 
 bool BooleanFunction::is_constant() const noexcept {
@@ -169,7 +169,7 @@ size_t BooleanFunction::variable() const {
 std::vector<bool> BooleanFunction::mobius_transformation() const noexcept {
     std::vector<bool> anf(vec_);
 
-    for (size_t s = 0; s < this->dim(); ++s) {
+    for (size_t s = 0; s < this->dim(); s++) {
         const size_t mask = 1 << s;
         for (size_t i = 0; i < vec_.size(); i++) {
             if (i & mask) {
@@ -337,15 +337,20 @@ BinaryMapping::BinaryMapping(const BinaryMapping &mp) {
 }
 
 BinaryMapping::BinaryMapping(const Substitution &sub) {
-    auto power = static_cast<size_t>(std::log2(sub.power()));
-    table truth_table(power);
-    for (const auto &v: sub.vector()) {
-        auto v_binary = decimal_to_binary_s(v, power);
-        for (size_t i = 0; i < v_binary.size(); i++) {
-            truth_table[i].push_back(v_binary[i] == '1');
+    if (!is_power_of_2(sub.power())) {
+        throw BMException("Impossible to transform Substitution into BM whose power is not power of 2");
+    }
+    size_t cols = std::log2(sub.power());
+    table truth_table(cols, binary_vector(sub.power(), false));
+    for (size_t col = 0; col < cols; col++) {
+        size_t bit_pos = cols - col - 1;
+        size_t mask = 1u << bit_pos;
+        auto& cf_col = truth_table[col];
+        for (size_t row = 0; row < sub.power(); row++) {
+            cf_col[row] = sub.vector()[row] & mask;
         }
     }
-    cf_.reserve(truth_table.size());
+    cf_.reserve(cols);
     for (const auto &bf: truth_table) {
         cf_.emplace_back(bf);
     }
@@ -398,7 +403,7 @@ size_t BinaryMapping::outputs_number() const noexcept {
 
 bool BinaryMapping::is_substitution() const noexcept {
     try {
-        auto _ = Substitution(*this);
+        Substitution(*this);
         return true;
     } catch (...) {
         return false;
@@ -531,11 +536,48 @@ bool is_substitution(const std::vector<size_t> &vec) {
     return checked.size() == vec.size();
 }
 
+size_t cayley_distance(const Substitution &sub1, const Substitution &sub2) {
+    // sub1 = g; sub2 = h
+    int n = std::max(sub1.power(), sub2.power());
+    auto hg = sub2.invert() * sub1;
+    return n - hg.cycles().size();
+}
+
 Substitution::Substitution(const std::vector<size_t> &v) {
     if (v.empty()) {
         throw SubException("Empty coordinate function set");
     }
     sub_ = v;
+    if (!is_substitution(sub_)) {
+        sub_.clear();
+        throw SubException("Unable to build substitution");
+    }
+}
+
+Substitution::Substitution(const std::vector<cycle_type> &cycles) {
+    *this = Substitution(2);
+    for (const auto &cycle: cycles) {
+        *this *= substitution_by_cycle(cycle);
+    }
+}
+
+Substitution::Substitution(const std::vector<transposition_type> &transpositions) {
+    if (transpositions.empty()) {
+        throw SubException("Unable to handle empty transpositions set");
+    }
+    size_t power = 0;
+    for (const auto &trans: transpositions) {
+        power = trans.first > power ? trans.first : power;
+        power = trans.second > power ? trans.second : power;
+    }
+
+    *this = Substitution(power + 1);
+    for (const auto &[i, j]: transpositions) {
+        auto temp_sub = Substitution(power + 1);
+        std::swap(temp_sub.sub_[i], temp_sub.sub_[j]);
+        *this = temp_sub * *this;
+    }
+
     if (!is_substitution(sub_)) {
         sub_.clear();
         throw SubException("Unable to build substitution");
@@ -611,6 +653,15 @@ Substitution::Substitution(const std::string &s) {
     by_string_(s);
 }
 
+Substitution::Substitution(const size_t power) {
+    if (power < 2) {
+        throw SubException("Substitution power should be greater than 1");
+    }
+    for (size_t i = 0; i < power; i++) {
+        sub_.push_back(i);
+    }
+}
+
 Substitution::Substitution(std::istream &s) {
     std::stringstream ss;
     ss << s.rdbuf();
@@ -622,7 +673,7 @@ Substitution::Substitution(const Substitution &sub) {
 }
 
 Substitution::Substitution(const BinaryMapping &mp) {
-    sub_ = Substitution(mp.coordinate_functions()).sub_;
+    *this = Substitution(mp.coordinate_functions());
 }
 
 Substitution &Substitution::operator=(const Substitution &sub) {
@@ -662,6 +713,26 @@ bool Substitution::operator!=(const BinaryMapping &bm) const {
     return !this->operator==(bm);
 }
 
+Substitution &Substitution::operator*=(const Substitution &s) {
+    std::vector<size_t> images(std::max(s.power(), power()));
+
+    for (size_t i = 0; i < images.size(); i++) {
+        if (i < sub_.size()) {
+            auto image = sub_[i];
+            if (image >= s.sub_.size()) {
+                images[i] = image;
+                continue;
+            }
+            images[i] = s.sub_[image];
+            continue;
+        }
+        images[i] = s.sub_[i];
+    }
+
+    sub_ = images;
+    return *this;
+}
+
 size_t Substitution::power() const noexcept {
     return sub_.size();
 }
@@ -679,8 +750,8 @@ std::vector<size_t> Substitution::vector() const noexcept {
     return sub_;
 }
 
-std::vector<std::pair<size_t, size_t>> Substitution::transpositions() const noexcept {
-    std::vector<std::pair<size_t, size_t>> transpositions;
+std::vector<transposition_type> Substitution::transpositions() const noexcept {
+    std::vector<transposition_type> transpositions;
     for (const auto &cycle: this->cycles()) {
         if (cycle.size() == 1) {
             continue;
@@ -692,16 +763,16 @@ std::vector<std::pair<size_t, size_t>> Substitution::transpositions() const noex
     return transpositions;
 }
 
-std::vector<std::vector<size_t>> Substitution::cycles() const noexcept {
+std::vector<cycle_type> Substitution::cycles() const noexcept {
     std::unordered_set<size_t> visited;
-    std::vector<std::vector<size_t>> cycles;
+    std::vector<cycle_type> cycles;
 
     for (size_t i = 0; i < sub_.size(); i++) {
         if (visited.count(i)) {
             continue;
         }
 
-        std::vector<size_t> cycle;
+        cycle_type cycle;
         auto element = i;
         while (!visited.count(element)) {
             visited.insert(element);
@@ -713,12 +784,16 @@ std::vector<std::vector<size_t>> Substitution::cycles() const noexcept {
     return cycles;
 }
 
-bool Substitution::is_odd() const noexcept {
-    int indicator = 1;  // is not odd
-    for (const auto &cycle: this->cycles()) {
-        indicator *= static_cast<int>(std::pow(-1, cycle.size() - 1));
+Substitution Substitution::invert() const noexcept {
+    std::vector<size_t> images(sub_.size());
+    for (size_t i = 0; i < sub_.size(); i++) {
+        images[sub_[i]] = i;
     }
-    return indicator == -1;
+    return Substitution(images);
+}
+
+bool Substitution::is_odd() const noexcept {
+    return transpositions().size() % 2;
 }
 
 void Substitution::by_string_(const std::string &s) {
@@ -749,9 +824,33 @@ void Substitution::by_string_(const std::string &s) {
     }
 }
 
+Substitution substitution_by_cycle(const cycle_type &cycle) {
+    if (cycle.empty()) {
+        throw SubException("Unable to handle empty cycle");
+    }
+    size_t power = *std::max_element(cycle.begin(), cycle.end());
+    if (!power) {
+        return Substitution(2);
+    }
+    Substitution sub(power + 1);
+    if (cycle.size() == 1) {
+        return sub;
+    }
+    for (size_t i = 0; i < cycle.size() - 1; i++) {
+        std::swap(sub.sub_[cycle[i]], sub.sub_[cycle[i + 1]]);
+    }
+    return sub;
+}
+
 std::ostream &operator<<(std::ostream &out, const Substitution &sub) noexcept {
     for (size_t i = 0; i < sub.power(); i++) {
         out << sub.sub_[i] << ' ';
     }
     return out;
+}
+
+Substitution operator*(const Substitution &sub1, const Substitution &sub2) {
+    Substitution sub3(sub1);
+    sub3 *= sub2;
+    return sub3;
 }
