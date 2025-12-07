@@ -4,6 +4,8 @@
 
 
 TEST(Synthesis, MappingRW) {
+    JobsConfig::instance().set(std::thread::hardware_concurrency());
+
     {
         BinaryMapping bm(table{{0, 1, 1, 0, 1, 1, 1, 1}});
         Circuit c = RW_algorithm(bm);
@@ -75,6 +77,8 @@ TEST(Synthesis, MappingRW) {
 }
 
 TEST(Synthesis, SubstitutionRW) {
+    JobsConfig::instance().set(std::thread::hardware_concurrency());
+
     EXPECT_THROW(RW_algorithm(Substitution("0 2 1")), SynthException);
     {
         Substitution sub("0 1 2 3");

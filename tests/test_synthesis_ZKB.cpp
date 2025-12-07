@@ -4,6 +4,8 @@
 
 
 TEST(Synthesis, MappingZKB) {
+    JobsConfig::instance().set(std::thread::hardware_concurrency());
+
     {
         BinaryMapping bm(table{{0, 1, 1, 0, 1, 1, 1, 1}});
         Circuit c = ZKB_algorithm(bm);
@@ -59,11 +61,33 @@ TEST(Synthesis, MappingZKB) {
 }
 
 TEST(Synthesis, SubstitutionZKB) {
+    JobsConfig::instance().set(std::thread::hardware_concurrency());
+
     EXPECT_THROW(ZKB_algorithm(Substitution("0 2 1")), SynthException);
     EXPECT_THROW(ZKB_algorithm(Substitution("1 0")), SynthException);
     EXPECT_THROW(ZKB_algorithm(Substitution("0 2 1 3")), SynthException);
-    EXPECT_THROW(ZKB_algorithm(Substitution("0 7 2 6 1 4 3 5")), SynthException);
 
+    {
+        Substitution sub("0 1 2 3 4 5 6 7");
+        Circuit c = ZKB_algorithm(sub);
+        EXPECT_EQ(synthesize(sub, Algo::ZKB), c);
+        EXPECT_EQ(synthesize(sub, Algo::ZKB, true), c);
+        EXPECT_EQ(c.produce_mapping(), sub);
+    }
+    {
+        Substitution sub("2 7 1 6 0 3 5 4");
+        Circuit c = ZKB_algorithm(sub);
+        EXPECT_EQ(synthesize(sub, Algo::ZKB), c);
+        EXPECT_EQ(synthesize(sub, Algo::ZKB, true), c);
+        EXPECT_EQ(c.produce_mapping(), sub);
+    }
+    {
+        Substitution sub("0 7 2 6 1 4 3 5");
+        Circuit c = ZKB_algorithm(sub);
+        EXPECT_EQ(synthesize(sub, Algo::ZKB), c);
+        EXPECT_EQ(synthesize(sub, Algo::ZKB, true), c);
+        EXPECT_EQ(c.produce_mapping(), sub);
+    }
     {
         Substitution sub("0 1 2 3 4 5 6 7 8 9 A B C D E F");
         Circuit c = ZKB_algorithm(sub);

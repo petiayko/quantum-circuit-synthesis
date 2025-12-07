@@ -169,7 +169,7 @@ size_t BooleanFunction::variable() const {
 std::vector<bool> BooleanFunction::mobius_transformation() const noexcept {
     std::vector<bool> anf(vec_);
 
-    for (size_t s = 0; s < this->dim(); ++s) {
+    for (size_t s = 0; s < this->dim(); s++) {
         const size_t mask = 1 << s;
         for (size_t i = 0; i < vec_.size(); i++) {
             if (i & mask) {
