@@ -33,7 +33,7 @@ void write_result(const std::string &output_path, const T &result) {
     if (std::filesystem::exists(output_path)) {
         LOG_WARNING("Writing result", "Output file already exists");
         if (!overwrite_confirmation()) {
-            LOG_WARNING("Writing result", "Will be written to cout");
+            LOG_WARNING("Writing result", "Will be written to standard output");
             std::cout << result << std::endl;
             return;
         }

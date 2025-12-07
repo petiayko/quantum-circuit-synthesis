@@ -347,14 +347,12 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
 
     auto c = Circuit(outputs);
 
-    std::unordered_map<size_t, std::vector<Gate>> precomputed_gates_cnot;
-    std::unordered_map<size_t, std::vector<Gate>> precomputed_gates_kcnot2;
-    std::unordered_map<size_t, std::vector<Gate>> precomputed_gates_kcnot3;
+    std::array<std::unordered_map<size_t, std::vector<Gate>>, 3> precomputed_gates;
 
     for (size_t nest = 0; nest < outputs; nest++) {
-        precomputed_gates_cnot[nest] = generate_all_gates({GateType::CNOT}, nest, 1, outputs);
-        precomputed_gates_kcnot2[nest] = generate_all_gates({GateType::kCNOT}, nest, 2, outputs);
-        precomputed_gates_kcnot3[nest] = generate_all_gates({GateType::kCNOT}, nest, 3, outputs);
+        precomputed_gates[0][nest] = generate_all_gates({GateType::CNOT}, nest, 1, outputs);
+        precomputed_gates[1][nest] = generate_all_gates({GateType::kCNOT}, nest, 2, outputs);
+        precomputed_gates[2][nest] = generate_all_gates({GateType::kCNOT}, nest, 3, outputs);
     }
 
     while (true) {
@@ -373,118 +371,38 @@ Circuit RW_algorithm(const BinaryMapping &bm, bool reduction) {
 
         bool gate_chosen = false;
 
-        for (size_t nest = 0; nest < outputs; nest++) {
-            if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
-                continue;
-            }
-            auto complexity = bm_cf[nest].complexity();
-            auto max_complexity_diff = 0;
-            Gate best_gate;
-
-            for (const auto &gate: precomputed_gates_cnot[nest]) {
-                gate.act(bm_cf);
-                auto complexity_new = bm_cf[nest].complexity();
-                if (complexity_new - complexity >= max_complexity_diff) {
-                    max_complexity_diff = complexity_new - complexity;
-                    best_gate = gate;
+        for (size_t gate_type_idx = 0; gate_type_idx < 3 && !gate_chosen; gate_type_idx++) {
+            for (size_t nest = 0; nest < outputs && !gate_chosen; nest++) {
+                if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
+                    continue;
                 }
-                gate.act(bm_cf);
-            }
-            if (max_complexity_diff) {
-                c.insert(best_gate, 0);
-                best_gate.act(bm_cf);
-                gate_chosen = true;
-                break;
-            }
-        }
-        if (gate_chosen) {
-            continue;
-        }
 
-        for (size_t nest = 0; nest < outputs; nest++) {
-            if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
-                continue;
-            }
-            auto complexity = bm_cf[nest].complexity();
-            auto max_complexity_diff = 0;
-            Gate best_gate;
+                auto complexity = bm_cf[nest].complexity();
+                auto max_complexity_diff = 0;
+                Gate best_gate;
 
-            for (const auto &gate: precomputed_gates_cnot[nest]) {
-                gate.act(bm_cf);
-                auto complexity_new = bm_cf[nest].complexity();
-                if (complexity_new - complexity >= max_complexity_diff) {
-                    max_complexity_diff = complexity_new - complexity;
-                    best_gate = gate;
+                for (const auto &gate: precomputed_gates[gate_type_idx][nest]) {
+                    gate.act(bm_cf);
+                    auto complexity_new = bm_cf[nest].complexity();
+                    if (complexity_new - complexity >= max_complexity_diff) {
+                        max_complexity_diff = complexity_new - complexity;
+                        best_gate = gate;
+                    }
+                    gate.act(bm_cf);
                 }
-                gate.act(bm_cf);
-            }
-            if (max_complexity_diff) {
-                c.insert(best_gate, 0);
-                best_gate.act(bm_cf);
-                gate_chosen = true;
-                break;
-            }
-        }
-        if (gate_chosen) {
-            continue;
-        }
 
-        for (size_t nest = 0; nest < outputs; nest++) {
-            if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
-                continue;
-            }
-            auto complexity = bm_cf[nest].complexity();
-            auto max_complexity_diff = 0;
-            Gate best_gate;
-
-            for (const auto &gate: precomputed_gates_kcnot2[nest]) {
-                gate.act(bm_cf);
-                auto complexity_new = bm_cf[nest].complexity();
-                if (complexity_new - complexity >= max_complexity_diff) {
-                    max_complexity_diff = complexity_new - complexity;
-                    best_gate = gate;
+                if (max_complexity_diff) {
+                    c.insert(best_gate, 0);
+                    best_gate.act(bm_cf);
+                    gate_chosen = true;
+                    break;
                 }
-                gate.act(bm_cf);
             }
-            if (max_complexity_diff) {
-                c.insert(best_gate, 0);
-                best_gate.act(bm_cf);
-                gate_chosen = true;
-                break;
-            }
-        }
-        if (gate_chosen) {
-            continue;
         }
 
-        for (size_t nest = 0; nest < outputs; nest++) {
-            if (bm_cf[nest] == BooleanFunction(nest, outputs)) {
-                continue;
-            }
-            auto complexity = bm_cf[nest].complexity();
-            auto max_complexity_diff = 0;
-            Gate best_gate;
-
-            for (const auto &gate: precomputed_gates_kcnot3[nest]) {
-                gate.act(bm_cf);
-                auto complexity_new = bm_cf[nest].complexity();
-                if (complexity_new - complexity >= max_complexity_diff) {
-                    max_complexity_diff = complexity_new - complexity;
-                    best_gate = gate;
-                }
-                gate.act(bm_cf);
-            }
-            if (max_complexity_diff) {
-                c.insert(best_gate, 0);
-                best_gate.act(bm_cf);
-                gate_chosen = true;
-                break;
-            }
+        if (!gate_chosen) {
+            break;
         }
-        if (gate_chosen) {
-            continue;
-        }
-        break;
     }
 
     for (size_t i = 0; i < outputs; i++) {
@@ -725,7 +643,8 @@ Circuit ZKB_algorithm(const Substitution &sub, bool reduction) {
     }
 
     size_t dim = std::log2(sub.power());
-    if (dim < 4) {
+    // Actually 4, but...
+    if (dim < 3) {
         throw SynthException("Impossible to apply the ZKB algorithm to a substitution of power less than 16");
     }
 

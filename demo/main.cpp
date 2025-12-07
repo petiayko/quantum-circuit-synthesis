@@ -1,4 +1,5 @@
 #include "computings.hpp"
+#include "statistics.hpp"
 
 
 using configuration = std::map<std::string, std::string>;
@@ -124,6 +125,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (config.empty()) {
+//        collect_statistics();
         return 0;
     }
 
@@ -248,7 +250,7 @@ int main(int argc, char *argv[]) {
     try {
         process_config(type, algo, reduction, input, output);
     } catch (const std::exception &e) {
-        LOG_ERROR("Finishing", std::string("Error: ") + e.what());
+        LOG_ERROR("Finishing", std::string("Unable to handle. An error occurred: ") + e.what());
     }
     LOG_INFO("Finishing", "");
     return 0;
