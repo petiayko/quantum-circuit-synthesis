@@ -23,40 +23,6 @@ bool contains(const std::vector<T> &vec, const T &value) {
     return std::find(vec.begin(), vec.end(), value) != vec.end();
 }
 
-size_t count_gates(GateType type, size_t dim, bool on_nest = false) noexcept {
-    size_t number = 0;
-    if (type == GateType::NOT) {
-        number = 1;
-    } else if (type == GateType::CNOT) {
-        if (dim < 2) {
-            return 0;
-        }
-        number = 2 * (dim - 1);
-    } else if (type == GateType::kCNOT) {
-        if (dim < 3) {
-            return 0;
-        }
-        number = std::pow(3, dim - 1) - 2 * dim + 1;
-    } else if (type == GateType::SWAP) {
-        if (dim < 2) {
-            return 0;
-        }
-        return dim * (dim - 1) >> 1;
-    } else if (type == GateType::CSWAP) {
-        if (dim < 3) {
-            return 0;
-        }
-        return dim * (dim - 1) * (dim - 2);
-    } else {
-        return -1;
-    }
-    if (on_nest) {
-        return number;
-    }
-    return number * dim;
-}
-
-
 TEST(Synthesis, AllGatesGenerator) {
     JobsConfig::instance().set(std::thread::hardware_concurrency());
 

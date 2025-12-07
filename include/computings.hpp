@@ -97,9 +97,6 @@ void process_config(InputType type, Algo algo, bool reduction,
     }
 
     LOG_INFO("Starting quantum circuit synthesis", "");
-    if (reduction) {
-        LOG_WARNING("After synthesis, the circuit will be reduced. This is an experimental option", "");
-    }
     if (type == InputType::TABLE) {
         BinaryMapping bm(file_content);
         Circuit c = synthesize(bm, algo, reduction);

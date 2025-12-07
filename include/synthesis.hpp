@@ -4,6 +4,7 @@
 #include <atomic>
 #include <execution>
 #include <future>
+#include <omp.h>
 
 #include "exseptions.hpp"
 #include "gates.hpp"
@@ -40,9 +41,12 @@ enum class Algo {
     RW,
     SS,
     ZKB,
+    CA,
     UNKNOWN = 1024,
     EMPTY = 2048,
 };
+
+size_t count_gates(GateType, size_t, bool = false) noexcept;
 
 std::vector<Gate> generate_all_gates(const std::vector<GateType> &, size_t);
 
@@ -71,5 +75,9 @@ Circuit SS_algorithm(const Substitution &, bool = false);
 Circuit ZKB_algorithm(const BinaryMapping &, bool = false);
 
 Circuit ZKB_algorithm(const Substitution &, bool = false);
+
+Circuit CA_algorithm(const BinaryMapping &, bool = false);
+
+Circuit CA_algorithm(const Substitution &, bool = false);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_SYNTHESIS_HPP

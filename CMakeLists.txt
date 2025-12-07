@@ -20,6 +20,7 @@ project(quantum_circuit_synthesis VERSION ${VERSION})
 string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
+string(APPEND CMAKE_CXX_FLAGS " -fopenmp")
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 

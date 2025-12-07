@@ -35,7 +35,7 @@ void print_program_help() {
     std::cout << std::endl;
 
     std::cout << "Synthesis options:" << std::endl;
-    std::cout << "  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'ss', 'zkb')"
+    std::cout << "  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'ss', 'zkb', 'ca')"
               << std::endl;
     std::cout << "  -r, --reduction     reduce the output circuit (default: false)" << std::endl;
     std::cout << "  -j, --jobs ARG      maximum number of jobs running in parallel (default: 1)" << std::endl;
@@ -184,6 +184,8 @@ int main(int argc, char *argv[]) {
         algo = Algo::SS;
     } else if (algo_s == "zkb") {
         algo = Algo::ZKB;
+    } else if (algo_s == "ca") {
+        algo = Algo::CA;
     } else if (!algo_s.empty()) {
         algo = Algo::UNKNOWN;
     }

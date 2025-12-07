@@ -14,6 +14,9 @@ Circuit synthesize(const BinaryMapping &bm, Algo algo, bool reduction) {
     if (algo == Algo::ZKB) {
         return ZKB_algorithm(bm, reduction);
     }
+    if (algo == Algo::CA) {
+        return CA_algorithm(bm, reduction);
+    }
     throw SynthException("Unknown synthesis algorithm");
 }
 
@@ -29,6 +32,9 @@ Circuit synthesize(const Substitution &sub, Algo algo, bool reduction) {
     }
     if (algo == Algo::ZKB) {
         return ZKB_algorithm(sub, reduction);
+    }
+    if (algo == Algo::CA) {
+        return CA_algorithm(sub, reduction);
     }
     throw SynthException("Unknown synthesis algorithm");
 }
@@ -93,39 +99,89 @@ Circuit dummy_algorithm(const Substitution &sub, bool reduction) {
     return dummy_algorithm(BinaryMapping(sub), reduction);
 }
 
+size_t count_gates(GateType type, size_t dim, bool on_nest) noexcept {
+    size_t number = 0;
+    if (type == GateType::NOT) {
+        number = 1;
+    } else if (type == GateType::CNOT) {
+        if (dim < 2) {
+            return 0;
+        }
+        number = 2 * (dim - 1);
+    } else if (type == GateType::kCNOT) {
+        if (dim < 3) {
+            return 0;
+        }
+        number = std::pow(3, dim - 1) - 2 * dim + 1;
+    } else if (type == GateType::SWAP) {
+        if (dim < 2) {
+            return 0;
+        }
+        return dim * (dim - 1) >> 1;
+    } else if (type == GateType::CSWAP) {
+        if (dim < 3) {
+            return 0;
+        }
+        return dim * (dim - 1) * (dim - 2);
+    } else {
+        return -1;
+    }
+    if (on_nest) {
+        return number;
+    }
+    return number * dim;
+}
+
 std::vector<controls_type> generate_gate_controls(size_t nest, size_t min_controls, size_t max_controls, size_t dim) {
     if (max_controls < min_controls) {
         return {};
     }
 
+    const size_t nest_bit = 1u << (dim - nest - 1);
+
+    size_t max_possible_results = 0;
+    for (size_t k = min_controls; k <= max_controls; k++) {
+        size_t comb = 1;
+        for (size_t i = 0; i < k; i++) {
+            comb *= (dim - i - 1) / (i + 1);
+        }
+        max_possible_results += comb * (1 << k);
+    }
+
     std::vector<controls_type> result;
+    result.reserve(max_possible_results);
 
-    for (size_t controls_mask = 0; controls_mask < static_cast<size_t>(1 << dim); controls_mask++) {
-        // controls_mask: 0 - no input; 1 - input
-        if (decimal_to_binary_v(controls_mask, dim)[nest]) {
+    for (size_t controls_mask = 0; controls_mask < (1u << dim); controls_mask++) {
+        if (controls_mask & nest_bit) {
             continue;
         }
 
-        size_t controls_number = static_cast<size_t>(std::popcount(controls_mask));
-        if (controls_number > max_controls || controls_number < min_controls) {
+        size_t controls_number = std::popcount(controls_mask);
+        if (controls_number < min_controls || controls_number > max_controls) {
             continue;
         }
 
-        const auto controls_mask_binary = decimal_to_binary_v(controls_mask, dim);
-        for (size_t inversions_mask = 0;
-             inversions_mask < static_cast<size_t>(1 << controls_number); inversions_mask++) {
-            result.emplace_back();
-            const auto inversions_mask_binary = decimal_to_binary_v(inversions_mask, controls_number);
-            size_t control_type_i = 0;
-            for (size_t i = 0; i < controls_mask_binary.size(); i++) {
-                if (!controls_mask_binary[i]) {
-                    continue;
-                }
-                result.back()[i] = inversions_mask_binary[control_type_i];
-                control_type_i++;
+        std::vector<size_t> indices;
+        indices.reserve(controls_number);
+
+        size_t temp_mask = controls_mask;
+        while (temp_mask) {
+            size_t lsb = temp_mask & -temp_mask;
+            indices.push_back(dim - std::countr_zero(lsb) - 1);
+            temp_mask ^= lsb;
+        }
+
+        for (size_t inv_mask = 0; inv_mask < (1u << controls_number); inv_mask++) {
+            controls_type control_map;
+
+            for (size_t i = 0; i < controls_number; i++) {
+                control_map[indices[i]] = (inv_mask >> (controls_number - i - 1)) & 1;
             }
+
+            result.push_back(std::move(control_map));
         }
     }
+
     return result;
 }
 
@@ -140,6 +196,7 @@ std::vector<Gate> generate_gates_by_type_nest(GateType type, size_t nest, size_t
     }
 
     std::vector<Gate> result;
+    result.reserve(count_gates(type, dim, true));
 
     size_t min_controls = 0;
     size_t real_max_controls = 0;
@@ -160,6 +217,7 @@ std::vector<Gate> generate_gates_by_type_nest(GateType type, size_t nest, size_t
 
 std::vector<Gate> generate_gates_by_type(GateType type, size_t max_controls, size_t dim) {
     std::vector<Gate> result;
+    result.reserve(count_gates(type, dim));
 
     if (type == GateType::NOT || type == GateType::CNOT || type == GateType::kCNOT) {
         size_t min_controls = 0;
@@ -692,4 +750,18 @@ Circuit ZKB_algorithm(const Substitution &sub, bool reduction) {
     }
 
     return c;
+}
+
+Circuit CA_algorithm(const BinaryMapping &bm, bool reduction) {
+    if (bm.is_substitution() || reduction) {
+
+    }
+    return Circuit(1);
+}
+
+Circuit CA_algorithm(const Substitution &sub, bool reduction) {
+    if (sub.is_identical() || reduction) {
+
+    }
+    return Circuit(1);
 }
