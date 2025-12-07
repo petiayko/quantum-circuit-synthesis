@@ -6,7 +6,7 @@ set(CMAKE_EXE_LINKER_FLAGS "-static")
 set(VERSION "1.2.3")
 
 option(BUILD_TESTS "Build tests" ON)
-option(BUILD_COVERAGE "Build code coverage" ON)
+option(BUILD_COVERAGE "Build code coverage" OFF)
 
 include(FetchContent)
 FetchContent_Declare(
