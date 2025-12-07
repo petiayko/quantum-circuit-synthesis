@@ -53,6 +53,7 @@ if (BUILD_TESTS)
             tests/test_substitutions.cpp
 
             tests/test_synthesis_general.cpp
+            tests/test_synthesis_CA.cpp
             tests/test_synthesis_dummy.cpp
             tests/test_synthesis_RW.cpp
             tests/test_synthesis_SS.cpp
