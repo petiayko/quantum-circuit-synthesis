@@ -2,9 +2,7 @@
 #define QUANTUM_CIRCUIT_SYNTHESIS_SYNTHESIS_HPP
 
 #include <atomic>
-#include <execution>
 #include <future>
-#include <omp.h>
 
 #include "exseptions.hpp"
 #include "gates.hpp"

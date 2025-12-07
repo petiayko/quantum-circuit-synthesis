@@ -18,7 +18,7 @@ void generate_substitution(size_t n, Circuit (*synt_algo)(const Substitution &, 
             statistic.emplace_back(c.dim(), c.memory(), c.complexity(),
                                    duration_cast<std::chrono::microseconds>(end - start));
         } catch (std::exception &e) {
-//            std::cout << e.what() << std::endl;
+            std::cout << e.what() << std::endl;
             std::cout << Substitution(sub) << std::endl;
             failed_count++;
         }
@@ -40,6 +40,9 @@ std::tuple<double, double, double, double> collect_statistics(size_t power, Algo
             break;
         case Algo::ZKB:
             generate_substitution(power, ZKB_algorithm, statistic);
+            break;
+        case Algo::CA:
+            generate_substitution(power, CA_algorithm, statistic);
             break;
         default:
             break;
@@ -65,7 +68,7 @@ std::tuple<double, double, double, double> collect_statistics(size_t power, Algo
 void collect_statistics() {
     JobsConfig::instance().set(100);
     const std::vector<size_t> powers = {2, 4, 8};
-    const std::vector<Algo> algorithms = {Algo::DUMMY, Algo::RW, Algo::SS, Algo::ZKB};
+    const std::vector<Algo> algorithms = {Algo::DUMMY, Algo::RW, Algo::SS, Algo::ZKB, Algo::CA};
 
     for (auto algo: algorithms) {
         for (auto power: powers) {
