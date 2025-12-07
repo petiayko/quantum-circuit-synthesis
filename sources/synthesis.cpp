@@ -34,31 +34,49 @@ Circuit synthesize(const Substitution &sub, Algo algo, bool reduction) {
 }
 
 Circuit dummy_algorithm(const BinaryMapping &bm, bool reduction) {
-    std::cout << "Dummy. Jobs: " << JobsConfig::instance().get() << std::endl;
-
     const auto bm_bf = bm.coordinate_functions();
-    std::vector<std::vector<bool>> bm_anf;
-    bm_anf.resize(bm_bf.size());
-    std::transform(bm_bf.cbegin(), bm_bf.cend(), bm_anf.begin(), [](const BooleanFunction &bf) {
-        return bf.mobius_transformation();
-    });
 
-    auto c_dim = bm.inputs_number() + bm.outputs_number();
+    auto outputs = bm.outputs_number();
+    auto c_dim = bm.inputs_number() + outputs;
     auto c = Circuit(c_dim);
-    c.set_memory(bm.outputs_number());
-    // TODO separate here
-    for (size_t i = 0; i < bm.outputs_number(); i++) {
-        if (bm_anf[i].front()) {
-            c.add(Gate(GateType::NOT, {bm.inputs_number() + i}, {}, c_dim));
-        }
-        for (size_t c_set = 1; c_set < bm_anf[i].size(); c_set++) {
-            if (bm_anf[i][c_set]) {
-                controls_type controls;
-                for (const auto num: bits_mask(c_set, bm.inputs_number())) {
-                    controls[num] = true;
-                }
-                c.add(Gate(GateType::kCNOT, {bm.inputs_number() + i}, controls, c_dim));
+    c.set_memory(outputs);
+
+    std::vector<std::future<std::vector<Gate>>> futures;
+    auto process_range = [&](size_t start, size_t end) -> std::vector<Gate> {
+        std::vector<Gate> gates;
+        for (size_t i = start; i < end; i++) {
+            auto anf = bm_bf[i].mobius_transformation();
+
+            if (anf.front()) {
+                gates.emplace_back(GateType::NOT, std::vector<size_t>{bm.inputs_number() + i}, controls_type{}, c_dim);
             }
+
+            for (size_t c_set = 1; c_set < anf.size(); c_set++) {
+                if (anf[c_set]) {
+                    controls_type controls;
+                    for (const auto num: bits_mask(c_set, bm.inputs_number())) {
+                        controls[num] = true;
+                    }
+                    gates.emplace_back(GateType::kCNOT, std::vector<size_t>{bm.inputs_number() + i}, controls, c_dim);
+                }
+            }
+        }
+        return gates;
+    };
+
+    size_t num_threads = JobsConfig::instance().get();
+    size_t batch_size = (outputs + num_threads - 1) / num_threads;
+
+    for (size_t i = 0; i < outputs; i += batch_size) {
+        size_t start = i;
+        size_t end = std::min(i + batch_size, outputs);
+        futures.push_back(std::async(std::launch::async, process_range, start, end));
+    }
+
+    for (auto &future: futures) {
+        auto gates = future.get();
+        for (const auto &gate: gates) {
+            c.add(gate);
         }
     }
 
@@ -190,14 +208,28 @@ std::vector<Gate> generate_all_gates(const std::vector<GateType> &types, size_t 
     if (!dim) {
         throw SynthException("Dimension value should be at least 1");
     }
+
     std::vector<Gate> result;
-    // TODO separate here!
-    std::cout << "Generate all gates. Jobs: " << JobsConfig::instance().get() << std::endl;
-    for (const auto type: std::unordered_set<GateType>(types.begin(), types.end())) {
-        for (const auto &gate: generate_gates_by_type(type, dim - 1, dim)) {
-            result.push_back(gate);
-        }
+    std::future<std::vector<Gate>> kcnot_future;
+    std::unordered_set<GateType> unique_types(types.begin(), types.end());
+    auto has_kcnot = bool(unique_types.extract(GateType::kCNOT));
+
+    if (has_kcnot) {
+        kcnot_future = std::async(std::launch::async, [&]() {
+            return generate_gates_by_type(GateType::kCNOT, dim - 1, dim);
+        });
     }
+
+    std::for_each(unique_types.begin(), unique_types.end(), [&](auto type) {
+        auto gates = generate_gates_by_type(type, dim - 1, dim);
+        result.insert(result.end(), gates.begin(), gates.end());
+    });
+
+    if (has_kcnot) {
+        auto kcnot_gates = kcnot_future.get();
+        result.insert(result.end(), kcnot_gates.begin(), kcnot_gates.end());
+    }
+
     return result;
 }
 
@@ -644,9 +676,7 @@ Circuit ZKB_algorithm(const Substitution &sub, bool reduction) {
         return c;
     }
 
-    std::cout << "ZKB. Jobs: " << JobsConfig::instance().get() << std::endl;
     for (const auto &trans: sub.transpositions()) {
-        // TODO separate here
         for (const auto &gate: ZKB_algorithm(trans, dim)) {
             c.insert(gate, 0);
         }

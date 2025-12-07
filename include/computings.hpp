@@ -92,9 +92,6 @@ void process_config(InputType type, Algo algo, bool reduction,
     if (algo == Algo::DUMMY) {
         LOG_WARNING("Application parameters", "Selected synthesis algorithm is 'dummy', it always builds a quantum "
                                               "circuit with additional memory");
-        LOG_WARNING("Application parameters", "Selected synthesis algorithm is 'dummy', number of additional memory "
-                                              "lines in the resulting quantum circuit will be equal to the number of "
-                                              "coordinate functions");
     } else if (algo == Algo::UNKNOWN) {
         throw ArgumentException("Unknown synthesis algorithm");
     }
