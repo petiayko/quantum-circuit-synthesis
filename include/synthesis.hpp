@@ -37,7 +37,7 @@ private:
 enum class Algo {
     DUMMY,
     RW,
-    SS,
+    GS,
     ZKB,
     CA,
     UNKNOWN = 1024,
@@ -66,9 +66,9 @@ Circuit RW_algorithm(const BinaryMapping &, bool = false);
 
 Circuit RW_algorithm(const Substitution &, bool = false);
 
-Circuit SS_algorithm(const BinaryMapping &, bool = false);
+Circuit GS_algorithm(const BinaryMapping &, bool = false);
 
-Circuit SS_algorithm(const Substitution &, bool = false);
+Circuit GS_algorithm(const Substitution &, bool = false);
 
 Circuit ZKB_algorithm(const BinaryMapping &, bool = false);
 
