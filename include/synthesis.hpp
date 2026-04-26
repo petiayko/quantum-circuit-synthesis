@@ -44,6 +44,8 @@ enum class Algo {
     EMPTY = 2048,
 };
 
+static const size_t CA_THRESHOLD = 5;
+
 size_t count_gates(GateType, size_t, bool = false) noexcept;
 
 std::vector<Gate> generate_all_gates(const std::vector<GateType> &, size_t);

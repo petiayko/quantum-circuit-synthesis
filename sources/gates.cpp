@@ -885,6 +885,45 @@ BinaryMapping Circuit::produce_mapping() const noexcept {
     return BinaryMapping(vec_bf);
 }
 
+void Circuit::inject(const Circuit &c) {
+    if (c.dim() > dim_) {
+        throw CircuitException("Impossible to inject a circuit with a larger number of inputs");
+    }
+    if (c.dim() == dim_) {
+        for (const auto &gate: c.gates_) {
+            this->insert(gate);
+        }
+        return;
+    }
+    for (const auto &gate: c.gates_) {
+        std::vector<size_t> new_nests;
+        for (const auto line: gate.nests()) {
+            new_nests.push_back(line + 1);
+        }
+
+        controls_type new_controls;
+        new_controls[0] = false;
+        for (const auto line: gate.direct_controls()) {
+            new_controls[line + 1] = true;
+        }
+        for (const auto line: gate.inverted_controls()) {
+            new_controls[line + 1] = false;
+        }
+
+        if (gate.type() == GateType::NOT) {
+            this->insert(Gate(GateType::CNOT, new_nests, new_controls, dim_));
+        } else if (gate.type() == GateType::CNOT) {
+            this->insert(Gate(GateType::kCNOT, new_nests, new_controls, dim_));
+        } else if (gate.type() == GateType::SWAP) {
+            this->insert(Gate(GateType::CSWAP, new_nests, new_controls, dim_));
+        } else if (gate.type() == GateType::kCNOT) {
+            this->insert(Gate(GateType::kCNOT, new_nests, new_controls, dim_));
+        } else {
+            this->insert(Gate(GateType::CSWAP, new_nests, new_controls, dim_));
+        }
+    }
+}
+
 void Circuit::reduce() noexcept {
     size_t swap_number = 0;
     auto subcircuits_borders = split_circuit_(swap_number);
