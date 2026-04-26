@@ -35,8 +35,8 @@ std::tuple<double, double, double, double> collect_statistics(size_t power, Algo
         case Algo::RW:
             generate_substitution(power, RW_algorithm, statistic);
             break;
-        case Algo::SS:
-            generate_substitution(power, SS_algorithm, statistic);
+        case Algo::GS:
+            generate_substitution(power, GS_algorithm, statistic);
             break;
         case Algo::ZKB:
             generate_substitution(power, ZKB_algorithm, statistic);
@@ -68,7 +68,7 @@ std::tuple<double, double, double, double> collect_statistics(size_t power, Algo
 void collect_statistics() {
     JobsConfig::instance().set(100);
     const std::vector<size_t> powers = {2, 4, 8};
-    const std::vector<Algo> algorithms = {Algo::DUMMY, Algo::RW, Algo::SS, Algo::ZKB, Algo::CA};
+    const std::vector<Algo> algorithms = {Algo::DUMMY, Algo::RW, Algo::GS, Algo::ZKB, Algo::CA};
 
     for (auto algo: algorithms) {
         for (auto power: powers) {

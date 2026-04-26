@@ -1,15 +1,14 @@
 #include "computings.hpp"
-#include "statistics.hpp"
 
 
 using configuration = std::map<std::string, std::string>;
 
-static const std::string version = "1.2.3";
+static const std::string version = "1.2.4";
 static const std::string program_name = "QCS";
 
 void print_program_info() {
     std::cout << program_name << " v" << version << std::endl;
-    std::cout << "(c) Peter Makretskiy, IU8 BMSTU, 2025." << std::endl;
+    std::cout << "(c) Peter Makretskiy, IU8 BMSTU, 2026." << std::endl;
     std::cout << "Program for synthesizing quantum circuits from mapping"
               << std::endl << std::endl;
 }
@@ -36,7 +35,7 @@ void print_program_help() {
     std::cout << std::endl;
 
     std::cout << "Synthesis options:" << std::endl;
-    std::cout << "  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'ss', 'zkb', 'ca')"
+    std::cout << "  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'gs', 'zkb', 'ca')"
               << std::endl;
     std::cout << "  -r, --reduction     reduce the output circuit (default: false)" << std::endl;
     std::cout << "  -j, --jobs ARG      maximum number of jobs running in parallel (default: 1)" << std::endl;
@@ -125,7 +124,6 @@ int main(int argc, char *argv[]) {
     }
 
     if (config.empty()) {
-//        collect_statistics();
         return 0;
     }
 
@@ -182,8 +180,8 @@ int main(int argc, char *argv[]) {
         algo = Algo::DUMMY;
     } else if (algo_s == "rw") {
         algo = Algo::RW;
-    } else if (algo_s == "ss") {
-        algo = Algo::SS;
+    } else if (algo_s == "gs") {
+        algo = Algo::GS;
     } else if (algo_s == "zkb") {
         algo = Algo::ZKB;
     } else if (algo_s == "ca") {

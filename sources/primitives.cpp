@@ -345,7 +345,7 @@ BinaryMapping::BinaryMapping(const Substitution &sub) {
     for (size_t col = 0; col < cols; col++) {
         size_t bit_pos = cols - col - 1;
         size_t mask = 1u << bit_pos;
-        auto& cf_col = truth_table[col];
+        auto &cf_col = truth_table[col];
         for (size_t row = 0; row < sub.power(); row++) {
             cf_col[row] = sub.vector()[row] & mask;
         }
@@ -838,6 +838,18 @@ Substitution substitution_by_cycle(const cycle_type &cycle) {
     }
     for (size_t i = 0; i < cycle.size() - 1; i++) {
         std::swap(sub.sub_[cycle[i]], sub.sub_[cycle[i + 1]]);
+    }
+    return sub;
+}
+
+// TODO well yeah that sucks
+Substitution substitution_power_of_2_by_cycle(const cycle_type &cycle) {
+    auto sub = substitution_by_cycle(cycle);
+    if (is_power_of_2(sub.power())) {
+        return sub;
+    }
+    for (size_t i = sub.power(); i < std::bit_ceil(sub.power()); i++) {
+        sub.sub_.push_back(i);
     }
     return sub;
 }

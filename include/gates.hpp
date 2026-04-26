@@ -128,6 +128,8 @@ public:
 
     void insert(const Gate &, size_t = 0);
 
+    void inject(const Circuit &);
+
     void reduce() noexcept;
 
     [[nodiscard]] BinaryMapping produce_mapping() const noexcept;
