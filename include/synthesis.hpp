@@ -37,12 +37,14 @@ private:
 enum class Algo {
     DUMMY,
     RW,
-    SS,
+    GS,
     ZKB,
     CA,
     UNKNOWN = 1024,
     EMPTY = 2048,
 };
+
+static const size_t CA_THRESHOLD = 5;
 
 size_t count_gates(GateType, size_t, bool = false) noexcept;
 
@@ -66,9 +68,9 @@ Circuit RW_algorithm(const BinaryMapping &, bool = false);
 
 Circuit RW_algorithm(const Substitution &, bool = false);
 
-Circuit SS_algorithm(const BinaryMapping &, bool = false);
+Circuit GS_algorithm(const BinaryMapping &, bool = false);
 
-Circuit SS_algorithm(const Substitution &, bool = false);
+Circuit GS_algorithm(const Substitution &, bool = false);
 
 Circuit ZKB_algorithm(const BinaryMapping &, bool = false);
 

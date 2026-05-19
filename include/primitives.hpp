@@ -203,6 +203,8 @@ public:
 
     friend Substitution substitution_by_cycle(const cycle_type &);
 
+    friend Substitution substitution_power_of_2_by_cycle(const cycle_type &);
+
 private:
     std::vector<size_t> sub_;
 
@@ -212,5 +214,7 @@ private:
 Substitution operator*(const Substitution &, const Substitution &);
 
 Substitution substitution_by_cycle(const cycle_type &);
+
+Substitution substitution_power_of_2_by_cycle(const cycle_type &);
 
 #endif //QUANTUM_CIRCUIT_SYNTHESIS_PRIMITIVES_HPP

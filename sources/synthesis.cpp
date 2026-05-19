@@ -8,8 +8,8 @@ Circuit synthesize(const BinaryMapping &bm, Algo algo, bool reduction) {
     if (algo == Algo::RW) {
         return RW_algorithm(bm, reduction);
     }
-    if (algo == Algo::SS) {
-        return SS_algorithm(bm, reduction);
+    if (algo == Algo::GS) {
+        return GS_algorithm(bm, reduction);
     }
     if (algo == Algo::ZKB) {
         return ZKB_algorithm(bm, reduction);
@@ -27,8 +27,8 @@ Circuit synthesize(const Substitution &sub, Algo algo, bool reduction) {
     if (algo == Algo::RW) {
         return RW_algorithm(sub, reduction);
     }
-    if (algo == Algo::SS) {
-        return SS_algorithm(sub, reduction);
+    if (algo == Algo::GS) {
+        return GS_algorithm(sub, reduction);
     }
     if (algo == Algo::ZKB) {
         return ZKB_algorithm(sub, reduction);
@@ -451,14 +451,14 @@ Circuit RW_algorithm(const Substitution &sub, bool reduction) {
     return RW_algorithm(BinaryMapping(sub), reduction);
 }
 
-Circuit SS_algorithm(const BinaryMapping &bm, bool reduction) {
+Circuit GS_algorithm(const BinaryMapping &bm, bool reduction) {
     auto bm_extended = bm.extend();
-    auto c = SS_algorithm(Substitution(bm_extended), reduction);
+    auto c = GS_algorithm(Substitution(bm_extended), reduction);
     c.set_memory(bm_extended.inputs_number() - bm.inputs_number());
     return c;
 }
 
-Circuit SS_algorithm(const Substitution &sub, bool reduction) {
+Circuit GS_algorithm(const Substitution &sub, bool reduction) {
     if (!is_power_of_2(sub.power())) {
         throw SynthException("Substitution size should be power of 2");
     }
@@ -487,7 +487,7 @@ Circuit SS_algorithm(const Substitution &sub, bool reduction) {
             }
         }
         if (best_gate.empty()) {
-            LOG_DEBUG("Performing synthesis using the SS algorithm",
+            LOG_DEBUG("Performing synthesis using the GS algorithm",
                       "Can not chose the best gate: " + static_cast<std::string>(c));
             throw SynthException("Unable to synthesize Circuit");
         }
@@ -500,7 +500,7 @@ Circuit SS_algorithm(const Substitution &sub, bool reduction) {
     }
 
     if (c.produce_mapping() != sub) {
-        LOG_DEBUG("Performing synthesis using the SS algorithm",
+        LOG_DEBUG("Performing synthesis using the GS algorithm",
                   "The synthesized circuit produces an incorrect mapping: " + static_cast<std::string>(c));
         throw SynthException("Unable to synthesize Circuit");
     }
@@ -688,26 +688,40 @@ Circuit CA_algorithm(const Substitution &sub, bool reduction) {
         throw SynthException("Substitution size should be power of 2");
     }
 
-    size_t dim = std::log2(sub.power());
+    if (sub.power() < CA_THRESHOLD) {
+        return GS_algorithm(sub, reduction);
+    }
 
-    if (dim <= 2) {
-        LOG_INFO("Performing synthesis using CA algorithm", "Switching to SS algorithm");
-        try {
-            return SS_algorithm(sub, reduction);
-        } catch (...) {}
-        LOG_INFO("Performing synthesis using CA algorithm. SS algorithm did not produce a result",
-                 "Switching to RW algorithm");
-        return RW_algorithm(sub, reduction);
+    size_t dim = std::log2(sub.power());
+    Circuit c(dim);
+
+    for (const auto &cycle: sub.cycles()) {
+        const auto cycle_sub = substitution_power_of_2_by_cycle(cycle);
+        if (cycle.size() < CA_THRESHOLD) {
+            try {
+                c.inject(GS_algorithm(cycle_sub));
+            } catch (SynthException &e) {
+                LOG_DEBUG("Performing synthesis using the CA algorithm",
+                          "GS fucked up: " + static_cast<std::string>(e.what()));
+                c.inject(ZKB_algorithm(cycle_sub));
+            }
+            continue;
+        }
+        if (cycle.size() >= CA_THRESHOLD) {
+            c.inject(ZKB_algorithm(cycle_sub));
+            continue;
+        }
     }
-    if (dim == 3) {
-        LOG_INFO("Performing synthesis using CA algorithm", "Switching to ZKB algorithm");
-        try {
-            return ZKB_algorithm(sub, reduction);
-        } catch (...) {}
-        LOG_INFO("Performing synthesis using CA algorithm. ZKB algorithm did not produce a result",
-                 "Switching to RW algorithm");
-        return RW_algorithm(sub, reduction);
+
+    if (reduction) {
+        c.reduce();
     }
-    LOG_INFO("Performing synthesis using CA algorithm", "Switching to ZKB algorithm");
-    return ZKB_algorithm(sub, reduction);
+
+//    if (c.produce_mapping() != sub) {
+//        LOG_DEBUG("Performing synthesis using the CA algorithm",
+//                  "The synthesized circuit produces an incorrect mapping: " + static_cast<std::string>(c));
+//        throw SynthException("Unable to synthesize Circuit");
+//    }
+
+    return c;
 }

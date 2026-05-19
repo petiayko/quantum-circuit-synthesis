@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.28)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXE_LINKER_FLAGS "-static")
-set(VERSION "1.2.3")
+set(VERSION "1.2.4")
 
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_COVERAGE "Build code coverage" OFF)
@@ -54,9 +54,9 @@ if (BUILD_TESTS)
 
             tests/test_synthesis_general.cpp
             tests/test_synthesis_CA.cpp
+            tests/test_synthesis_GS.cpp
             tests/test_synthesis_dummy.cpp
             tests/test_synthesis_RW.cpp
-            tests/test_synthesis_SS.cpp
             tests/test_synthesis_ZKB.cpp
             tests/test_reduction.cpp
 

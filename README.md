@@ -33,9 +33,9 @@ MIT License, 2026.
 * `--help` или `-h` печатает основную информацию, другие аргументы игнорируются
 
 ```bash
-./qcs_1.2.3 --help
-QCS v1.2.3
-(c) Peter Makretskiy, IU8 BMSTU, 2025.
+./qcs_1.2.4 --help
+QCS v1.2.4
+(c) Peter Makretskiy, IU8 BMSTU, 2026.
 Program for synthesizing quantum circuits from mapping
 
 Generic options:
@@ -47,7 +47,7 @@ Operating modes:
   -t, --type ARG      type of input ('tt' - truth table, 'sub' - substitution, 'qc' - quantum circuit)
 
 Synthesis options:
-  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'ss', 'zkb', 'ca')
+  -a, --algo ARG      algorithm to synthesis quantum circuit ('dummy', 'rw', 'gs', 'zkb', 'ca')
   -r, --reduction     reduce the output circuit (default: false)
   -j, --jobs ARG      maximum number of jobs running in parallel (default: 1)
 
@@ -59,8 +59,8 @@ Parameters:
 * `--version` или `-V` печатает версию программы, другие аргументы игнорируются
 
 ```bash
-./qcs_1.2.3 --version
-1.2.3
+./qcs_1.2.4 --version
+1.2.4
 ```
 
 * `-l arg` или `--log arg` устанавливает максимальный уровень логирования. Опциональный параметр, значение по умолчанию
@@ -81,9 +81,9 @@ Parameters:
   обратном режиме работа недопустимо. Аргумент обязательный. Допустимые значения аргумента:
     * `dummy` - алгоритм независимого построения каждой координатной функции отображения;
     * `rw` - алгоритм, основанный на спектре Радемахера-Уолша координатных функций отображения;
-    * `ss` - алгоритм, основанный на наилучшем выборе вентилей, представляемых в виде подстановок;
+    * `gs` - жадный алгоритм синтеза, основанный на наилучшем выборе вентилей, представляемых в виде подстановок;
     * `zkb` - алгоритм Д. В. Закаблукова, основанный на реализации транспозиций исходной подстановки;
-    * `ca` - комбинированный алгоритм, применяющий алгоритмы, приведенные выше.
+    * `ca` - комбинированный алгоритм, применяющий алгоритмы ZKB и GS.
 
 * `-r` или `--reduction` определяет, будет ли итоговая схема упрощена. Опциональный параметр. Недопустим в обратном
   режиме работы.
@@ -207,7 +207,7 @@ CSWAP(3, 4; 1)
    отображения.
 
 ```bash
-./qcs_1.2.3 --type qc --input "circuit.txt" --output "mapping.txt" --log INFO
+./qcs_1.2.4 --type qc --input "circuit.txt" --output "mapping.txt" --log INFO
 ```
 
 2. Синтез схемы:
@@ -218,7 +218,7 @@ CSWAP(3, 4; 1)
    двоичное отображение необратимо, выходная квантовая схема будет иметь дополнительную память.
 
 ```bash
-./qcs_1.2.3 --type tt --algo rw --input "truth_table.txt" --reduction
+./qcs_1.2.4 --type tt --algo rw --input "truth_table.txt" --reduction
 ```
 
 ## Сборка из исходного кода
@@ -234,7 +234,7 @@ CSWAP(3, 4; 1)
 
 Проект разрабатывался на базе Windows 10 Pro x64, дополнительно испытывался на системе Debian 12 x64.
 
-Скрипт создаст директорию `/build` в корне проекта, выполнит сборку исполняемых файлов: `qcs_1.2.3` и `tests` -
+Скрипт создаст директорию `/build` в корне проекта, выполнит сборку исполняемых файлов: `qcs_1.2.4` и `tests` -
 скопирует их из `/build` в корень проекта.
 
 Исполняемый файл `tests` используется для запуска модульных тестов.
